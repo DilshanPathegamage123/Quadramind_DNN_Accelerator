@@ -1,0 +1,40 @@
+# CI verification matrix. Each entry expands to a SimConfig that
+# scripts/iterate_until_pass.py runs.
+matrix:
+  - { top: single_dnn_top, dataflow: OS, memory: STAMP, array_height: 4, array_width: 4 }
+  - { top: single_dnn_top, dataflow: OS, memory: PAGED, array_height: 4, array_width: 4 }
+  - { top: single_dnn_top, dataflow: IS, memory: STAMP, array_height: 4, array_width: 4 }
+  - { top: single_dnn_top, dataflow: IS, memory: PAGED, array_height: 4, array_width: 4 }
+  - { top: single_dnn_top, dataflow: WS, memory: STAMP, array_height: 4, array_width: 4 }
+  - { top: single_dnn_top, dataflow: WS, memory: PAGED, array_height: 4, array_width: 4 }
+  - { top: single_dnn_top, dataflow: OS, memory: STAMP, array_height: 8, array_width: 8 }
+  - { top: multi_dnn_top, dataflow: OS, memory: STAMP, array_height: 4, array_width: 4, scheduler: FIFO }
+  - { top: multi_dnn_top, dataflow: OS, memory: STAMP, array_height: 4, array_width: 4, scheduler: SJF }
+  - { top: multi_dnn_top, dataflow: OS, memory: STAMP, array_height: 4, array_width: 4, scheduler: AIMT }
+  - { top: multi_dnn_top, dataflow: OS, memory: STAMP, array_height: 4, array_width: 4, scheduler: BATCHDNN }
+  - { top: multi_dnn_top, dataflow: OS, memory: STAMP, array_height: 4, array_width: 4, scheduler: BATCHDNN_PP }
+
+# ---------------------------------------------------------------------------
+# Experiment Set 4: Bank Conflict and Memory-Side Stall Characterisation
+# Sweeps num_banks across dataflow × memory_layout × backend combinations.
+# num_banks: 1 = flat baseline (no conflicts); 2 = high-conflict stress test;
+#            4 = default 4-bank SRAM;          8 = wide 8-bank configuration.
+# ---------------------------------------------------------------------------
+
+  # -- num_banks sweep: OS/CHANNEL_MAJOR/STAMP (primary sweep axis) --
+  - { top: single_dnn_top, dataflow: OS, memory: STAMP, array_height: 4, array_width: 4, num_banks: 1 }
+  - { top: single_dnn_top, dataflow: OS, memory: STAMP, array_height: 4, array_width: 4, num_banks: 2 }
+  - { top: single_dnn_top, dataflow: OS, memory: STAMP, array_height: 4, array_width: 4, num_banks: 8 }
+
+  # -- memory layout × 4-bank: captures layout-conflict interaction --
+  - { top: single_dnn_top, dataflow: OS, memory: STAMP, array_height: 4, array_width: 4, num_banks: 4, mem_layout: ROW_MAJOR }
+  - { top: single_dnn_top, dataflow: OS, memory: STAMP, array_height: 4, array_width: 4, num_banks: 4, mem_layout: COLUMN_MAJOR }
+
+  # -- dataflow × 4-bank: IS and WS access patterns vs CHANNEL_MAJOR --
+  - { top: single_dnn_top, dataflow: IS, memory: STAMP, array_height: 4, array_width: 4, num_banks: 4 }
+  - { top: single_dnn_top, dataflow: WS, memory: STAMP, array_height: 4, array_width: 4, num_banks: 4 }
+
+  # -- paged backend with banking (page translation + bank conflict overlap) --
+  - { top: single_dnn_top, dataflow: OS, memory: PAGED, array_height: 4, array_width: 4, num_banks: 1 }
+  - { top: single_dnn_top, dataflow: OS, memory: PAGED, array_height: 4, array_width: 4, num_banks: 4 }
+  - { top: single_dnn_top, dataflow: OS, memory: PAGED, array_height: 4, array_width: 4, num_banks: 8 }

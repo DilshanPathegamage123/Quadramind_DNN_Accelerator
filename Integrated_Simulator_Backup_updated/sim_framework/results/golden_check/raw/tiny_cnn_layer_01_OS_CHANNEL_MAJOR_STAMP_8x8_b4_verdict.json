@@ -1,0 +1,22 @@
+{
+  "layer": "models/tiny_cnn/layer_01",
+  "dataflow": "OS",
+  "layout": "CHANNEL_MAJOR",
+  "memory": "STAMP",
+  "array": "8x8",
+  "num_banks": 4,
+  "relu": false,
+  "tol_frac_of_fullscale": 0.05,
+  "full_scale": 2.6554057598114014,
+  "passed": true,
+  "assembly": "hardware_full",
+  "n_total": 4,
+  "n_within_tol": 4,
+  "max_abs_err": 0.00044570863246917725,
+  "mean_abs_err": 0.00015938840806484222,
+  "max_rel_err_pct": 0.016784953893480798,
+  "mean_rel_err_pct": 0.006002412530586764,
+  "rtl_cycles_total": 2613,
+  "rtl_runs": 1,
+  "wall_seconds": 0.9
+}

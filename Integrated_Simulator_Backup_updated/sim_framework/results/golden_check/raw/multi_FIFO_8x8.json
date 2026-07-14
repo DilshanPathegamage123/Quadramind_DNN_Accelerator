@@ -1,0 +1,67 @@
+{
+  "scheduler": "FIFO",
+  "completions": 3,
+  "dispatch_order": [
+    {
+      "task": 0,
+      "cycle": 2,
+      "is_ct": null
+    },
+    {
+      "task": 1,
+      "cycle": 271,
+      "is_ct": null
+    },
+    {
+      "task": 2,
+      "cycle": 376,
+      "is_ct": null
+    }
+  ],
+  "tasks": [
+    {
+      "task": 0,
+      "layer": "models/tiny_cnn/layer_00",
+      "pixel": [
+        0,
+        0
+      ],
+      "channels_checked": 8,
+      "captured": 8,
+      "dispatches": 1,
+      "cycles": 267,
+      "max_err_pct_fs": 0.00950928988938614,
+      "passed": true
+    },
+    {
+      "task": 1,
+      "layer": "models/mnist_cnn/layer_00",
+      "pixel": [
+        1,
+        1
+      ],
+      "channels_checked": 8,
+      "captured": 8,
+      "dispatches": 1,
+      "cycles": 103,
+      "max_err_pct_fs": 0.004170206211469879,
+      "passed": true
+    },
+    {
+      "task": 2,
+      "layer": "models/tiny_cnn/layer_01",
+      "pixel": [
+        0,
+        0
+      ],
+      "channels_checked": 4,
+      "captured": 4,
+      "dispatches": 1,
+      "cycles": 2614,
+      "max_err_pct_fs": 0.016784953893480798,
+      "passed": true
+    }
+  ],
+  "total_cycles": 3290,
+  "all_pass": true
+}
