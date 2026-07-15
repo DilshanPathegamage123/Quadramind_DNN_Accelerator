@@ -16,7 +16,7 @@
   "mean_abs_err": 0.0004929255694150925,
   "max_rel_err_pct": 0.04993626313270883,
   "mean_rel_err_pct": 0.021308540572735915,
-  "rtl_cycles_total": 34932,
+  "rtl_cycles_total": 162470,
   "rtl_runs": 2,
-  "wall_seconds": 4.3
+  "wall_seconds": 15.5
 }
