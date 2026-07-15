@@ -1,0 +1,246 @@
+{
+ "n_cells": 48,
+ "n_exact": 8,
+ "cells": {
+  "r0c0": {
+   "rtl": -256245300,
+   "exact": -256245300,
+   "match": true
+  },
+  "r0c1": {
+   "rtl": -2639609,
+   "exact": 253605691,
+   "match": false
+  },
+  "r0c2": {
+   "rtl": 33069836,
+   "exact": 35709445,
+   "match": false
+  },
+  "r0c3": {
+   "rtl": -128959502,
+   "exact": -162029338,
+   "match": false
+  },
+  "r0c4": {
+   "rtl": -181636714,
+   "exact": -52677212,
+   "match": false
+  },
+  "r0c5": {
+   "rtl": -236145242,
+   "exact": -86600503,
+   "match": false
+  },
+  "r1c0": {
+   "rtl": 154045940,
+   "exact": 154045940,
+   "match": true
+  },
+  "r1c1": {
+   "rtl": 331670919,
+   "exact": 177624979,
+   "match": false
+  },
+  "r1c2": {
+   "rtl": 240079999,
+   "exact": -91590920,
+   "match": false
+  },
+  "r1c3": {
+   "rtl": 378310962,
+   "exact": 138230963,
+   "match": false
+  },
+  "r1c4": {
+   "rtl": 216740390,
+   "exact": -161570572,
+   "match": false
+  },
+  "r1c5": {
+   "rtl": 327724810,
+   "exact": 91141382,
+   "match": false
+  },
+  "r2c0": {
+   "rtl": -96161846,
+   "exact": -96161846,
+   "match": true
+  },
+  "r2c1": {
+   "rtl": 30226306,
+   "exact": 126388152,
+   "match": false
+  },
+  "r2c2": {
+   "rtl": -163255370,
+   "exact": -193481676,
+   "match": false
+  },
+  "r2c3": {
+   "rtl": -113828533,
+   "exact": 49426837,
+   "match": false
+  },
+  "r2c4": {
+   "rtl": -747186,
+   "exact": 113081347,
+   "match": false
+  },
+  "r2c5": {
+   "rtl": -77577717,
+   "exact": -58966998,
+   "match": false
+  },
+  "r3c0": {
+   "rtl": 45868788,
+   "exact": 45868788,
+   "match": true
+  },
+  "r3c1": {
+   "rtl": 9667311,
+   "exact": -36201477,
+   "match": false
+  },
+  "r3c2": {
+   "rtl": -92453731,
+   "exact": -102121042,
+   "match": false
+  },
+  "r3c3": {
+   "rtl": 75636317,
+   "exact": 168090048,
+   "match": false
+  },
+  "r3c4": {
+   "rtl": 398117671,
+   "exact": 322481354,
+   "match": false
+  },
+  "r3c5": {
+   "rtl": 271897068,
+   "exact": -15027584,
+   "match": false
+  },
+  "r4c0": {
+   "rtl": -70253332,
+   "exact": -70253332,
+   "match": true
+  },
+  "r4c1": {
+   "rtl": -287759148,
+   "exact": -217505816,
+   "match": false
+  },
+  "r4c2": {
+   "rtl": -240593385,
+   "exact": 47165763,
+   "match": false
+  },
+  "r4c3": {
+   "rtl": -448765820,
+   "exact": -208172435,
+   "match": false
+  },
+  "r4c4": {
+   "rtl": -274993741,
+   "exact": 296272531,
+   "match": false
+  },
+  "r4c5": {
+   "rtl": -397584273,
+   "exact": -64851500,
+   "match": false
+  },
+  "r5c0": {
+   "rtl": -112113669,
+   "exact": -112113669,
+   "match": true
+  },
+  "r5c1": {
+   "rtl": -275272763,
+   "exact": -163159094,
+   "match": false
+  },
+  "r5c2": {
+   "rtl": -223922196,
+   "exact": 51350567,
+   "match": false
+  },
+  "r5c3": {
+   "rtl": -261431020,
+   "exact": 26297928,
+   "match": false
+  },
+  "r5c4": {
+   "rtl": -106446578,
+   "exact": 187339928,
+   "match": false
+  },
+  "r5c5": {
+   "rtl": -71171127,
+   "exact": 123170042,
+   "match": false
+  },
+  "r6c0": {
+   "rtl": -72393781,
+   "exact": -72393781,
+   "match": true
+  },
+  "r6c1": {
+   "rtl": 240292565,
+   "exact": 312686346,
+   "match": false
+  },
+  "r6c2": {
+   "rtl": 52149869,
+   "exact": -234208196,
+   "match": false
+  },
+  "r6c3": {
+   "rtl": 508268300,
+   "exact": 464018571,
+   "match": false
+  },
+  "r6c4": {
+   "rtl": 716661469,
+   "exact": 189040064,
+   "match": false
+  },
+  "r6c5": {
+   "rtl": 655777079,
+   "exact": -23086796,
+   "match": false
+  },
+  "r7c0": {
+   "rtl": 140671281,
+   "exact": 140671281,
+   "match": true
+  },
+  "r7c1": {
+   "rtl": -35922056,
+   "exact": -187227737,
+   "match": false
+  },
+  "r7c2": {
+   "rtl": 34644883,
+   "exact": 150361339,
+   "match": false
+  },
+  "r7c3": {
+   "rtl": -89659782,
+   "exact": -136165465,
+   "match": false
+  },
+  "r7c4": {
+   "rtl": -172630540,
+   "exact": -53915158,
+   "match": false
+  },
+  "r7c5": {
+   "rtl": 119125427,
+   "exact": 282019845,
+   "match": false
+  }
+ }
+}

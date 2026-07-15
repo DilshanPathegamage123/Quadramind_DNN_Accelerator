@@ -395,10 +395,11 @@ async def _harness_is(dut, p, cfg, xq, wq_stream, flat_in):
 # ===========================================================================
 async def _run_ws_pass(dut, ctx, k, oh, ow, c_in, timeout):
     """One WS invocation. All addresses are deterministic, so the stream is
-    anchored on the FSM's COMPUTE transition (state==3): weight for tuple i
-    is driven at compute+i (3-cycle load pipeline -> ready at edge +i+3),
-    the activation at compute+i+2 (accumulate lands at edge +i+4, one edge
-    after the weight load, well inside the pe_enable window)."""
+    anchored on the FSM's COMPUTE transition (state==3). The accumulate for
+    tuple i lands at PE(0,W-1) at edge anchor+i+3+W (2-cycle act serve path
+    + W-1 ripple hops); the weight has a 3-cycle load pipeline, so tuple i's
+    weight is driven at anchor+i+(W-1), loading exactly one edge before its
+    accumulate. Activations are driven at anchor+i+2."""
     H, W = ctx["H"], ctx["W"]
     xq = ctx["xq"]           # (1,H,W,C) int64
     wq = ctx["wq"]           # (kh,kw,C,K) int64
@@ -427,7 +428,7 @@ async def _run_ws_pass(dut, ctx, k, oh, ow, c_in, timeout):
                 kh_i, kw_i = divmod(i, KW)
                 wv = int(wq[kh_i, kw_i, c_in, k])
                 xv = int(xq[0, oh + kh_i, ow + kw_i, c_in])
-                events.setdefault(cyc + i, []).append(("w", wv))
+                events.setdefault(cyc + i + (W - 1), []).append(("w", wv))
                 events.setdefault(cyc + i + 2, []).append(("x", xv))
             scheduled = True
 

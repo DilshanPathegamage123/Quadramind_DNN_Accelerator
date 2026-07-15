@@ -182,8 +182,8 @@ module systolic_array_top
             weight_fetch_enable <= 1'b0;
             input_fetch_enable  <= 1'b0;
             output_fetch_enable <= 1'b0;
-            pe_enable <= '{default: 1'b0};
-            pe_clear  <= '{default: 1'b0};
+            pe_enable <= '0;
+            pe_clear  <= '0;
             done <= 1'b0;
             busy <= 1'b0;
         end else begin
@@ -196,13 +196,13 @@ module systolic_array_top
             case (state)
                 IDLE: begin
                     busy     <= 1'b0;
-                    pe_clear <= '{default: 1'b1};
+                    pe_clear <= '1;
                 end
 
                 FETCH_WEIGHTS: begin
                     busy                <= 1'b1;
                     weight_fetch_enable <= 1'b1;   // single-cycle pulse to sub-module
-                    pe_clear            <= '{default: 1'b0};
+                    pe_clear            <= '0;
                 end
 
                 WAIT_WEIGHTS: begin
@@ -212,18 +212,18 @@ module systolic_array_top
                 COMPUTE: begin
                     busy               <= 1'b1;
                     input_fetch_enable <= 1'b1;    // single-cycle pulse
-                    pe_enable          <= '{default: 1'b1};
+                    pe_enable          <= '1;
                 end
 
                 WAIT_COMPUTE: begin
                     busy      <= 1'b1;
-                    pe_enable <= '{default: 1'b1};
+                    pe_enable <= '1;
                 end
 
                 WRITEBACK: begin
                     busy                <= 1'b1;
                     output_fetch_enable <= 1'b1;   // single-cycle pulse
-                    pe_enable           <= '{default: 1'b0};
+                    pe_enable           <= '0;
                 end
 
                 WAIT_WRITEBACK: begin
