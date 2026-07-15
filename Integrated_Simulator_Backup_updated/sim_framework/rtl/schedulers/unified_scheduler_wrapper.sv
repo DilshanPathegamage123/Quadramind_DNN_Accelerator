@@ -132,7 +132,9 @@ module unified_scheduler_wrapper
     ) u_dnn (
         .clk               (clk),
         .rst_n             (rst_n),
-        .dnn_scheduler_select (scheduler_select[1:0]),
+        .dnn_scheduler_select (2'(scheduler_select - 5'd11)), // F6 fix: 11->AI-MT,
+                                              // 12->BatchDNN, 13->BatchDNN++
+                                              // (was select[1:0]: off-by-11)
         .st_write_en       (st_write_en && (scheduler_select >= 5'd11)),
         .st_layer_idx      (st_layer_idx),
         .st_dnn_id         (st_dnn_id),

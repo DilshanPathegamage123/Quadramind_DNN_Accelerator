@@ -25,14 +25,10 @@ import cocotb
 from cocotb.clock import Clock
 from cocotb.triggers import RisingEdge
 
-# NOTE on select values: unified_scheduler_wrapper routes
-# scheduler_select[1:0] (not select-11) into dnn_scheduler_wrapper, whose
-# write-gates decode 0=AI-MT, 1=BatchDNN, 2=BatchDNN++. The documented
-# selects 11/12/13 therefore do NOT run the named algorithm; the values
-# below are chosen so select[1:0] lands on the intended scheduler for both
-# the st-write gating and the output mux (and select stays >= 11).
-SCHED_SEL = {"FIFO": 0, "LIFO": 1, "AIMT": 12, "BATCHDNN": 13,
-             "BATCHDNN_PP": 14}
+# Canonical select codes (F6 fixed in RTL: the unified wrapper now decodes
+# select-11 for the DNN-aware family, so the documented codes work).
+SCHED_SEL = {"FIFO": 0, "LIFO": 1, "AIMT": 11, "BATCHDNN": 12,
+             "BATCHDNN_PP": 13}
 
 
 def _quant(a, fb):
