@@ -154,21 +154,17 @@ async def golden_multi(dut):
         dut.task_valid.value = 0
     else:
         # DNN-aware family: scheduling table, one root layer per DNN.
-        # The wrapper only accepts st writes while select>=11, and the
-        # scheduler dispatches as soon as the first row lands - so load the
-        # table from a background coroutine while the main loop below is
-        # already serving dispatches. Writes are spaced 10 cycles apart:
-        # the mt candidate queue is enqueued and popped from two separate
-        # always_ff blocks and a same-edge enqueue+pop loses the enqueue.
+        # Post-F7 the queue registers are single-owner and the balance
+        # check bootstraps, so rows are written back-to-back with real
+        # (nonzero) mem_cycles; the main loop below serves dispatches that
+        # may begin while later rows are still being written.
         async def _load_table():
             for tid, t in enumerate(tasks):
                 dut.st_write_en.value = 1
                 dut.st_layer_idx.value = tid
                 dut.st_dnn_id.value = tid
                 dut.st_prev_layer.value = 0xFF
-                # mem_cycles must be 0: the AI-MT balance check only admits
-                # the first MT when mem_cycles <= compute_cycle_ctr (init 0)
-                dut.st_mem_cycles.value = 0
+                dut.st_mem_cycles.value = 50
                 dut.st_compute_cycles.value = 300
                 dut.st_weight_fp.value = 1024
                 dut.st_ifmap_fp.value = 1024
@@ -176,9 +172,6 @@ async def golden_multi(dut):
                 dut.st_batch.value = 1
                 dut.st_total_layers.value = len(tasks)
                 await RisingEdge(dut.clk)
-                dut.st_write_en.value = 0
-                for _ in range(10):
-                    await RisingEdge(dut.clk)
             dut.st_write_en.value = 0
 
         cocotb.start_soon(_load_table())

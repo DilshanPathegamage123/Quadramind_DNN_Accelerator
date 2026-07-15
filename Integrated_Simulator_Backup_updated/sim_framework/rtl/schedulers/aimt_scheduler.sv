@@ -161,19 +161,9 @@ module aimt_scheduler #(
     // Populate MT candidate queue on reset/load
     // All valid layers initially await memory access
     // ================================================================
-    // It specifically initializes the queues and pushes new layers into the MT (Memory Task) queue.
-    always_ff @(posedge clk or negedge rst_n) begin
-        if (!rst_n) begin
-            mt_cq_head <= '0; mt_cq_tail <= '0; mt_cq_cnt <= '0;
-            ct_cq_head <= '0; ct_cq_tail <= '0; ct_cq_cnt <= '0;
-            sct_head   <= '0; sct_tail   <= '0; sct_cnt   <= '0;
-        end else if (st_write_en) begin
-            // Enqueue newly loaded layer into MT candidate queue
-            mt_cq[mt_cq_tail] <= st_layer_idx;   //Store the layer ID at the current tail position
-            mt_cq_tail         <= (mt_cq_tail + 1) % QD; //Move tail forward
-            mt_cq_cnt          <= mt_cq_cnt + 1;
-        end
-    end
+    // Queue pointers/counters are owned by the main scheduler block below
+    // (finding F7): the enqueue previously lived in its own always_ff, so a
+    // same-edge enqueue+pop multi-drove the count and lost the enqueue.
 
     // ================================================================
     // Available memory & cycles_to_fill initialisation
@@ -186,7 +176,18 @@ module aimt_scheduler #(
             compute_cycle_ctr      <= '0;
             stall_ctr              <= '0;
             stall_detected         <= 1'b0;
+            mt_cq_head <= '0; mt_cq_tail <= '0; mt_cq_cnt <= '0;
+            ct_cq_head <= '0; ct_cq_tail <= '0; ct_cq_cnt <= '0;
+            sct_head   <= '0; sct_tail   <= '0; sct_cnt   <= '0;
         end else begin
+            // F7: queue operations are collected as flags and applied once
+            // at the end of this block so a same-edge enqueue+pop cannot
+            // lose an element to last-assignment-wins.
+            automatic logic mt_pop, ct_enq, ct_pop, sct_enq, sct_pop;
+            automatic logic [LAYER_ID_WIDTH-1:0] ct_enq_layer, sct_enq_layer;
+            mt_pop = 1'b0; ct_enq = 1'b0; ct_pop = 1'b0;
+            sct_enq = 1'b0; sct_pop = 1'b0;
+            ct_enq_layer = '0; sct_enq_layer = '0;
 
             // -----------------------------------------------------------
             // A) Memory Access Scheduler  (Figure 7, Block A)
@@ -215,13 +216,17 @@ module aimt_scheduler #(
                         end else if (sched_table[cand].mem_cycles <=
                                      compute_cycle_ctr) begin
                             schedule_mt = 1'b1;
+                        // Bootstrap (F7): with no compute work scheduled at
+                        // all there is nothing to balance against - admit
+                        // the memory task instead of stalling forever.
+                        end else if (compute_cycle_ctr == 0) begin
+                            schedule_mt = 1'b1;
                         end
                     end
 
                     if (schedule_mt && mem_req <= avail_mem_reg) begin
-                        // Pop from MT CQ (box 5)
-                        mt_cq_head    <= (mt_cq_head + 1) % QD;  //when it reaches the last slot, it goes back to 
-                        mt_cq_cnt     <= mt_cq_cnt - 1;
+                        // Pop from MT CQ (box 5) - applied at block end (F7)
+                        mt_pop = 1'b1;
                         // Allocate memory (box 7,8)
                         avail_mem_reg          <= avail_mem_reg - mem_req;
                         cycles_to_fill_remaining <= cycles_to_fill_remaining -
@@ -251,10 +256,9 @@ module aimt_scheduler #(
                 // Update counters (box 7 decrement)
                 mem_cycle_ctr <= mem_cycle_ctr -
                                  $signed({1'b0, sched_table[mt_active_layer].mem_cycles});
-                // Enqueue into CT candidate queue
-                ct_cq[ct_cq_tail] <= mt_active_layer;
-                ct_cq_tail        <= (ct_cq_tail + 1) % QD;
-                ct_cq_cnt         <= ct_cq_cnt + 1;
+                // Enqueue into CT candidate queue - applied at block end (F7)
+                ct_enq       = 1'b1;
+                ct_enq_layer = mt_active_layer;
                 mt_active <= 1'b0;
                 mt_valid  <= 1'b0;
             end
@@ -286,12 +290,10 @@ module aimt_scheduler #(
                 end
 
                 if (schedule_ct) begin
-                    ct_cq_head      <= (ct_cq_head + 1) % QD;
-                    ct_cq_cnt       <= ct_cq_cnt - 1;
-                    // Move to scheduled compute queue (box 14)
-                    sct_q[sct_tail] <= ct_cand;
-                    sct_tail        <= (sct_tail + 1) % QD;
-                    sct_cnt         <= sct_cnt + 1;
+                    ct_pop = 1'b1;
+                    // Move to scheduled compute queue (box 14) - at block end
+                    sct_enq       = 1'b1;
+                    sct_enq_layer = ct_cand;
                     compute_cycle_ctr <= compute_cycle_ctr +
                                         $signed({1'b0, sched_table[ct_cand].compute_cycles});
                 end
@@ -304,8 +306,7 @@ module aimt_scheduler #(
                 ct_valid        <= 1'b1;
                 ct_layer_id     <= sct_q[sct_head];
                 ct_dnn_id       <= sched_table[sct_q[sct_head]].dnn_id;
-                sct_head        <= (sct_head + 1) % QD;
-                sct_cnt         <= sct_cnt - 1;
+                sct_pop = 1'b1;
             end
 
             // -----------------------------------------------------------
@@ -325,6 +326,33 @@ module aimt_scheduler #(
                 ct_valid      <= 1'b0;
                 stall_detected <= 1'b0;
             end
+
+            // -----------------------------------------------------------
+            // F7: single-owner queue updates (enqueue and pop may coincide)
+            // -----------------------------------------------------------
+            if (st_write_en) begin
+                mt_cq[mt_cq_tail] <= st_layer_idx;
+                mt_cq_tail        <= (mt_cq_tail + 1) % QD;
+            end
+            if (mt_pop)
+                mt_cq_head <= (mt_cq_head + 1) % QD;
+            mt_cq_cnt <= mt_cq_cnt + (st_write_en ? 1 : 0) - (mt_pop ? 1 : 0);
+
+            if (ct_enq) begin
+                ct_cq[ct_cq_tail] <= ct_enq_layer;
+                ct_cq_tail        <= (ct_cq_tail + 1) % QD;
+            end
+            if (ct_pop)
+                ct_cq_head <= (ct_cq_head + 1) % QD;
+            ct_cq_cnt <= ct_cq_cnt + (ct_enq ? 1 : 0) - (ct_pop ? 1 : 0);
+
+            if (sct_enq) begin
+                sct_q[sct_tail] <= sct_enq_layer;
+                sct_tail        <= (sct_tail + 1) % QD;
+            end
+            if (sct_pop)
+                sct_head <= (sct_head + 1) % QD;
+            sct_cnt <= sct_cnt + (sct_enq ? 1 : 0) - (sct_pop ? 1 : 0);
         end
     end
 

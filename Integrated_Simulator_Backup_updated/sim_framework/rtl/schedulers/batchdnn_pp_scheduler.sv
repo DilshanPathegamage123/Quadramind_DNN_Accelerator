@@ -348,18 +348,9 @@ module batchdnn_pp_scheduler #(
         end
     end
 
-    // MT candidate queue population
-    always_ff @(posedge clk or negedge rst_n) begin
-        if (!rst_n) begin
-            mt_cq_head <= '0; mt_cq_tail <= '0; mt_cq_cnt <= '0;
-            ct_cq_head <= '0; ct_cq_tail <= '0; ct_cq_cnt <= '0;
-            sct_head   <= '0; sct_tail   <= '0; sct_cnt   <= '0;
-        end else if (st_write_en) begin
-            mt_cq[mt_cq_tail] <= st_layer_idx;
-            mt_cq_tail        <= (mt_cq_tail + 1) % QD;
-            mt_cq_cnt         <= mt_cq_cnt + 1;
-        end
-    end
+    // MT queue ownership moved into the main block (finding F7): the
+    // separate enqueue always_ff multi-drove the array/tail/cnt with the
+    // expedite re-enqueue paths in the main scheduler.
 
     // ================================================================
     // Main scheduler  (Figure 9)
@@ -376,7 +367,15 @@ module batchdnn_pp_scheduler #(
             stall_detected <= 1'b0;
             mt_active <= 1'b0; mt_valid <= 1'b0;
             ct_active <= 1'b0; ct_valid <= 1'b0;
+            mt_cq_head <= '0; mt_cq_tail <= '0; mt_cq_cnt <= '0;
+            ct_cq_head <= '0; ct_cq_tail <= '0; ct_cq_cnt <= '0;
+            sct_head   <= '0; sct_tail   <= '0; sct_cnt   <= '0;
         end else begin
+            // F7: MT enqueues (table load + expedites) applied once at the
+            // end of this block so same-edge enqueues cannot be lost.
+            automatic logic exp_enq;
+            automatic logic [LAYER_ID_WIDTH-1:0] exp_layer;
+            exp_enq = 1'b0; exp_layer = '0;
 
             // =============================================================
             // BLOCK A: Memory Access Scheduler with Distance Throttling
@@ -500,10 +499,9 @@ module batchdnn_pp_scheduler #(
                     if (!all_prev_mem_done) begin
                         // Box 12: Schedule predecessor as MT (expedite)
                         if (!sched_table[pred].expedited) begin
-                            // Inject into front of MT queue by marking as expedited
-                            mt_cq[mt_cq_tail] <= pred;
-                            mt_cq_tail        <= (mt_cq_tail + 1) % QD;
-                            mt_cq_cnt         <= mt_cq_cnt + 1;
+                            // Enqueue expedited MT - applied at block end (F7)
+                            exp_enq   = 1'b1;
+                            exp_layer = pred;
                             sched_table[pred].expedited <= 1'b1;
                             expedition_ctr              <= expedition_ctr + 1;
                         end
@@ -515,9 +513,9 @@ module batchdnn_pp_scheduler #(
                             if (!sched_table[bottleneck].mem_access_done_flag &&
                                 !sched_table[bottleneck].expedited) begin
                                 // Expedite memory access of bottleneck (box 17)
-                                mt_cq[mt_cq_tail] <= bottleneck;
-                                mt_cq_tail        <= (mt_cq_tail + 1) % QD;
-                                mt_cq_cnt         <= mt_cq_cnt + 1;
+                                // - applied at block end (F7)
+                                exp_enq   = 1'b1;
+                                exp_layer = bottleneck;
                                 sched_table[bottleneck].expedited <= 1'b1;
                                 expedition_ctr <= expedition_ctr + 1;
                             end else if (sched_table[bottleneck].mem_access_done_flag &&
@@ -657,6 +655,21 @@ module batchdnn_pp_scheduler #(
                 ct_active <= 1'b0;
                 ct_valid  <= 1'b0;
             end
+
+
+            // F7: single-owner MT queue update (load + expedite may coincide)
+            if (st_write_en && exp_enq) begin
+                mt_cq[mt_cq_tail]            <= st_layer_idx;
+                mt_cq[(mt_cq_tail + 1) % QD] <= exp_layer;
+                mt_cq_tail                   <= (mt_cq_tail + 2) % QD;
+            end else if (st_write_en) begin
+                mt_cq[mt_cq_tail] <= st_layer_idx;
+                mt_cq_tail        <= (mt_cq_tail + 1) % QD;
+            end else if (exp_enq) begin
+                mt_cq[mt_cq_tail] <= exp_layer;
+                mt_cq_tail        <= (mt_cq_tail + 1) % QD;
+            end
+            mt_cq_cnt <= mt_cq_cnt + (st_write_en ? 1 : 0) + (exp_enq ? 1 : 0);
 
         end // !rst_n
     end
