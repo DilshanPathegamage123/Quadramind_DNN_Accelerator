@@ -392,19 +392,24 @@ async def _harness_is(dut, p, cfg, xq, wq_stream, flat_in):
 # WS harness: rightmost PE of row 0; one (pixel, k, channel) per invocation;
 # TB sums the per-channel partials.
 # ===========================================================================
-async def _run_ws_pass(dut, ctx, k, oh, ow, c_in, timeout):
-    """One WS invocation. All addresses are deterministic, so the stream is
-    anchored on the FSM's COMPUTE transition (state==3). The accumulate for
-    tuple i lands at PE(0,W-1) at edge anchor+i+3+W (2-cycle act serve path
-    + W-1 ripple hops); the weight has a 3-cycle load pipeline, so tuple i's
-    weight is driven at anchor+i+(W-1), loading exactly one edge before its
-    accumulate. Activations are driven at anchor+i+2."""
+async def _run_ws_pass(dut, ctx, k, oh0, ow, c_in, timeout):
+    """One WS invocation computes up to ARRAY_HEIGHT output rows (row r =
+    output row oh0+r) for one (column, channel k, input channel) - post-F2
+    (drain) and F8-WS (clean per-PE accumulators on every row).
+
+    All addresses are deterministic, so the stream is anchored on the FSM's
+    COMPUTE transition (state==3). The accumulate for tuple i lands at
+    PE(r,W-1) at edge anchor+i+3+W (2-cycle act serve path + W-1 ripple
+    hops); the weight has a 3-cycle load pipeline, so tuple i's weight is
+    driven at anchor+i+(W-1), loading exactly one edge before its
+    accumulate. Activations are driven at anchor+i+2 on every row port."""
     H, W = ctx["H"], ctx["W"]
     xq = ctx["xq"]           # (1,H,W,C) int64
     wq = ctx["wq"]           # (kh,kw,C,K) int64
     KH, KW = ctx["cfg"]["weight_kh"], ctx["cfg"]["weight_kw"]
+    IH = ctx["cfg"]["input_height"]
 
-    dut.tile_row.value       = oh    # -> tile_row_start
+    dut.tile_row.value       = oh0   # -> tile_row_start
     dut.tile_col_start.value = ow    # -> tile_col
     dut.tile_ch_start.value  = k
     dut.ws_input_ch.value    = c_in
@@ -414,41 +419,52 @@ async def _run_ws_pass(dut, ctx, k, oh, ow, c_in, timeout):
 
     ws_state = ctx["ws_state"]
     events: dict[int, list] = {}
-    result = None
+    results = {}
     scheduled = False
     cyc = 0
-    wbit = (0 * W) + (W - 1)   # packed bit index of PE(0, W-1)
+    wmask = 0
+    for r in range(H):
+        wmask |= (1 << (r * W + (W - 1)))
     while cyc < timeout:
         await RisingEdge(dut.clk)
         cyc += 1
 
         if not scheduled and int(ws_state.value) == 3:   # COMPUTE
+            K = ctx["cfg"]["weight_k"]
             for i in range(KH * KW):
                 kh_i, kw_i = divmod(i, KW)
-                wv = int(wq[kh_i, kw_i, c_in, k])
-                xv = int(xq[0, oh + kh_i, ow + kw_i, c_in])
-                events.setdefault(cyc + i + (W - 1), []).append(("w", wv))
-                events.setdefault(cyc + i + 2, []).append(("x", xv))
+                # row r computes channel k+r at output row oh0+r (the WS
+                # output fetcher's diagonal mapping)
+                wr = [int(wq[kh_i, kw_i, c_in, k + r])
+                      if (k + r) < K else 0 for r in range(H)]
+                xr = [int(xq[0, oh0 + r + kh_i, ow + kw_i, c_in])
+                      if (oh0 + r + kh_i) < IH else 0 for r in range(H)]
+                events.setdefault(cyc + i + (W - 1), []).append(("w", wr))
+                events.setdefault(cyc + i + 2, []).append(("x", xr))
             scheduled = True
 
         wvalid2d = 0
         dut.ext_input_data_valid_h.value = 0
         for ev in events.pop(cyc, []):
             if ev[0] == "w":
-                dut.ext_weight_data_2d[0][W - 1].value = ev[1] & 0xFFFFFFFF
-                wvalid2d |= (1 << wbit)
+                for r in range(H):
+                    dut.ext_weight_data_2d[r][W - 1].value = ev[1][r] & 0xFFFFFFFF
+                wvalid2d = wmask
             else:
-                dut.ext_input_data_h[0].value = ev[1] & 0xFFFFFFFF
-                dut.ext_input_data_valid_h.value = 1
+                for r in range(H):
+                    dut.ext_input_data_h[r].value = ev[1][r] & 0xFFFFFFFF
+                dut.ext_input_data_valid_h.value = (1 << H) - 1
         dut.ext_weight_data_valid_2d.value = wvalid2d
 
         oav = int(dut.ext_output_addr_valid_1d.value)
-        if oav & 1:
-            result = _tosigned(int(dut.ext_output_data_1d[0].value))
+        if oav:
+            for r in range(H):
+                if (oav >> r) & 1:
+                    results[r] = _tosigned(int(dut.ext_output_data_1d[r].value))
 
         if int(dut.done.value) == 1:
-            return result, cyc
-    raise TimeoutError(f"WS pass (k{k},{oh},{ow},c{c_in}): no done in {timeout}")
+            return results, cyc
+    raise TimeoutError(f"WS pass (k{k},{oh0},{ow},c{c_in}): no done in {timeout}")
 
 
 async def _harness_ws(dut, p, cfg, xq, wq_stream, flat_in):
@@ -456,7 +472,7 @@ async def _harness_ws(dut, p, cfg, xq, wq_stream, flat_in):
     K, OH, OW = cfg["weight_k"], cfg["output_height"], cfg["output_width"]
     C, KH, KW = cfg["weight_c"], cfg["weight_kh"], cfg["weight_kw"]
     wq = _quant(np.load(p["layer_dir"] / "weights.npy"), p["frac_w"])
-    timeout = KH * KW * 4 + 600
+    timeout = KH * KW * 4 + W + 600
 
     xq = _quant(np.load(p["layer_dir"] / "input.npy"), p["frac_x"])
     out_fixed = np.zeros((OH, OW, K), dtype=np.int64)
@@ -465,16 +481,23 @@ async def _harness_ws(dut, p, cfg, xq, wq_stream, flat_in):
     n_runs = 0
     ctx = {"H": H, "W": W, "cfg": cfg, "xq": xq, "wq": wq,
            "ws_state": dut.u_array.g_ws.u_ws.state}
-    for k in range(K):
-        for oh in range(OH):
+    # The WS output fetcher writes row r to (channel_start+r, row_start+r,
+    # col) - a diagonal of the (row, channel) grid. Tile all diagonals.
+    for d in range(-(OH - 1), K):
+        oh_lo, oh_hi = max(0, -d), min(OH, K - d)
+        if oh_hi <= oh_lo:
+            continue
+        for oh0 in range(oh_lo, oh_hi, H):
+            k0 = oh0 + d
             for ow in range(OW):
                 for c_in in range(C):
-                    res, cyc = await _run_ws_pass(dut, ctx, k, oh, ow, c_in, timeout)
+                    res, cyc = await _run_ws_pass(dut, ctx, k0, oh0, ow, c_in, timeout)
                     total_cycles += cyc
                     n_runs += 1
-                    if res is not None:
-                        out_fixed[oh, ow, k] += res
-                        got[oh, ow, k] += 1
+                    for r, val in res.items():
+                        if oh0 + r < OH and k0 + r < K:
+                            out_fixed[oh0 + r, ow, k0 + r] += val
+                            got[oh0 + r, ow, k0 + r] += 1
                     for _ in range(2):
                         await RisingEdge(dut.clk)
     return (out_fixed, (got == C), total_cycles, n_runs,

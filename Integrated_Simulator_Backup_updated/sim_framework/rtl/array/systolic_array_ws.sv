@@ -282,31 +282,56 @@ module weight_stationary_top
         else
             state <= next_state;
     end
-    
+
+    //=========================================================================
+    // Pipeline drain (fix for finding F2): activations broadcast rightward
+    // one PE per cycle, so data issued on the input fetcher's final cycles
+    // needs up to ARRAY_WIDTH-1 more cycles to reach the rightmost column
+    // (the one the writeback reads). Hold WAIT_COMPUTE, with pe_enable
+    // asserted, for a drain window before WRITEBACK.
+    //=========================================================================
+    logic        ws_draining;
+    logic [15:0] ws_drain_cnt;
+
+    always_ff @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            ws_draining  <= 1'b0;
+            ws_drain_cnt <= '0;
+        end else if (state == IDLE) begin
+            ws_draining  <= 1'b0;
+            ws_drain_cnt <= '0;
+        end else if (state == WAIT_COMPUTE && input_fetch_done && !ws_draining) begin
+            ws_draining  <= 1'b1;
+            ws_drain_cnt <= 16'(ARRAY_WIDTH) + 16'd6;
+        end else if (ws_draining && ws_drain_cnt != 0) begin
+            ws_drain_cnt <= ws_drain_cnt - 1;
+        end
+    end
+
     always_comb begin
         next_state = state;
-        
+
         case (state)
             IDLE: begin
                 if (start)
                     next_state = FETCH_WEIGHTS;
             end
-            
+
             FETCH_WEIGHTS: begin
                 next_state = WAIT_WEIGHTS;
             end
-            
+
             WAIT_WEIGHTS: begin
                 if (weight_fetch_done)
                     next_state = COMPUTE;
             end
-            
+
             COMPUTE: begin
                 next_state = WAIT_COMPUTE;
             end
-            
+
             WAIT_COMPUTE: begin
-                if (input_fetch_done)
+                if (ws_draining && ws_drain_cnt == 0)
                     next_state = WRITEBACK;
             end
             
