@@ -38,11 +38,17 @@ module processing_element #(
     // Internal registers
     logic [DATA_WIDTH-1:0]   weight_reg;
     logic [ACCUM_WIDTH-1:0]  accumulator;
+    logic [ACCUM_WIDTH-1:0]  product;
     logic [ACCUM_WIDTH-1:0]  mac_result;
-    
-    // MAC operation
+
+    // MAC operation. The local accumulator (read by the output-stationary
+    // writeback via `result`) accumulates only this PE's own products;
+    // psum_in is forwarded on the horizontal chain only. Including psum_in
+    // in the accumulation corrupts every column except column 0 with the
+    // left neighbour's partial sums (finding F8).
     always_comb begin
-        mac_result = $signed(activation_in) * $signed(weight_reg) + $signed(psum_in);
+        product    = $signed(activation_in) * $signed(weight_reg);
+        mac_result = $signed(product) + $signed(psum_in);
     end
     
     // Weight register (stationary)
@@ -61,7 +67,7 @@ module processing_element #(
         end else if (clear_accum) begin
             accumulator <= '0;
         end else if (enable && activation_valid_in) begin
-            accumulator <= accumulator + mac_result;
+            accumulator <= accumulator + product;
         end
     end
     
