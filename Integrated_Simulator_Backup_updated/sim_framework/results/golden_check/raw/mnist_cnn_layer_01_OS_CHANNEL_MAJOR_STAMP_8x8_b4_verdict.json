@@ -9,13 +9,14 @@
   "tol_frac_of_fullscale": 0.05,
   "full_scale": 2.6730117797851562,
   "passed": true,
+  "assembly": "hardware_full",
   "n_total": 1936,
   "n_within_tol": 1936,
   "max_abs_err": 0.000513564795255661,
   "mean_abs_err": 5.912078078595675e-05,
   "max_rel_err_pct": 0.019212964160484874,
   "mean_rel_err_pct": 0.002211766563584265,
-  "rtl_cycles_total": 161898,
-  "rtl_runs": 242,
-  "wall_seconds": 13.9
+  "rtl_cycles_total": 30360,
+  "rtl_runs": 44,
+  "wall_seconds": 3.8
 }

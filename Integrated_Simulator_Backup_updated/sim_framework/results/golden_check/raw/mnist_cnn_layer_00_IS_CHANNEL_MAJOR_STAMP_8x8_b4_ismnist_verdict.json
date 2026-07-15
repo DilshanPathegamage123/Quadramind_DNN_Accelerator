@@ -1,6 +1,6 @@
 {
   "layer": "models/mnist_cnn/layer_00",
-  "dataflow": "OS",
+  "dataflow": "IS",
   "layout": "CHANNEL_MAJOR",
   "memory": "STAMP",
   "array": "8x8",
@@ -16,7 +16,7 @@
   "mean_abs_err": 1.84502458865372e-05,
   "max_rel_err_pct": 0.008926121660597022,
   "mean_rel_err_pct": 0.0008989284907545892,
-  "rtl_cycles_total": 12792,
+  "rtl_cycles_total": 8216,
   "rtl_runs": 104,
-  "wall_seconds": 2.0
+  "wall_seconds": 1.7
 }

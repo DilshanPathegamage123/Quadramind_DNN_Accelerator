@@ -9,14 +9,14 @@
   "tol_frac_of_fullscale": 0.05,
   "full_scale": 2.1950297355651855,
   "passed": true,
-  "assembly": "tb_sum_over_tuples",
+  "assembly": "hardware_full",
   "n_total": 288,
   "n_within_tol": 288,
   "max_abs_err": 0.00028942525386810303,
   "mean_abs_err": 7.731466292979248e-05,
   "max_rel_err_pct": 0.013185482145351465,
   "mean_rel_err_pct": 0.003522260390239551,
-  "rtl_cycles_total": 1337472,
-  "rtl_runs": 7776,
-  "wall_seconds": 112.9
+  "rtl_cycles_total": 1122,
+  "rtl_runs": 6,
+  "wall_seconds": 0.8
 }
