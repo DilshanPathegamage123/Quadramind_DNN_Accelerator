@@ -159,6 +159,31 @@ module systolic_array_top
         else        state <= next_state;
     end
 
+    //=========================================================================
+    // Pipeline drain (fix for finding F5): when the input fetcher finishes,
+    // activations issued on its final cycles are still in flight - up to
+    // ARRAY_WIDTH-1 cycles of column skew plus ARRAY_HEIGHT-1 rows of
+    // vertical ripple. Hold WAIT_COMPUTE (pe_enable stays asserted) for a
+    // drain window before writeback so those MACs are not dropped.
+    //=========================================================================
+    logic        draining;
+    logic [15:0] drain_cnt;
+
+    always_ff @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            draining  <= 1'b0;
+            drain_cnt <= '0;
+        end else if (state == IDLE) begin
+            draining  <= 1'b0;
+            drain_cnt <= '0;
+        end else if (state == WAIT_COMPUTE && input_done_latch && !draining) begin
+            draining  <= 1'b1;
+            drain_cnt <= 16'(ARRAY_HEIGHT) + 16'(ARRAY_WIDTH) + 16'd4;
+        end else if (draining && drain_cnt != 0) begin
+            drain_cnt <= drain_cnt - 1;
+        end
+    end
+
     always_comb begin
         next_state = state;
         case (state)
@@ -166,7 +191,8 @@ module systolic_array_top
             FETCH_WEIGHTS:                          next_state = WAIT_WEIGHTS;
             WAIT_WEIGHTS:   if (weight_done_latch)  next_state = COMPUTE;
             COMPUTE:                                next_state = WAIT_COMPUTE;
-            WAIT_COMPUTE:   if (input_done_latch)   next_state = WRITEBACK;
+            WAIT_COMPUTE:   if (draining && drain_cnt == 0)
+                                                    next_state = WRITEBACK;
             WRITEBACK:                              next_state = WAIT_WRITEBACK;
             WAIT_WRITEBACK: if (output_done_latch)  next_state = DONE_STATE;
             DONE_STATE:                             next_state = IDLE;

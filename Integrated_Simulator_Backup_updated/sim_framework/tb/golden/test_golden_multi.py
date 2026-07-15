@@ -270,21 +270,12 @@ async def golden_multi(dut):
                 val = int(t["flat_in"][off]) if 0 <= off < t["flat_in"].size else 0
                 wqs = t["wq_stream"]
                 K = t["cfg"]["weight_k"]
+                # natural schedule (F5 fixed in RTL)
                 if n < t["n_tuples"]:
-                    if n == 0:
-                        for r in range(H):
-                            events.setdefault(cyc + r, []).append(
-                                ("w", r, int(wqs[min(r, K - 1)][0])))
-                        events.setdefault(cyc + 3, []).append(("x", val))
-                    else:
-                        for r in range(2, H):
-                            events.setdefault(cyc + r - 2, []).append(
-                                ("w", r, int(wqs[min(r, K - 1)][n])))
-                        events.setdefault(cyc + 1, []).append(("x", val))
-                    if n + 1 < t["n_tuples"]:
-                        for r in range(min(2, H)):
-                            events.setdefault(cyc + W - 2 + r, []).append(
-                                ("w", r, int(wqs[min(r, K - 1)][n + 1])))
+                    for r in range(H):
+                        events.setdefault(cyc + r, []).append(
+                            ("w", r, int(wqs[min(r, K - 1)][n])))
+                    events.setdefault(cyc + 3, []).append(("x", val))
                 n += 1
 
             oav = int(dut.ext_output_addr_valid_2d.value)

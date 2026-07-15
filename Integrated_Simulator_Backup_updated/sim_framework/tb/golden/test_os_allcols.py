@@ -58,28 +58,15 @@ async def os_allcols(dut):
                     addr = int(dut.ext_input_addr_w[c].value)
                     off = addr - in_base
                     val = int(flat_in[off]) if 0 <= off < flat_in.size else 0
-                    tup = n if c == 0 else n - 1  # col c observed c cycles later
                     if c == 0:
-                        # weight schedule identical to the production harness
+                        # natural schedule (post-F5): weights at obs+r
                         if n < n_tuples:
-                            if n == 0:
-                                for r in range(H):
-                                    events.setdefault(cyc + r, []).append(
-                                        ("w", r, int(wq_stream[min(r, K-1)][0])))
-                            else:
-                                for r in range(2, H):
-                                    events.setdefault(cyc + r - 2, []).append(
-                                        ("w", r, int(wq_stream[min(r, K-1)][n])))
-                            if n + 1 < n_tuples:
-                                for r in range(min(2, H)):
-                                    events.setdefault(cyc + W - 2 + r, []).append(
-                                        ("w", r, int(wq_stream[min(r, K-1)][n+1])))
-                        tup0 = n
+                            for r in range(H):
+                                events.setdefault(cyc + r, []).append(
+                                    ("w", r, int(wq_stream[min(r, K-1)][n])))
                         n += 1
-                    # serve: tuple 0 at obs+3 (weight lead), others at obs+1
-                    is_first = (c == 0 and tup0 == 0) or (c > 0 and n - 1 == 0)
-                    delay = 3 if is_first else 1
-                    events.setdefault(cyc + delay, []).append(("x", c, val))
+                    # every column served at its own obs+3
+                    events.setdefault(cyc + 2, []).append(("x", c, val))
 
         oav = int(dut.ext_output_addr_valid_2d.value)
         if oav:

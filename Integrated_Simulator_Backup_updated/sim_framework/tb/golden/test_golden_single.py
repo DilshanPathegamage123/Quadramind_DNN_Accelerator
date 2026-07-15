@@ -152,14 +152,18 @@ async def _pulse_start(dut):
 # ===========================================================================
 # OS harness (validated in step 3)
 # ===========================================================================
-async def _run_os_pixel(dut, ctx, ch_start, oh, ow, timeout):
+async def _run_os_tile(dut, ctx, ch_start, oh, ow0, timeout):
+    """One OS invocation computes a full tile: ARRAY_HEIGHT output channels
+    x up to ARRAY_WIDTH output pixels of row oh (post-F1/F5/F8). Natural
+    schedule: every column is served at its own obs+3; row weights ride
+    the column-0 observation at obs+r."""
     H, W = ctx["H"], ctx["W"]
     flat_in, wq_rows = ctx["flat_in"], ctx["wq_rows"]
     in_base = ctx["cfg"]["input_base_addr"]
     n_tuples = ctx["n_tuples"]
 
     dut.tile_row.value       = oh
-    dut.tile_col_start.value = ow
+    dut.tile_col_start.value = ow0
     dut.tile_ch_start.value  = ch_start
     await _pulse_start(dut)
 
@@ -172,50 +176,45 @@ async def _run_os_pixel(dut, ctx, ch_start, oh, ow, timeout):
         cyc += 1
 
         iav = int(dut.ext_input_addr_valid_w.value)
-        if iav & 1:
-            addr = int(dut.ext_input_addr_w[0].value)
-            off = addr - in_base
-            val = int(flat_in[off]) if 0 <= off < flat_in.size else 0
-            if n < n_tuples:
-                if n == 0:
-                    for r in range(H):
-                        events.setdefault(cyc + r, []).append(
-                            ("w", r, int(wq_rows[r][0])))
-                    events.setdefault(cyc + 3, []).append(("x", val))
-                else:
-                    for r in range(2, H):
-                        events.setdefault(cyc + r - 2, []).append(
-                            ("w", r, int(wq_rows[r][n])))
-                    events.setdefault(cyc + 1, []).append(("x", val))
-                if n + 1 < n_tuples:
-                    for r in range(min(2, H)):
-                        events.setdefault(cyc + W - 2 + r, []).append(
-                            ("w", r, int(wq_rows[r][n + 1])))
-            n += 1
+        if iav:
+            for c in range(W):
+                if (iav >> c) & 1:
+                    addr = int(dut.ext_input_addr_w[c].value)
+                    off = addr - in_base
+                    val = int(flat_in[off]) if 0 <= off < flat_in.size else 0
+                    if c == 0:
+                        if n < n_tuples:
+                            for r in range(H):
+                                events.setdefault(cyc + r, []).append(
+                                    ("w", r, int(wq_rows[r][n])))
+                        n += 1
+                    events.setdefault(cyc + 2, []).append(("x", c, val))
 
         oav = int(dut.ext_output_addr_valid_2d.value)
         if oav:
             for r in range(H):
-                if (oav >> (r * W)) & 1:
-                    d = _tosigned(int(dut.ext_output_data_2d[r][0].value))
-                    results[r] = d
+                for c in range(W):
+                    if (oav >> (r * W + c)) & 1:
+                        results[(r, c)] = _tosigned(
+                            int(dut.ext_output_data_2d[r][c].value))
 
         wvalid = 0
-        dut.ext_input_data_valid_w.value = 0
+        ivalid = 0
         for ev in events.pop(cyc, []):
             if ev[0] == "w":
                 _, r, wv = ev
                 dut.ext_weight_data_1d[r].value = wv & 0xFFFFFFFF
                 wvalid |= (1 << r)
             else:
-                _, xv = ev
-                dut.ext_input_data_w[0].value = xv & 0xFFFFFFFF
-                dut.ext_input_data_valid_w.value = 1
+                _, c, xv = ev
+                dut.ext_input_data_w[c].value = xv & 0xFFFFFFFF
+                ivalid |= (1 << c)
         dut.ext_weight_data_valid_1d.value = wvalid
+        dut.ext_input_data_valid_w.value = ivalid
 
         if int(dut.done.value) == 1:
             return results, cyc
-    raise TimeoutError(f"OS pixel (ch{ch_start},{oh},{ow}): no done in {timeout}")
+    raise TimeoutError(f"OS tile (ch{ch_start},{oh},{ow0}): no done in {timeout}")
 
 
 async def _harness_os(dut, p, cfg, xq, wq_stream, flat_in):
@@ -233,14 +232,14 @@ async def _harness_os(dut, p, cfg, xq, wq_stream, flat_in):
         ctx = {"H": H, "W": W, "cfg": cfg, "flat_in": flat_in,
                "wq_rows": wq_rows, "n_tuples": n_tuples}
         for oh in range(OH):
-            for ow in range(OW):
-                res, cyc = await _run_os_pixel(dut, ctx, ch_start, oh, ow, timeout)
+            for ow0 in range(0, OW, W):
+                res, cyc = await _run_os_tile(dut, ctx, ch_start, oh, ow0, timeout)
                 total_cycles += cyc
                 n_runs += 1
-                for r, val in res.items():
-                    if ch_start + r < K:
-                        out_fixed[oh, ow, ch_start + r] = val
-                        got[oh, ow, ch_start + r] = True
+                for (r, c), val in res.items():
+                    if ch_start + r < K and ow0 + c < OW:
+                        out_fixed[oh, ow0 + c, ch_start + r] = val
+                        got[oh, ow0 + c, ch_start + r] = True
                 for _ in range(4):
                     await RisingEdge(dut.clk)
     return out_fixed, got, total_cycles, n_runs, "hardware_full", {}
