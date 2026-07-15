@@ -153,9 +153,14 @@ module input_fetcher_is
                 input_w_pos_j = output_col_start + j[15:0] + kw_cnt;
             end
 
-            // Index mapping by memory layout
+            // Index mapping by memory layout.
+            // idx_valid extends through DONE (finding F4): the address /
+            // load_input path is two register stages deep, so the FINAL
+            // (ch,kh,kw) iteration's load window was cut off before a data
+            // response could latch. The counters hold their last values in
+            // DONE, so the extra window re-presents the final tuple.
             always_comb begin
-                idx_valid_j = (state == FETCH);
+                idx_valid_j = (state == FETCH) || (state == DONE);
                 case (layout)
                     CHANNEL_MAJOR: begin
                         idx_0_j = ch_cnt;           // c

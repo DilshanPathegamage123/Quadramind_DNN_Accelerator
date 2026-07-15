@@ -134,6 +134,7 @@ module input_stationary_top
         FETCH_WEIGHTS,
         WAIT_WEIGHTS,
         COMPUTE,
+        DRAIN,
         WRITEBACK,
         DONE_STATE
     } state_t;
@@ -143,6 +144,22 @@ module input_stationary_top
     always_ff @(posedge clk or negedge rst_n) begin
         if (!rst_n) state <= IDLE;
         else        state <= next_state;
+    end
+
+    //=========================================================================
+    // Pipeline drain (finding F3): the final weight pulse ripples rightward
+    // one column per cycle; hold the PEs enabled for a drain window before
+    // writeback so the last tuple reaches every column.
+    //=========================================================================
+    logic [15:0] is_drain_cnt;
+
+    always_ff @(posedge clk or negedge rst_n) begin
+        if (!rst_n)
+            is_drain_cnt <= '0;
+        else if (state != DRAIN)
+            is_drain_cnt <= 16'(ARRAY_WIDTH) + 16'd6;
+        else if (is_drain_cnt != 0)
+            is_drain_cnt <= is_drain_cnt - 1;
     end
 
     //=========================================================================
@@ -169,7 +186,7 @@ module input_stationary_top
                     if (ch_cnt  == weight_c  - 1 &&
                         kw_cnt  == weight_kw - 1 &&
                         kh_cnt  == weight_kh - 1)
-                        next_state = WRITEBACK;
+                        next_state = DRAIN;
                     else
                         next_state = COMPUTE;
                 end
@@ -177,6 +194,9 @@ module input_stationary_top
             COMPUTE:
                 // 1-cycle transition back to fetch next weight
                 next_state = FETCH_WEIGHTS;
+
+            DRAIN:
+                if (is_drain_cnt == 0) next_state = WRITEBACK;
 
             WRITEBACK:
                 if (output_fetch_done) next_state = DONE_STATE;
@@ -396,6 +416,12 @@ module input_stationary_top
             FETCH_WEIGHTS: begin
                 // FIX: assert weight_fetch_enable ONLY here, not in COMPUTE
                 weight_fetch_enable = 1'b1;
+                // PEs stay enabled across the whole weight-streaming loop
+                // (finding F3): weight pulses ripple one column per cycle,
+                // so columns >= 1 accumulate outside the WAIT_WEIGHTS state.
+                for (int r2 = 0; r2 < ARRAY_HEIGHT; r2++)
+                    for (int c2 = 0; c2 < ARRAY_WIDTH; c2++)
+                        pe_enable[r2][c2] = 1'b1;
             end
 
             WAIT_WEIGHTS: begin
@@ -408,6 +434,16 @@ module input_stationary_top
             COMPUTE: begin
                 // 1-cycle gap between weight fetch iterations
                 // (weight_fetch_enable NOT asserted here - avoids double-trigger)
+                for (int r2 = 0; r2 < ARRAY_HEIGHT; r2++)
+                    for (int c2 = 0; c2 < ARRAY_WIDTH; c2++)
+                        pe_enable[r2][c2] = 1'b1;
+            end
+
+            DRAIN: begin
+                // In-flight weight pulses finish rippling (finding F3)
+                for (int r2 = 0; r2 < ARRAY_HEIGHT; r2++)
+                    for (int c2 = 0; c2 < ARRAY_WIDTH; c2++)
+                        pe_enable[r2][c2] = 1'b1;
             end
 
             WRITEBACK: begin
