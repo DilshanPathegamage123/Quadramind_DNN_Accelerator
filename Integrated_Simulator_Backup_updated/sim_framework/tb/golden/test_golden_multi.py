@@ -141,6 +141,10 @@ async def golden_multi(dut):
     dut.rst_n.value = 1
     await RisingEdge(dut.clk)
 
+    import test_golden_single as _g
+    axi_stats = {"ar": 0, "beats": 0, "trace": []}
+    cocotb.start_soon(_g._axi_responder(dut, axi_stats))
+
     # ---- submit workload ----
     if SCHED_SEL[sched] <= 10:
         # basic/advanced family: FIFO task queue

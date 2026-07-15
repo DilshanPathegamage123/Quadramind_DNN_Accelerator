@@ -40,13 +40,14 @@ async def os_allcols(dut):
     dut.tile_col_start.value = 0
     dut.tile_ch_start.value = 0
     await g._reset(dut)
+    cocotb.start_soon(g._axi_responder(dut))
     await g._pulse_start(dut)
 
     events: dict[int, list] = {}
     results = {}
     n = 0                      # tuple counter, advanced on col-0 observations
     cyc = 0
-    timeout = n_tuples * (W + 1) + 800
+    timeout = n_tuples * (W + 1) + 800 + 3 * n_tuples * (H + W) + 600
     while cyc < timeout:
         await RisingEdge(dut.clk)
         cyc += 1

@@ -40,6 +40,7 @@ rtl/memory/scratchpad_ram.sv
 rtl/memory/axi_read_adapter.sv
 rtl/memory/stamp_memory_backend.sv
 rtl/memory/paged_memory_backend.sv
+rtl/memory/layout_prefetcher.sv
 rtl/memory/mem_backend_wrap.sv
 
 # --- schedulers ---

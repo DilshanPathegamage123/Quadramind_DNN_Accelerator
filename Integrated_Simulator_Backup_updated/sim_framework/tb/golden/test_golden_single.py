@@ -149,6 +149,32 @@ async def _pulse_start(dut):
     dut.phase_start_in.value = 0
 
 
+async def _axi_responder(dut, stats=None):
+    """Behavioural DRAM: accepts AR bursts from the DUT's real AXI port and
+    streams arlen+1 R beats. Records every AR (addr, len) when stats given.
+    Payload is zeros - the compute data plane uses the ext_* ports; this
+    models the off-chip traffic the layout prefetcher generates."""
+    dut.axi_arready.value = 1
+    dut.axi_rvalid.value = 0
+    dut.axi_rlast.value = 0
+    while True:
+        await RisingEdge(dut.clk)
+        if int(dut.axi_arvalid.value):
+            ln = int(dut.axi_arlen.value)
+            if stats is not None:
+                stats["ar"] += 1
+                stats["beats"] += ln + 1
+                if len(stats["trace"]) < 300000:
+                    stats["trace"].append([int(dut.axi_arvalid_addr.value), ln])
+            await RisingEdge(dut.clk)   # AR handshake completes this edge
+            for b in range(ln + 1):
+                dut.axi_rvalid.value = 1
+                dut.axi_rlast.value = 1 if b == ln else 0
+                await RisingEdge(dut.clk)
+            dut.axi_rvalid.value = 0
+            dut.axi_rlast.value = 0
+
+
 # ===========================================================================
 # OS harness (validated in step 3)
 # ===========================================================================
@@ -221,7 +247,7 @@ async def _harness_os(dut, p, cfg, xq, wq_stream, flat_in):
     H, W = p["array_h"], p["array_w"]
     K, OH, OW = cfg["weight_k"], cfg["output_height"], cfg["output_width"]
     n_tuples = cfg["weight_c"] * cfg["weight_kh"] * cfg["weight_kw"]
-    timeout = n_tuples * (W + 1) + 800
+    timeout = n_tuples * (W + 1) + 800 + 3 * n_tuples * (H + W) + 600
 
     out_fixed = np.zeros((OH, OW, K), dtype=np.int64)
     got = np.zeros((OH, OW, K), dtype=bool)
@@ -391,7 +417,7 @@ async def _harness_is(dut, p, cfg, xq, wq_stream, flat_in):
     K, OH, OW = cfg["weight_k"], cfg["output_height"], cfg["output_width"]
     C, KH, KW = cfg["weight_c"], cfg["weight_kh"], cfg["weight_kw"]
     n_tuples = C * KH * KW
-    timeout = n_tuples * 7 + W + 400
+    timeout = n_tuples * 7 + W + 400 + 3 * n_tuples * (H + W) + 600
 
     if os.environ.get("GOLDEN_IS_PROBE"):
         ctx = {"H": H, "W": W, "cfg": cfg, "flat_in": flat_in,
@@ -505,7 +531,7 @@ async def _harness_ws(dut, p, cfg, xq, wq_stream, flat_in):
     K, OH, OW = cfg["weight_k"], cfg["output_height"], cfg["output_width"]
     C, KH, KW = cfg["weight_c"], cfg["weight_kh"], cfg["weight_kw"]
     wq = _quant(np.load(p["layer_dir"] / "weights.npy"), p["frac_w"])
-    timeout = KH * KW * 4 + W + 600
+    timeout = KH * KW * 4 + W + 600 + 3 * C * KH * KW * (H + W) + 600
 
     xq = _quant(np.load(p["layer_dir"] / "input.npy"), p["frac_x"])
     out_fixed = np.zeros((OH, OW, K), dtype=np.int64)
@@ -566,6 +592,9 @@ async def golden_layer(dut):
     dut.tile_ch_start.value = 0
     await _reset(dut)
 
+    axi_stats = {"ar": 0, "beats": 0, "trace": []}
+    cocotb.start_soon(_axi_responder(dut, axi_stats))
+
     harness = {"OS": _harness_os, "IS": _harness_is, "WS": _harness_ws}[p["dataflow"]]
     out_fixed, got, total_cycles, n_runs, assembly, extra = await harness(
         dut, p, cfg, xq, wq_stream, flat_in)
@@ -577,6 +606,8 @@ async def golden_layer(dut):
         "frac_x": p["frac_x"], "frac_w": p["frac_w"],
         "n_runs": n_runs, "total_cycles": total_cycles,
         "assembly": assembly,
+        "axi_ar_requests": axi_stats["ar"],
+        "axi_beats": axi_stats["beats"],
         "coverage": float(np.asarray(got, dtype=bool).mean()),
         "out_fixed": out_fixed.reshape(1, OH, OW, K).tolist(),
     }
