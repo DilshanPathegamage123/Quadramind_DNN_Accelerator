@@ -20,9 +20,10 @@ PAGED (MEMORY=PAGED build):
     port 0 (translation hardware): accesses to unmapped pages MISS
     (measured), mapped pages HIT (measured). After the pass the host maps
     the newly-faulted pages via pt_write.
-  - RTL limitation (reported, not patched): the per-port page_table write
-    is gated `p == 0` and requires rd_addr[0] to hold the target VPN, so
-    only port 0 can ever hit -> the replay is single-port by necessity.
+  - The per-port page_table write was originally gated `p == 0` (plus an
+    rd_addr[0] VPN match), so only port 0 could ever hit; that gate is now
+    fixed (writes broadcast to all port tables) and the replay uses all 4
+    ports, symmetric with the STAMP replay.
 
 Everything recorded comes from hardware counters or the AXI responder;
 host-side derivations (e.g. implied page-fetch bytes) are labelled in the
@@ -44,7 +45,7 @@ from cocotb.triggers import RisingEdge
 
 import test_golden_single as g
 
-PAGE_BITS = 12
+PAGE_BITS = 10   # PAGED runs are word-addressed; 2**10 words = 4 KB pages
 N_PORTS = 4
 MAX_OPS = 256
 
@@ -115,8 +116,7 @@ async def _replay(dut, addrs, n_ports):
 
 
 async def _map_page(dut, vpn, ppn):
-    """PT write; the RTL gate requires rd_addr[0].VPN == written VPN."""
-    dut.spad_dbg_rd_addr[0].value = vpn << PAGE_BITS
+    """PT write (post-fix: broadcasts to every port's page table)."""
     dut.pt_write_vpn.value = vpn
     dut.pt_write_ppn.value = ppn
     dut.pt_write_valid.value = 1
@@ -195,12 +195,16 @@ async def scheme_divergence(dut):
                 else:
                     dut.num_delta_ops_in.value = 0
                     # demand pass: replay BEFORE mapping so new pages miss
-                    byte_addrs = [a * 4 for a in words]
-                    cyc, srv = await _replay(dut, byte_addrs, 1)
+                    # (post PT-write fix: all 4 ports, like the STAMP replay).
+                    # Word-addressed vaddrs: the paged datapath applies no
+                    # byte->word shift (unlike the stamp path), so word units
+                    # keep the scratchpad bank stride comparable; with
+                    # PAGE_SIZE_BITS=10 a page is 1,024 words = 4 KB.
+                    cyc, srv = await _replay(dut, list(words), N_PORTS)
                     tot["replay_cycles"] += cyc
                     tot["replay_served"] += srv
                     for a in words:
-                        vpn = (a * 4) >> PAGE_BITS
+                        vpn = a >> PAGE_BITS
                         if vpn not in mapped:
                             mapped[vpn] = len(mapped)
                             tot["program_cycles"] += await _map_page(

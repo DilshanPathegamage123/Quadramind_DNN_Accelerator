@@ -77,8 +77,11 @@ module paged_memory_backend #(
                 .paddr       (paddr[p]),
                 .hit         (hit[p]),
                 .valid       (tx_valid[p]),
-                .write_en    (pt_write_en && (pt_write_vpn[VPN_WIDTH-1:0] ==
-                              rd_addr[p][PAGE_SIZE_BITS +: VPN_WIDTH]) && (p == 0)),
+                // FIX (Member2 golden check): PT writes now broadcast to every
+                // port's table, as the design comment below intends. The old
+                // gate (`p == 0` plus rd_addr[0] VPN match) made ports 1..3
+                // permanently miss and forced single-port operation.
+                .write_en    (pt_write_en),
                 .write_vpn   (pt_write_vpn),
                 .write_ppn   (pt_write_ppn),
                 .write_valid (pt_write_valid)

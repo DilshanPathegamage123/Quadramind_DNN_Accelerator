@@ -18,6 +18,13 @@
   "max_rel_err_pct": 0.019212964160484874,
   "mean_rel_err_pct": 0.002211766563584265,
   "rtl_cycles_total": 110176,
+  "stats_bank_conflicts": 0,
+  "stats_bank_conflict_stall_cycles": 0,
+  "stats_loads_or_hits": 0,
+  "stats_moves_or_misses": 0,
+  "stats_keeps": 0,
+  "stats_bytes_loaded": 0,
+  "stats_bytes_moved": 0,
   "rtl_runs": 44,
-  "wall_seconds": 10.8
+  "wall_seconds": 11.3
 }

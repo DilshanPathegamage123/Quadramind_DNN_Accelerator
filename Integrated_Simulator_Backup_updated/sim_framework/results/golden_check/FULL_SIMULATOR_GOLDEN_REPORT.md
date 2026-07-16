@@ -95,6 +95,19 @@ Representative layer: tiny_cnn layer_00. All runs real RTL:
   `mem_backend_wrap`), so `-GNUM_BANKS` fails at the Verilator command line.
   All runs used the RTL default.
 
+> **Addendum (2026-07-17):** the three gaps above have since been closed on
+> follow-up branches, with golden verification at each step:
+> - **Casting** (unicast/multicast/hybrid) is now a real RTL knob affecting
+>   measured off-chip AXI traffic — branch `fix_casting_schemes`, see
+>   `CASTING_FIX_REPORT.md`.
+> - **`num_banks`** is now a real `-GNUM_BANKS` hardware parameter on both
+>   tops, with the scratchpad's cycle-accurate bank-conflict/stall counters
+>   exposed and recorded in every run JSON (`b4` in earlier filenames was a
+>   label only). Measured bank sweeps: see `MEMBER2_MEMORY_GOLDEN_REPORT.md`.
+> - **STAMP vs PAGED** now run real work (delta-ops / page-table writes) and
+>   measurably diverge — STAMP fetches 2.4–5.0× less off-chip data; same
+>   report.
+
 ## 5. Multi-DNN correctness under schedulers (Step 5)
 
 Harness: `tb/golden/run_golden_multi.py` + `test_golden_multi.py` on
