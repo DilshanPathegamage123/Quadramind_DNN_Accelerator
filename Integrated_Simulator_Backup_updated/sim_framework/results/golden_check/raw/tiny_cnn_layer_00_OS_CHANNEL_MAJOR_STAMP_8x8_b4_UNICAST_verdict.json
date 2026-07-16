@@ -1,9 +1,9 @@
 {
   "layer": "models/tiny_cnn/layer_00",
   "dataflow": "OS",
-  "layout": "ROW_MAJOR",
+  "layout": "CHANNEL_MAJOR",
   "memory": "STAMP",
-  "casting": "MULTICAST",
+  "casting": "UNICAST",
   "array": "8x8",
   "num_banks": 4,
   "relu": false,
@@ -17,7 +17,7 @@
   "mean_abs_err": 7.731466292979248e-05,
   "max_rel_err_pct": 0.013185482145351465,
   "mean_rel_err_pct": 0.003522260390239551,
-  "rtl_cycles_total": 10776,
+  "rtl_cycles_total": 98130,
   "rtl_runs": 6,
-  "wall_seconds": 1.7
+  "wall_seconds": 9.5
 }

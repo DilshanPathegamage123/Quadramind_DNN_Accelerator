@@ -3,6 +3,7 @@
   "dataflow": "WS",
   "layout": "CHANNEL_MAJOR",
   "memory": "STAMP",
+  "casting": "MULTICAST",
   "array": "8x8",
   "num_banks": 4,
   "relu": false,
@@ -16,7 +17,7 @@
   "mean_abs_err": 7.731466292979248e-05,
   "max_rel_err_pct": 0.013185482145351465,
   "mean_rel_err_pct": 0.003522260390239551,
-  "rtl_cycles_total": 225342,
+  "rtl_cycles_total": 153738,
   "rtl_runs": 234,
-  "wall_seconds": 22.7
+  "wall_seconds": 15.1
 }

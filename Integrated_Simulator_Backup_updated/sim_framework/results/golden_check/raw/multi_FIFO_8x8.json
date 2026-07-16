@@ -9,12 +9,12 @@
     },
     {
       "task": 1,
-      "cycle": 1281,
+      "cycle": 975,
       "is_ct": null
     },
     {
       "task": 2,
-      "cycle": 1739,
+      "cycle": 1331,
       "is_ct": null
     }
   ],
@@ -29,7 +29,7 @@
       "channels_checked": 8,
       "captured": 8,
       "dispatches": 1,
-      "cycles": 1277,
+      "cycles": 971,
       "max_err_pct_fs": 0.00950928988938614,
       "passed": true
     },
@@ -43,7 +43,7 @@
       "channels_checked": 8,
       "captured": 8,
       "dispatches": 1,
-      "cycles": 456,
+      "cycles": 354,
       "max_err_pct_fs": 0.004170206211469879,
       "passed": true
     },
@@ -62,6 +62,6 @@
       "passed": true
     }
   ],
-  "total_cycles": 13820,
+  "total_cycles": 13412,
   "all_pass": true
 }
