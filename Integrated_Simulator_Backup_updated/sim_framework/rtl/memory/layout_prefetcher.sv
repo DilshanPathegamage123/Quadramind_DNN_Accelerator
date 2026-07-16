@@ -21,6 +21,21 @@
 //                    (out_ch = tile_ch_start + r; rows with out_ch >= K skip)
 //   phase 1 inputs:  ch outer, then kh -> kw -> col (0..ARRAY_WIDTH-1)
 //                    element = (ch, tile_row + kh, tile_col_start + col + kw)
+//
+// Casting scheme (how a shared value maps to off-chip reads):
+//   CAST_MULTICAST: one read per unique value. Weights: 1 read/element.
+//                   Inputs: the per-column window walk is replaced by a
+//                   dedup walk over the tile's unique halo footprint
+//                   (kw held at 0, col sweeps 0..ARRAY_WIDTH+KW-2), so
+//                   window-overlap duplicates are fetched once.
+//   CAST_UNICAST:   one read per consuming PE. Each weight element is
+//                   re-issued ARRAY_WIDTH times (row-broadcast consumers);
+//                   each input (tuple,col) request is re-issued
+//                   ARRAY_HEIGHT times (column-ripple consumers).
+//                   Repeated identical addresses never coalesce (the run
+//                   test requires addr == last+1), so every replica is a
+//                   distinct AXI AR transaction - by design.
+//   CAST_HYBRID:    weights multicast, inputs unicast.
 //=============================================================================
 
 module layout_prefetcher
@@ -36,6 +51,7 @@ module layout_prefetcher
 
     // Configuration (same ports the array fetchers see)
     input  mem_layout_t           layout,
+    input  casting_t              casting,
     input  logic [15:0]           input_c, input_h, input_w,
     input  logic [15:0]           weight_k, weight_c, weight_kh, weight_kw,
     input  logic [ADDR_WIDTH-1:0] input_base_addr, weight_base_addr,
@@ -63,7 +79,16 @@ module layout_prefetcher
     logic        phase;                       // 0 = weights, 1 = inputs
     logic [15:0] w_r, w_c, w_kh, w_kw;        // weight walk
     logic [15:0] i_ch, i_kh, i_kw, i_col;     // input walk
+    logic [15:0] w_rep, i_rep;                // per-consumer replica counters
     logic        walk_done;
+
+    // casting mode decode
+    wire wt_unicast = (casting == CAST_UNICAST);
+    wire in_unicast = (casting == CAST_UNICAST) || (casting == CAST_HYBRID);
+    // multicast inputs: dedup walk over the halo footprint (kw pinned at 0,
+    // col sweeps the union of col+kw positions)
+    wire [15:0] i_col_last = in_unicast ? 16'(ARRAY_WIDTH - 1)
+                                        : 16'(ARRAY_WIDTH - 1) + (weight_kw - 16'd1);
 
     // burst run under construction
     logic                  run_valid;
@@ -134,39 +159,52 @@ module layout_prefetcher
     // ------------------------------------------------------------------
     // Walk advance helpers (one element consumed per PF_SCAN cycle)
     // ------------------------------------------------------------------
-    // weight walk: kw -> kh -> c -> r; then phase 1
-    // input walk:  col -> kw -> kh -> ch; then walk_done
+    // weight walk: rep -> kw -> kh -> c -> r; then phase 1
+    //   (rep only advances under CAST_UNICAST: one replica per consuming
+    //    column PE of the row-broadcast weight)
+    // input walk:  rep -> col -> kw -> kh -> ch; then walk_done
+    //   (rep only under UNICAST/HYBRID: one replica per consuming row PE of
+    //    the column ripple; under MULTICAST kw is pinned at 0 and col sweeps
+    //    the dedup halo footprint 0..ARRAY_WIDTH+KW-2)
     task automatic advance_walk();
         if (!phase) begin
-            if (w_kw != weight_kw - 1) w_kw <= w_kw + 1;
+            if (wt_unicast && w_rep != 16'(ARRAY_WIDTH - 1)) w_rep <= w_rep + 1;
             else begin
-                w_kw <= '0;
-                if (w_kh != weight_kh - 1) w_kh <= w_kh + 1;
+                w_rep <= '0;
+                if (w_kw != weight_kw - 1) w_kw <= w_kw + 1;
                 else begin
-                    w_kh <= '0;
-                    if (w_c != weight_c - 1) w_c <= w_c + 1;
+                    w_kw <= '0;
+                    if (w_kh != weight_kh - 1) w_kh <= w_kh + 1;
                     else begin
-                        w_c <= '0;
-                        if (w_r != 16'(ARRAY_HEIGHT - 1)) w_r <= w_r + 1;
+                        w_kh <= '0;
+                        if (w_c != weight_c - 1) w_c <= w_c + 1;
                         else begin
-                            w_r  <= '0;
-                            phase <= 1'b1;
+                            w_c <= '0;
+                            if (w_r != 16'(ARRAY_HEIGHT - 1)) w_r <= w_r + 1;
+                            else begin
+                                w_r  <= '0;
+                                phase <= 1'b1;
+                            end
                         end
                     end
                 end
             end
         end else begin
-            if (i_col != 16'(ARRAY_WIDTH - 1)) i_col <= i_col + 1;
+            if (in_unicast && i_rep != 16'(ARRAY_HEIGHT - 1)) i_rep <= i_rep + 1;
             else begin
-                i_col <= '0;
-                if (i_kw != weight_kw - 1) i_kw <= i_kw + 1;
+                i_rep <= '0;
+                if (i_col != i_col_last) i_col <= i_col + 1;
                 else begin
-                    i_kw <= '0;
-                    if (i_kh != weight_kh - 1) i_kh <= i_kh + 1;
+                    i_col <= '0;
+                    if (in_unicast && i_kw != weight_kw - 1) i_kw <= i_kw + 1;
                     else begin
-                        i_kh <= '0;
-                        if (i_ch != input_c - 1) i_ch <= i_ch + 1;
-                        else walk_done <= 1'b1;
+                        i_kw <= '0;
+                        if (i_kh != weight_kh - 1) i_kh <= i_kh + 1;
+                        else begin
+                            i_kh <= '0;
+                            if (i_ch != input_c - 1) i_ch <= i_ch + 1;
+                            else walk_done <= 1'b1;
+                        end
                     end
                 end
             end
@@ -182,6 +220,7 @@ module layout_prefetcher
             phase <= 1'b0; walk_done <= 1'b0;
             w_r <= '0; w_c <= '0; w_kh <= '0; w_kw <= '0;
             i_ch <= '0; i_kh <= '0; i_kw <= '0; i_col <= '0;
+            w_rep <= '0; i_rep <= '0;
             run_valid <= 1'b0; run_start <= '0; run_last <= '0; run_len <= '0;
             pend_valid <= 1'b0; pend_addr <= '0;
             final_issue <= 1'b0;
@@ -195,6 +234,7 @@ module layout_prefetcher
                         phase <= 1'b0; walk_done <= 1'b0;
                         w_r <= '0; w_c <= '0; w_kh <= '0; w_kw <= '0;
                         i_ch <= '0; i_kh <= '0; i_kw <= '0; i_col <= '0;
+                        w_rep <= '0; i_rep <= '0;
                         run_valid <= 1'b0; pend_valid <= 1'b0;
                         final_issue <= 1'b0;
                         state <= PF_SCAN;

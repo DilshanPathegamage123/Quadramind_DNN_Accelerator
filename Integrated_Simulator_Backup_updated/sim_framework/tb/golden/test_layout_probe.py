@@ -30,6 +30,8 @@ async def _probe_one(dut, p, cfg, layout_name, wq_stream, H, W):
     in_base = cfg["input_base_addr"]
     n_tuples = cfg["weight_c"] * cfg["weight_kh"] * cfg["weight_kw"]
     timeout = n_tuples * (W + 1) + 800 + 3 * n_tuples * (H + W) + 600
+    if p.get("casting", "MULTICAST") != "MULTICAST":
+        timeout += 12 * n_tuples * H * W + 2000
 
     dut.mem_layout.value = g.LAYOUTS[layout_name]
     dut.tile_row.value = 0

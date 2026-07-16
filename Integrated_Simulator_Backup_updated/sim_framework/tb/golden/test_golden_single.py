@@ -44,6 +44,7 @@ from cocotb.clock import Clock
 from cocotb.triggers import RisingEdge
 
 LAYOUTS = {"CHANNEL_MAJOR": 0, "ROW_MAJOR": 1, "COLUMN_MAJOR": 2}
+CASTINGS = {"MULTICAST": 0, "UNICAST": 1, "HYBRID": 2}
 
 
 def _quant(a: np.ndarray, frac_bits: int) -> np.ndarray:
@@ -76,6 +77,7 @@ def _read_cfg():
         "cfg":       cfg,
         "dataflow":  os.environ.get("GOLDEN_DATAFLOW", "OS"),
         "layout":    os.environ.get("GOLDEN_LAYOUT", "CHANNEL_MAJOR"),
+        "casting":   os.environ.get("GOLDEN_CASTING", "MULTICAST"),
         "memory":    os.environ.get("GOLDEN_MEMORY", "STAMP"),
         "array_h":   int(os.environ.get("GOLDEN_ARRAY_H", "8")),
         "array_w":   int(os.environ.get("GOLDEN_ARRAY_W", "8")),
@@ -95,6 +97,7 @@ async def _reset(dut, ncyc=5):
 
 def _set_layer_ports(dut, cfg, layout_code):
     dut.mem_layout.value       = layout_code
+    dut.casting_scheme.value   = CASTINGS[os.environ.get("GOLDEN_CASTING", "MULTICAST")]
     dut.input_channels.value   = cfg["input_channels"]
     dut.input_height.value     = cfg["input_height"]
     dut.input_width.value      = cfg["input_width"]
@@ -248,6 +251,8 @@ async def _harness_os(dut, p, cfg, xq, wq_stream, flat_in):
     K, OH, OW = cfg["weight_k"], cfg["output_height"], cfg["output_width"]
     n_tuples = cfg["weight_c"] * cfg["weight_kh"] * cfg["weight_kw"]
     timeout = n_tuples * (W + 1) + 800 + 3 * n_tuples * (H + W) + 600
+    if p["casting"] != "MULTICAST":
+        timeout += 12 * n_tuples * H * W + 2000
 
     out_fixed = np.zeros((OH, OW, K), dtype=np.int64)
     got = np.zeros((OH, OW, K), dtype=bool)

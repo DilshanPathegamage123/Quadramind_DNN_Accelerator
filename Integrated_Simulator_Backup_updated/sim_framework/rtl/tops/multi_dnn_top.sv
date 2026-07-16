@@ -77,6 +77,7 @@ module multi_dnn_top
     //--- Per-task layer config (the dispatcher writes these into the
     //    single_dnn_top before issuing start)
     input  mem_layout_t           cfg_mem_layout,
+    input  casting_t              cfg_casting_scheme,
     input  logic [15:0]           cfg_input_channels, cfg_input_height, cfg_input_width,
     input  logic [15:0]           cfg_weight_k, cfg_weight_c, cfg_weight_kh, cfg_weight_kw,
     input  logic [15:0]           cfg_output_channels, cfg_output_height, cfg_output_width,
@@ -206,6 +207,7 @@ module multi_dnn_top
         .clk                (clk),
         .rst_n              (rst_n),
         .mem_layout         (cfg_mem_layout),
+        .casting_scheme     (cfg_casting_scheme),
         .input_channels     (cfg_input_channels),
         .input_height       (cfg_input_height),
         .input_width        (cfg_input_width),

@@ -128,6 +128,7 @@ async def golden_multi(dut):
         dut.ext_input_data_h[i].value = 0
         dut.ext_weight_data_1d[i].value = 0
     dut.cfg_mem_layout.value = 0
+    dut.cfg_casting_scheme.value = 0
     dut.cfg_tile_row.value = 0
     dut.cfg_tile_col_start.value = 0
     dut.cfg_tile_ch_start.value = 0
@@ -233,6 +234,7 @@ async def golden_multi(dut):
                     cfg = current["cfg"]
                     oh, ow = current["pixel"]
                     dut.cfg_mem_layout.value       = 0
+                    dut.cfg_casting_scheme.value   = 0
                     dut.cfg_input_channels.value   = cfg["input_channels"]
                     dut.cfg_input_height.value     = cfg["input_height"]
                     dut.cfg_input_width.value      = cfg["input_width"]

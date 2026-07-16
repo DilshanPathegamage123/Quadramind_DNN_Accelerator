@@ -38,6 +38,8 @@ def main() -> int:
     ap.add_argument("--layout", default="CHANNEL_MAJOR",
                     choices=["CHANNEL_MAJOR", "ROW_MAJOR", "COLUMN_MAJOR"])
     ap.add_argument("--memory", default="STAMP", choices=["STAMP", "PAGED"])
+    ap.add_argument("--casting", default="MULTICAST",
+                    choices=["MULTICAST", "UNICAST", "HYBRID"])
     ap.add_argument("--array", default="8x8")
     ap.add_argument("--num-banks", type=int, default=4)
     ap.add_argument("--frac-x", type=int, default=14)
@@ -84,6 +86,7 @@ def main() -> int:
 
     slug = (f"{layer_dir.parent.name}_{layer_dir.name}_{args.dataflow}_"
             f"{args.layout}_{args.memory}_{H}x{W}_b{args.num_banks}"
+            + (f"_{args.casting}" if args.casting != "MULTICAST" else "")
             + (f"_{args.tag}" if args.tag else ""))
     result_json = FRAMEWORK / "results" / "golden_check" / "raw" / f"{slug}.json"
 
@@ -99,6 +102,7 @@ def main() -> int:
             "GOLDEN_DATAFLOW":    args.dataflow,
             "GOLDEN_LAYOUT":      args.layout,
             "GOLDEN_MEMORY":      args.memory,
+            "GOLDEN_CASTING":     args.casting,
             "GOLDEN_ARRAY_H":     str(H),
             "GOLDEN_ARRAY_W":     str(W),
             "GOLDEN_FRAC_X":      str(args.frac_x),
@@ -123,7 +127,7 @@ def main() -> int:
     verdict = {
         "layer": str(layer_dir.relative_to(FRAMEWORK)),
         "dataflow": args.dataflow, "layout": args.layout,
-        "memory": args.memory, "array": f"{H}x{W}",
+        "memory": args.memory, "casting": args.casting, "array": f"{H}x{W}",
         "num_banks": args.num_banks, "relu": bool(args.relu),
         "tol_frac_of_fullscale": args.tol,
         "full_scale": fs,

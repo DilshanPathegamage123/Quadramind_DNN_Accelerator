@@ -44,6 +44,7 @@ module single_dnn_top
 
     //--- Layer configuration (driven by host)
     input  mem_layout_t           mem_layout,
+    input  casting_t              casting_scheme,
     input  logic [15:0]           input_channels, input_height, input_width,
     input  logic [15:0]           weight_k, weight_c, weight_kh, weight_kw,
     input  logic [15:0]           output_channels, output_height, output_width,
@@ -179,6 +180,7 @@ module single_dnn_top
         .clk              (clk),
         .rst_n            (rst_n),
         .layout           (mem_layout),
+        .casting          (casting_scheme),
         .input_c          (input_channels),
         .input_h          (input_height),
         .input_w          (input_width),

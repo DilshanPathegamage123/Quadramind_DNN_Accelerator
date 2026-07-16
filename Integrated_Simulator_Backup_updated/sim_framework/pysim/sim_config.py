@@ -86,6 +86,12 @@ class SimConfig:
     # -------- layout (data tensor packing in DRAM) --------
     mem_layout: Literal["CHANNEL_MAJOR", "ROW_MAJOR", "COLUMN_MAJOR"] = "CHANNEL_MAJOR"
 
+    # -------- casting (off-chip read policy for PE-shared values) --------
+    # MULTICAST: one read per unique shared value (baseline).
+    # UNICAST:   one read per consuming PE.
+    # HYBRID:    multicast weights, unicast inputs.
+    casting: Literal["MULTICAST", "UNICAST", "HYBRID"] = "MULTICAST"
+
     # -------- workload --------
     layers: List[LayerConfig] = field(default_factory=lambda: [LayerConfig()])
 
@@ -171,6 +177,7 @@ class SimConfig:
             "SIM_DATAFLOW":    self.dataflow,
             "SIM_MEMORY":      self.memory,
             "SIM_LAYOUT":      self.mem_layout,
+            "SIM_CASTING":     self.casting,
             "SIM_ARRAY_H":     str(self.array_height),
             "SIM_ARRAY_W":     str(self.array_width),
             "SIM_DATA_W":      str(self.data_width),
