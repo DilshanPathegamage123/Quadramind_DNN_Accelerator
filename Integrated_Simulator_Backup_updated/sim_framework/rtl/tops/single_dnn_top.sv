@@ -37,7 +37,8 @@ module single_dnn_top
     parameter int PAGE_SIZE_BITS = 12,
     parameter int VPN_WIDTH      = 8,
     parameter int PPN_WIDTH      = 20,
-    parameter int N_MEM_PORTS    = 4
+    parameter int N_MEM_PORTS    = 4,
+    parameter int NUM_BANKS      = 4     // scratchpad banks; 1 = flat/no conflicts
 ) (
     input  logic clk,
     input  logic rst_n,
@@ -118,13 +119,23 @@ module single_dnn_top
     output logic [DATA_WIDTH-1:0]   ext_output_data_1d  [ARRAY_HEIGHT],
     output logic [ARRAY_HEIGHT-1:0] ext_output_data_valid_1d,
 
+    //--- External scratchpad read ports (memory-side exerciser; default 0 =
+    //    legacy v1 wiring where the backend data plane is idle). Reads go
+    //    through the real banked scratchpad arbitration, so bank conflicts
+    //    and stalls are observable. NOT connected to compute (see v1 note).
+    input  logic [N_MEM_PORTS-1:0] spad_dbg_rd_en,
+    input  logic [ADDR_WIDTH-1:0]  spad_dbg_rd_addr [N_MEM_PORTS],
+    output logic [N_MEM_PORTS-1:0] spad_dbg_rd_valid,
+
     //--- Statistics
     output logic [31:0] stats_loads_or_hits,
     output logic [31:0] stats_moves_or_misses,
     output logic [31:0] stats_keeps,
     output logic [31:0] stats_bytes_loaded,
     output logic [31:0] stats_bytes_moved,
-    output logic [31:0] stats_compute_cycles
+    output logic [31:0] stats_compute_cycles,
+    output logic [31:0] stats_bank_conflicts,
+    output logic [31:0] stats_bank_conflict_stall_cycles
 );
 
     // ---------------------------------------------------------------------
@@ -142,15 +153,16 @@ module single_dnn_top
     // model); the on-chip memory backend models the scratchpad / DRAM and
     // signals phase_mem_done. Tie the backend's data plane to zero unless
     // explicitly driven.
-    assign be_rd_en   = '0;
+    assign be_rd_en   = spad_dbg_rd_en;   // '0 when the port is undriven
     assign be_wr_en   = '0;
     always_comb begin
         for (int i = 0; i < N_MEM_PORTS; i++) begin
-            be_rd_addr[i] = '0;
+            be_rd_addr[i] = spad_dbg_rd_addr[i];
             be_wr_addr[i] = '0;
             be_wr_data[i] = '0;
         end
     end
+    assign spad_dbg_rd_valid = be_rd_valid;
 
     // ---------------------------------------------------------------------
     // Layout prefetcher (layout fix): issues real AXI reads for the layer's
@@ -225,7 +237,8 @@ module single_dnn_top
         .NUM_PAGES      (NUM_PAGES),
         .PAGE_SIZE_BITS (PAGE_SIZE_BITS),
         .VPN_WIDTH      (VPN_WIDTH),
-        .PPN_WIDTH      (PPN_WIDTH)
+        .PPN_WIDTH      (PPN_WIDTH),
+        .NUM_BANKS      (NUM_BANKS)
     ) u_mem (
         .clk                   (clk),
         .rst_n                 (rst_n),
@@ -262,7 +275,10 @@ module single_dnn_top
         .stats_keeps           (stats_keeps),
         .stats_bytes_loaded    (stats_bytes_loaded),
         .stats_bytes_moved     (stats_bytes_moved),
-        .controller_busy       (be_busy)
+        .controller_busy       (be_busy),
+        .bank_conflict_detected           (),
+        .stats_bank_conflicts             (stats_bank_conflicts),
+        .stats_bank_conflict_stall_cycles (stats_bank_conflict_stall_cycles)
     );
 
     // ---------------------------------------------------------------------

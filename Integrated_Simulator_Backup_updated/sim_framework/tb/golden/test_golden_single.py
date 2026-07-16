@@ -123,6 +123,7 @@ def _set_layer_ports(dut, cfg, layout_code):
     dut.pt_write_vpn.value    = 0
     dut.pt_write_ppn.value    = 0
     dut.pt_write_valid.value  = 0
+    dut.spad_dbg_rd_en.value = 0
     dut.axi_arready.value = 1
     dut.axi_rdata.value   = 0
     dut.axi_rvalid.value  = 0
@@ -613,6 +614,13 @@ async def golden_layer(dut):
         "assembly": assembly,
         "axi_ar_requests": axi_stats["ar"],
         "axi_beats": axi_stats["beats"],
+        "stats_bank_conflicts": int(dut.stats_bank_conflicts.value),
+        "stats_bank_conflict_stall_cycles": int(dut.stats_bank_conflict_stall_cycles.value),
+        "stats_loads_or_hits": int(dut.stats_loads_or_hits.value),
+        "stats_moves_or_misses": int(dut.stats_moves_or_misses.value),
+        "stats_keeps": int(dut.stats_keeps.value),
+        "stats_bytes_loaded": int(dut.stats_bytes_loaded.value),
+        "stats_bytes_moved": int(dut.stats_bytes_moved.value),
         "coverage": float(np.asarray(got, dtype=bool).mean()),
         "out_fixed": out_fixed.reshape(1, OH, OW, K).tolist(),
     }

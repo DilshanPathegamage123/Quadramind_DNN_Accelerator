@@ -34,6 +34,7 @@ module multi_dnn_top
     parameter int           NUM_PAGES         = 256,
     parameter int           PAGE_SIZE_BITS    = 12,
     parameter int           N_MEM_PORTS       = 4,
+    parameter int           NUM_BANKS         = 4,
 
     parameter int           MAX_TASKS         = 16,
     parameter int           MAX_LAYERS        = 32,
@@ -188,6 +189,8 @@ module multi_dnn_top
     logic        sdt_start;
     logic        sdt_done;
     logic        sdt_phase_mem_done, sdt_phase_compute_done;
+    logic [ADDR_WIDTH-1:0] sdt_spad_dbg_addr [N_MEM_PORTS];
+    always_comb for (int i = 0; i < N_MEM_PORTS; i++) sdt_spad_dbg_addr[i] = '0;
 
     single_dnn_top #(
         .DATAFLOW      (DATAFLOW),
@@ -202,7 +205,8 @@ module multi_dnn_top
         .METADATA_DEPTH(METADATA_DEPTH),
         .NUM_PAGES     (NUM_PAGES),
         .PAGE_SIZE_BITS(PAGE_SIZE_BITS),
-        .N_MEM_PORTS   (N_MEM_PORTS)
+        .N_MEM_PORTS   (N_MEM_PORTS),
+        .NUM_BANKS     (NUM_BANKS)
     ) u_sdt (
         .clk                (clk),
         .rst_n              (rst_n),
@@ -275,12 +279,17 @@ module multi_dnn_top
         .ext_output_addr_valid_1d(ext_output_addr_valid_1d),
         .ext_output_data_1d      (ext_output_data_1d),
         .ext_output_data_valid_1d(ext_output_data_valid_1d),
+        .spad_dbg_rd_en          ('0),
+        .spad_dbg_rd_addr        (sdt_spad_dbg_addr),
+        .spad_dbg_rd_valid       (),
         .stats_loads_or_hits     (),
         .stats_moves_or_misses   (),
         .stats_keeps             (),
         .stats_bytes_loaded      (),
         .stats_bytes_moved       (),
-        .stats_compute_cycles    ()
+        .stats_compute_cycles    (),
+        .stats_bank_conflicts             (),
+        .stats_bank_conflict_stall_cycles ()
     );
 
     // --------------------------------------------------------------------
