@@ -242,8 +242,9 @@ def fig3():
     ax.set_ylabel("Cycles (log scale)")
     ax.set_xticks(x)
     ax.set_xticklabels(labels, rotation=30, ha="right", fontsize=7)
-    ax.set_title("Cycle Fidelity — analytical estimate vs RTL per-invocation "
-                 "cycles (label = agreement %)")
+    ax.set_title("Cycle-count fidelity — structural fetcher-bandwidth offset,"
+                 " documented as future work\n(model prices a full-array pass;"
+                 " fetchers stream one column-address/cycle; label = agreement %)")
     ax.legend(fontsize=8)
     ax.grid(True, alpha=0.3, axis="y")
     _savefig(fig, FIG / "f3_cycle_fidelity.png")
@@ -284,6 +285,12 @@ def fig4():
     axl.set_ylabel("Count — measured (RTL)")
     axl.set_title("Memory Layouts — tiny L0, OS 8x8\n(equal data: 1,836 beats "
                   "each; channel-major coalesces best)")
+    axl.text(0.5, -0.16,
+             "Row and column-major are equal by design: both strides defeat "
+             "burst coalescing into\nsingle-beat reads; a bank/row-aware "
+             "memory model would separate them.",
+             transform=axl.transAxes, ha="center", va="top", fontsize=7.5,
+             style="italic", color="#444444")
     axl.legend(fontsize=8)
     axl.grid(True, alpha=0.3, axis="y")
     axl.set_yscale("log")

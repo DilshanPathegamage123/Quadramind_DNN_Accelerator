@@ -9,6 +9,9 @@ of the real hardware, **model** for values from the analytical optimizer.
 Figures regenerate with `python scripts/gen_golden_summary_figs.py`; the data
 behind each figure sits next to it as a CSV.
 
+The two strongest results lead: **correctness** (§2) and **measured off-chip
+behaviour** (§3–4), where the RTL and the golden reference agree throughout.
+
 ## 1 · Capability map
 
 ![Capability scorecard](figures/f1_capability_scorecard.png)
@@ -31,30 +34,21 @@ casting schemes, memory backends, and array shapes all land on the same
 error floor, showing that these knobs change *how* the hardware executes,
 never *what* it computes. *(measured (RTL); data: f2_correctness_margin.csv)*
 
-## 3 · Cycle fidelity
-
-![Cycle fidelity](figures/f3_cycle_fidelity.png)
-
-The fast analytical estimator brackets the RTL cycle counts across every
-configuration, with per-invocation agreement labelled on each pair (up to
-98 % on mnist OS). The estimator is useful for rapid design-space pruning,
-and the RTL numbers provide the cycle-accurate ground truth wherever
-precision matters. *(estimate = model, actual = measured (RTL); data:
-f3_cycle_fidelity.csv)*
-
-## 4 · Data delivery — layouts and casting
+## 3 · Data delivery — layouts and casting
 
 ![Data delivery](figures/f4_data_delivery_traffic.png)
 
 Memory layout changes the shape of off-chip traffic while moving identical
 data: all three layouts transfer 1,836 beats on tiny L0, but channel-major
 coalesces them into 13× fewer AXI requests and finishes the layer in nearly
-half the cycles. Casting scales the traffic volume itself — multicast is
-lowest (one read per unique shared value), unicast highest (one read per
-consuming PE), hybrid in between — with bit-identical outputs across all
-three. *(measured (RTL); data: f4_data_delivery_traffic.csv)*
+half the cycles. Row- and column-major are equal by design on this layer —
+both strides defeat burst coalescing into single-beat reads (a bank/row-aware
+memory model would separate them). Casting scales the traffic volume itself —
+multicast is lowest (one read per unique shared value), unicast highest (one
+read per consuming PE), hybrid in between — with bit-identical outputs across
+all three. *(measured (RTL); data: f4_data_delivery_traffic.csv)*
 
-## 5 · Memory management — STAMP, PAGED, banking
+## 4 · Memory management — STAMP, PAGED, banking
 
 ![Memory management](figures/f5_memory_management.png)
 
@@ -69,7 +63,7 @@ behaviour the design intends. Bank/stall counts are memory-side event
 counters in this release; coupling them into compute timing is the natural
 next step. *(data: f5_memory_management.csv)*
 
-## 6 · Multi-DNN scheduling
+## 5 · Multi-DNN scheduling
 
 ![Scheduler behaviour](figures/f6_scheduler_behaviour.png)
 
@@ -79,7 +73,7 @@ with identical per-task errors and near-identical total cycles. Scheduling
 policy controls execution order and interleaving; results are untouched.
 *(measured (RTL); data: f6_scheduler_behaviour.csv)*
 
-## 7 · Loop optimization
+## 6 · Loop optimization
 
 ![Loop optimization](figures/f7_loop_optimization.png)
 
@@ -88,3 +82,16 @@ energy than the untiled baseline across all seven cloud workloads, and
 inter-layer reuse trims a further 21.8 % of off-chip accesses on top of the
 intra-layer win. These are design-space findings from the analytical
 optimizer. *(model; data: f7_loop_optimization.csv)*
+
+## 7 · Cycle-count fidelity — structural offset, documented as future work
+
+![Cycle fidelity](figures/f3_cycle_fidelity.png)
+
+Shown for transparency: per-invocation agreement between the analytical
+estimate and the RTL ranges from 6 % to 98 % (many configs at 6–37 %). The
+offset is structural and understood — the model prices a full-array pass
+per step, while the RTL fetchers stream one column-address per cycle — so
+the estimator currently ranks configurations rather than predicting absolute
+cycles; closing the offset is documented future work. The cycle-accurate
+ground truth is always the RTL numbers used everywhere else in this summary.
+*(estimate = model, actual = measured (RTL); data: f3_cycle_fidelity.csv)*
