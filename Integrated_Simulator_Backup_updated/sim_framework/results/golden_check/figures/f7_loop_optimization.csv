@@ -1,0 +1,25 @@
+workload,scheme_or_reuse,normalized_value,source
+3D-UNet,Baseline,1.0,model
+BERT-Large,Baseline,1.0,model
+DLRM,Baseline,1.0,model
+GPT-2/Transformer,Baseline,1.0,model
+RNN-T,Baseline,1.0,model
+ResNet-50,Baseline,1.0,model
+VGG-16,Baseline,1.0,model
+3D-UNet,Basic Tiling,0.7157839136615952,model
+BERT-Large,Basic Tiling,0.5235376602564102,model
+DLRM,Basic Tiling,0.49849687349687344,model
+GPT-2/Transformer,Basic Tiling,0.4500276199494949,model
+RNN-T,Basic Tiling,0.4752604166666667,model
+ResNet-50,Basic Tiling,0.6358739835405827,model
+VGG-16,Basic Tiling,0.5786160501269352,model
+3D-UNet,Optimized Blocking,0.37217109633763523,model
+BERT-Large,Optimized Blocking,0.1591515174278846,model
+DLRM,Optimized Blocking,0.08564626924001924,model
+GPT-2/Transformer,Optimized Blocking,0.23238159590698654,model
+RNN-T,Optimized Blocking,0.25250651041666666,model
+ResNet-50,Optimized Blocking,0.3257163262785869,model
+VGG-16,Optimized Blocking,0.15235093101347613,model
+all-workload mean,No Reuse,1.0,model
+all-workload mean,Intra-Layer Reuse,0.8246491255869349,model
+all-workload mean,Inter-Layer Reuse,0.781947179943813,model

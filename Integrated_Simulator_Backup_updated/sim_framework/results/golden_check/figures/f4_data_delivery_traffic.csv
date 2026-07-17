@@ -1,0 +1,10 @@
+axis,setting,layer,axi_ar_requests,axi_beats,total_cycles,source
+layout,ROW_MAJOR,tiny L0,1794,1836,10776,measured (RTL)
+layout,COLUMN_MAJOR,tiny L0,1794,1836,10776,measured (RTL)
+layout,CHANNEL_MAJOR,tiny L0,138,1836,5808,measured (RTL)
+casting,MULTICAST,tiny L0,138,1836,5808,measured (RTL)
+casting,HYBRID,tiny L0,9318,11664,53004,measured (RTL)
+casting,UNICAST,tiny L0,18312,20736,98130,measured (RTL)
+casting,MULTICAST,mnist L0,832,10608,36712,measured (RTL)
+casting,HYBRID,mnist L0,53872,67392,309400,measured (RTL)
+casting,UNICAST,mnist L0,105872,119808,570232,measured (RTL)

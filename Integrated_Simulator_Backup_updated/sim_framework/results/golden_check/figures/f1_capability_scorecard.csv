@@ -1,0 +1,19 @@
+topic,capability,recorded_result,source
+Compute dataflows,Output-stationary (OS),"full conv on the 8x8 array, golden-matched",measured (RTL)
+Compute dataflows,Weight-stationary (WS),"multi-width arrays 8x1/8x2/8x8, golden-matched",measured (RTL)
+Compute dataflows,Input-stationary (IS),"full conv incl. mnist, golden-matched",measured (RTL)
+Memory layouts,Row-major,distinct off-chip address/burst pattern,measured (RTL)
+Memory layouts,Column-major,distinct off-chip address/burst pattern,measured (RTL)
+Memory layouts,Channel-major,"long-burst coalescing, fewest AR requests",measured (RTL)
+Interconnect casting,Multicast,one off-chip read per unique shared value,measured (RTL)
+Interconnect casting,Hybrid,multicast weights + unicast inputs,measured (RTL)
+Interconnect casting,Unicast,"one read per consuming PE, distinct AXI transactions",measured (RTL)
+Memory management,STAMP delta-fetch,LOAD/KEEP delta ops; fetches only new words,measured (RTL)
+Memory management,PAGED page table,"per-port translation, hit/miss counters",measured (RTL)
+Memory management,Bank conflicts & stalls,cycle-accurate arbitration counters,measured (RTL)
+Memory management,num_banks knob (1-16),"hardware parameter, swept 2/4/8/16",measured (RTL)
+Multi-DNN scheduling,FIFO / LIFO,"order changes, results identical",measured (RTL)
+Multi-DNN scheduling,AI-MT,memory/compute task interleaving,measured (RTL)
+Multi-DNN scheduling,BatchDNN / BatchDNN++,batched dispatch variants,measured (RTL)
+Loop optimization,Blocking / tiling search,4.4x mean energy reduction found,model
+Loop optimization,Inter-layer reuse,21.8% off-chip access reduction,model

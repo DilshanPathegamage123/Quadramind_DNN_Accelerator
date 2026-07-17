@@ -1,0 +1,6 @@
+scheduler,dispatch_order,total_cycles,all_pass,source
+FIFO,T0->T1->T2,13412,True,measured (RTL)
+LIFO,T2->T1->T0,13412,True,measured (RTL)
+AIMT,T0->T1->T2,13413,True,measured (RTL)
+BATCHDNN,T0->T1->T2,13413,True,measured (RTL)
+BATCHDNN_PP,T0->T1->T2,13413,True,measured (RTL)
