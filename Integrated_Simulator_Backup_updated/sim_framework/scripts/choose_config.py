@@ -39,7 +39,7 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
 from pysim.sim_config import LayerConfig
-from pysim.config_chooser import GOALS, choose
+from pysim.config_chooser import GOALS, choose, goal_value, ties_at_best
 
 _LAYER_FIELDS = set(LayerConfig.__dataclass_fields__)
 
@@ -122,7 +122,18 @@ def main() -> None:
     print(f"  off-chip elements : {best.offchip_elements:,.0f}  (model)")
     print(f"  latency rank score: {best.latency_rank:,.0f}  "
           f"(rank only -- not a cycle prediction)")
-    print(f"  energy            : {best.energy_pJ/1e6:,.2f} uJ  (model)\n")
+    print(f"  energy            : {best.energy_pJ/1e6:,.2f} uJ  (model)")
+
+    tied = ties_at_best(ranked, args.goal)
+    if len(tied) > 1:
+        print(f"\n  NOTE: {len(tied)} configurations tie exactly at "
+              f"{goal_value(best, args.goal):,.0f} on --goal {args.goal}: "
+              + ", ".join(s.label for s in tied))
+        print("  Tie broken by latency rank, then energy "
+              f"(latency ranks: "
+              + ", ".join(f"{s.label} {s.latency_rank:,.0f}" for s in tied)
+              + ").")
+    print()
 
     hdr = (f"{'#':>3} {'config':<14} {'offchip elems':>14} "
            f"{'latency rank':>13} {'energy (uJ)':>12} {'weighted':>9}")

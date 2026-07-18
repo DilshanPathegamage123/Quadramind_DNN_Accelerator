@@ -102,11 +102,20 @@ RECOMMENDED: OS + CHANNEL_MAJOR + MULTICAST
 ```
 
 Full table: `results/chooser/ranked_tiny_cnn_offchip.csv` (27 rows, every
-value tagged `model`). Scored in ~2 ms warm (§4c). The three-way tie at
-rank 1–3 is real model behaviour: prefetch traffic is dataflow-independent
-and each dataflow's optimal layout carries zero penalty, so
-{OS-ChM, WS-CM, IS-RM} score identically on off-chip traffic at equal
-casting; the latency rank breaks the tie.
+value tagged `model`). The three-way tie at rank 1–3 is real model
+behaviour: prefetch traffic is dataflow-independent and each dataflow's
+optimal layout carries zero penalty, so {OS-ChM, WS-CM, IS-RM} score
+identically on off-chip traffic at equal casting.
+
+**Tie handling (corrected on `fix/chooser-accuracy`):** exact ties on the
+goal metric are reported explicitly in the CLI output and broken by a
+deliberate, documented criterion — **latency rank first, then energy** —
+never by enumeration order. (An earlier revision of this report claimed
+"the latency rank breaks the tie"; that was incorrect — the sort was
+stable on the goal metric alone, so tied configurations were silently
+ordered by enumeration order (OS, WS, IS). The 4×4 case exposed it:
+IS-RM-MU had the best latency rank of the tied set yet OS-ChM-MU was
+recommended. With the fix, the 4×4 off-chip recommendation is IS-RM-MU.)
 
 ## 3. How the chooser decides (summary of behaviour)
 

@@ -190,12 +190,31 @@ def score_config(layers: List[LayerConfig], array_h: int, array_w: int,
                        latency, energy, macs, beats_total)
 
 
+def goal_value(score: ConfigScore, goal: str) -> float:
+    """The metric a given goal ranks on."""
+    return {"offchip": score.offchip_elements, "latency": score.latency_rank,
+            "energy": score.energy_pJ, "weighted": score.weighted}[goal]
+
+
+def ties_at_best(ranked: List[ConfigScore], goal: str) -> List[ConfigScore]:
+    """All configurations exactly tied with the winner on the goal metric."""
+    best = goal_value(ranked[0], goal)
+    return [s for s in ranked if goal_value(s, goal) == best]
+
+
 def rank_configs(layers: List[LayerConfig], array_h: int, array_w: int,
                  mem_bytes: int, goal: str = "offchip",
                  weights: Optional[Dict[str, float]] = None,
                  data_width: int = 16) -> List[ConfigScore]:
     """Exhaustively score all 27 combinations and return them ranked (best
-    first) by `goal`: offchip | latency | energy | weighted."""
+    first) by `goal`: offchip | latency | energy | weighted.
+
+    Tie-break rule (deliberate, documented): configurations exactly tied on
+    the goal metric are ordered by latency rank, then energy — never by
+    enumeration order.  Exact ties are real model behaviour ({OS-ChM, WS-CM,
+    IS-RM} score identically on off-chip traffic at equal casting); use
+    ties_at_best() to surface them to the user.
+    """
     if goal not in GOALS:
         raise ValueError(f"goal must be one of {GOALS}, got {goal!r}")
     scores = [score_config(layers, array_h, array_w, mem_bytes, df, ly, ca,
@@ -216,11 +235,8 @@ def rank_configs(layers: List[LayerConfig], array_h: int, array_w: int,
                       + w["latency"] * s.latency_rank / mins["latency"]
                       + w["energy"] * s.energy_pJ / mins["energy"])
 
-    key = {"offchip": lambda s: s.offchip_elements,
-           "latency": lambda s: s.latency_rank,
-           "energy": lambda s: s.energy_pJ,
-           "weighted": lambda s: s.weighted}[goal]
-    return sorted(scores, key=key)
+    return sorted(scores, key=lambda s: (goal_value(s, goal),
+                                         s.latency_rank, s.energy_pJ))
 
 
 def choose(layers: List[LayerConfig], array_h: int, array_w: int,
