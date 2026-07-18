@@ -1,9 +1,17 @@
 # Configuration-Chooser Report — analytical stationary × layout × casting selection
 
-**Date:** 2026-07-18 · **Branch:** `feature/config-chooser` (on top of the
-verified-fix stack ending at `golden-check/visual-summary`) · **Module:**
+**Date:** 2026-07-18 · **Branch:** `fix/chooser-accuracy` (accuracy fixes
+on top of `feature/config-chooser`, itself on the verified-fix stack
+ending at `golden-check/visual-summary`) · **Module:**
 `pysim/config_chooser.py` · **CLI:** `scripts/choose_config.py` ·
 **Evaluation:** `scripts/eval_chooser.py`
+
+**Accuracy fixes applied on this branch:** Issue 1 — deliberate tie-break
+(latency rank, then energy) with explicit tie reporting; Issue 2 —
+dataflow-aware WS re-fetch term derived from the harness invocation loop,
+measured-exact on all four recorded WS runs; Issue 3 — honest speed
+figures (warm scoring vs one-time imports vs cold end-to-end). Open:
+Issue 4 — IS/OS cycle-model resolution (§1.4).
 
 Given a DNN workload (layer shapes), a fixed array size, and a memory
 provision, the chooser scores **all 27 combinations** of stationary scheme
@@ -102,19 +110,28 @@ runs (§4d).
 $ PYTHONPATH=. python scripts/choose_config.py \
       --workload models/tiny_cnn --array 8x8 --mem 256KB --goal offchip
 
+Model libraries loaded in 749 ms (one-time per process); scored 27
+combinations analytically in 0.8 ms (no RTL run).
+
 RECOMMENDED: OS + CHANNEL_MAJOR + MULTICAST
   off-chip elements : 5,584  (model)
   latency rank score: 5,649  (rank only -- not a cycle prediction)
   energy            : 6.26 uJ  (model)
 
+  NOTE: 2 configurations tie exactly at 5,584 on --goal offchip:
+        OS-ChM-MU, IS-RM-MU
+  Tie broken by latency rank, then energy
+        (latency ranks: OS-ChM-MU 5,649, IS-RM-MU 5,654).
+
   # config          offchip elems  latency rank  energy (uJ)  weighted
   1 OS-ChM-MU               5,584         5,649         6.26     3.000
-  2 WS-CM-MU                5,584         5,738         6.26     3.016
-  3 IS-RM-MU                5,584         5,654         6.26     3.001
+  2 IS-RM-MU                5,584         5,654         6.26     3.001
+  3 OS-CM-MU                5,640         5,653         6.33     3.021
   ...
- 10 OS-ChM-HY              31,540        31,605        35.33    16.885
- 19 OS-ChM-UN              48,676        48,741        54.53    26.051
- 27 IS-ChM-UN              60,908        48,782        68.23    30.437
+  7 OS-ChM-HY              31,540        31,605        35.33    16.885
+ 13 OS-ChM-UN              48,676        48,741        54.53    26.051
+ 19 WS-CM-MU            3,541,936     3,542,090     3,966.98  1894.729
+ 27 WS-RM-UN           29,616,156    28,569,515    33,170.10 15657.393
 ```
 
 Full table: `results/chooser/ranked_tiny_cnn_offchip.csv` (27 rows, every
@@ -137,10 +154,14 @@ recommended. With the fix, the 4×4 off-chip recommendation is IS-RM-MU.)
 
 Across all 14 evaluation workloads (7 edge + 7 cloud, 4 layers each) and
 both anchor models, at 8×8/256 KB the chooser's off-chip winner is
-**MULTICAST casting with each dataflow's matched layout**, ordered
-OS-ChM ≤ WS-CM = IS-RM, then hybrid (~5.6× more traffic on tiny), then
-unicast (~8.7×). This matches the measured casting behaviour (multicast
-fewest, unicast most, hybrid strictly between, on every measured metric).
+**MULTICAST casting with the winning dataflow's matched layout**: OS-ChM
+and IS-RM tie exactly (tie broken by latency rank — OS at 8×8, IS at
+narrow/small arrays such as 8×1 and 4×4), then hybrid (~5.6× more traffic
+on tiny), then unicast (~8.7×). WS configurations rank last (19–27) since
+the Issue 2 fix prices their measured per-invocation re-fetch. This
+matches the measured casting behaviour (multicast fewest, unicast most,
+hybrid strictly between, on every measured metric) and the measured WS
+traffic penalty (57,996 vs 1,836 beats on tiny L0).
 
 ## 4. Evaluation — four results, real numbers
 
@@ -159,8 +180,10 @@ not a heuristic's luck. On the anchors, axis-level agreement with
 ### (b) Optimality gap
 
 - **Model vs model:** 0.0000 % mean and max (pick == best in all 56 cases).
-  Ties at the best cost are real (median 2 configs tied, the
-  equivalent-optimum set of §2); median margin from the best to the next
+  Ties at the best cost are real and now explicit: after the Issue 2 fix,
+  28 of 56 cases have a 2-way tie ({OS-ChM, IS-RM} on the offchip/energy
+  goals) and 28 a unique best; ties resolve by the documented rule
+  (latency rank, then energy). Median margin from the best to the next
   *distinct* cost is 0.08 %.
 - **Against measured hardware (anchors, `--goal latency`):** the chooser
   picks OS-ChM-MULTICAST; the measured-fastest configuration is
@@ -172,12 +195,24 @@ not a heuristic's luck. On the anchors, axis-level agreement with
 
 ### (c) Speed — measured chooser vs recorded-RTL lower bound
 
+**Correction (Issue 3, `fix/chooser-accuracy`):** an earlier revision of
+this report claimed "2.1 ms per workload". That figure was **warm scoring
+only**, while the CLI at the time printed one combined timer whose first
+scoring call silently included the one-time Python library import
+(pandas/matplotlib/optimizer via `run_full_eval`) — hence the 557–1,507 ms
+"Scored in…" lines users actually saw. The CLI now measures and prints the
+two costs separately ("Model libraries loaded in … ms (one-time per
+process); scored 27 combinations analytically in … ms"), and the harness
+measures both warm and cold honestly. Warm scoring is also slower than the
+old claim because the Issue 2 WS diagonal walk does real per-diagonal work.
+
 | What | Time | Source |
 |---|---|---|
-| Chooser: 27 combos, one workload (median, warm) | **2.1 ms** | measured |
-| Chooser: per-config scoring cost | **~0.1 ms** | measured |
-| Chooser: all 14 workloads × 27 combos | **31 ms** | measured |
-| Chooser: 648-config sweep (27 × 6 arrays × 4 mem sizes) | **11 ms** | measured |
+| Chooser WARM scoring: 27 combos, one workload (median of 14 workloads × 5 reps; **excludes** one-time imports) | **15 ms** | measured |
+| Chooser WARM per-config scoring cost | **0.6 ms** | measured |
+| Chooser WARM: all 14 workloads × 27 combos | **237 ms** | measured |
+| Chooser COLD CLI end-to-end (interpreter start + imports + scoring + table print + CSV; median of 3 subprocess runs) | **1.14 s** | measured |
+| Chooser: 648-config sweep (27 × 6 arrays × 4 mem sizes, warm) | **17 ms** | measured |
 | RTL, 27 combos, tiny L0 only — lower bound | **≥ 147 s** | derived from recorded `wall_seconds` of the real golden runs |
 | RTL, 27 combos, mnist L0 only — lower bound | **≥ 750 s** | derived from recorded `wall_seconds` |
 | Hardware synthesis per config | infeasible per query | no number claimed |
@@ -186,13 +221,12 @@ The RTL lower bound = 9 dataflow×layout combos per casting × the recorded
 same-casting OS/ChM run time (tiny: 1.3/5.5/9.5 s for MC/HY/UC; mnist:
 4.1/26.5/52.7 s — `results/golden_check/raw/*_verdict.json`). It is a firm
 lower bound: recorded WS runs cost 4–13× the OS runs (16.7 s vs 1.3 s on
-tiny), and `wall_seconds` excludes Verilator build time. So the chooser is
-**≥ 5 orders of magnitude faster** than RTL-per-query on a single layer,
-and the gap widens with the sweep: 648 analytical configs take 11 ms, while
-648 RTL runs would extrapolate to roughly an hour of simulation per layer
-(same recorded run times), before build time. One-time cost not in the
-table: the first scoring call pays ~0.7 s of Python imports
-(pandas/matplotlib via `run_full_eval`).
+tiny), and `wall_seconds` excludes Verilator build time. Even on the
+honest **cold end-to-end** figure (1.14 s), the chooser is ~130× faster
+than the tiny-L0 RTL lower bound and ~660× faster than mnist L0; on warm
+scoring (the number that matters inside a sweep loop) it is 4–5 orders of
+magnitude faster, and a 648-config array×memory sweep costs 17 ms versus
+an extrapolated hour-plus of RTL simulation per layer before build time.
 
 ### (d) Anchor check — rankings vs verified hardware
 
@@ -208,6 +242,32 @@ table: the first scoring call pays ~0.7 s of Python imports
 | mnist L0 UNICAST | 119,808 | 119,808 | exact |
 
 Measured source: CASTING_FIX_REPORT.md §5 / `figures/f4_data_delivery_traffic.csv`.
+
+**WS dataflow walk (Issue 2) — 4/4 exact, beats AND invocation counts:**
+
+| Anchor (WS, MULTICAST, whole layer) | Model | Measured (RTL) | Match |
+|---|---|---|---|
+| tiny L0 8×1 | 43,254 / 234 inv | 43,254 / 234 inv | exact |
+| tiny L0 8×2 | 45,360 / 234 inv | 45,360 / 234 inv | exact |
+| tiny L0 8×8 | 57,996 / 234 inv | 57,996 / 234 inv | exact |
+| mnist L0 8×8 | 80,964 / 858 inv | 80,964 / 858 inv | exact |
+
+Measured source: `raw/tiny_cnn_layer_00_WS_*_b4.json`,
+`raw/mnist_cnn_layer_00_WS_CHANNEL_MAJOR_STAMP_8x8_b4_wsmnist.json`.
+Anchor total: **10/10 exact** beat matches (6 casting + 4 WS).
+
+**Dataflow axis after the fixes — stated explicitly:** for the offchip,
+energy, and weighted goals the pick (OS-ChM-MULTICAST) matches the
+measured best-or-tied configuration, and WS is no longer falsely tied
+(axis: 6/8, unchanged in count but qualitatively stronger — the WS
+traffic model is now measured-exact where a measurement exists). For the
+**latency goal the pick still does not match the measured-fastest
+configuration**: the chooser picks OS while measured hardware runs IS
+fastest (5,220 vs 5,808 cycles tiny; 32,136 vs 36,712 mnist). This is not
+forced to agree: the cycle estimator resolves the OS/IS difference at
+only ~0.09 % while the hardware gap is 11–14 % — the open **Issue 4**
+(IS/OS cycle-model resolution, §1.4), which neither the tie-break
+(Issue 1) nor the WS term (Issue 2) addresses.
 
 **Structure at other array widths (measured WS 8×1/8×2/8×8, MULTICAST,
 234 invocations, whole layer):** subtracting the structural input-halo term

@@ -269,11 +269,23 @@ def rank_configs(layers: List[LayerConfig], array_h: int, array_w: int,
                                          s.latency_rank, s.energy_pJ))
 
 
+def warm_up() -> float:
+    """Load the heavy model dependencies (pandas/matplotlib/optimizer via
+    scripts.run_full_eval) and return the elapsed seconds.  score_config
+    imports them lazily, so without this the FIRST scoring call pays the
+    one-time import cost -- which must not be presented as scoring time."""
+    t0 = time.perf_counter()
+    import scripts.run_full_eval  # noqa: F401
+    return time.perf_counter() - t0
+
+
 def choose(layers: List[LayerConfig], array_h: int, array_w: int,
            mem_bytes: int, goal: str = "offchip",
            weights: Optional[Dict[str, float]] = None,
            data_width: int = 16) -> tuple[ConfigScore, List[ConfigScore], float]:
-    """Return (best, ranked_table, elapsed_seconds)."""
+    """Return (best, ranked_table, elapsed_seconds).  The elapsed time
+    includes the one-time dependency import unless warm_up() was called
+    first."""
     t0 = time.perf_counter()
     ranked = rank_configs(layers, array_h, array_w, mem_bytes, goal, weights,
                           data_width)

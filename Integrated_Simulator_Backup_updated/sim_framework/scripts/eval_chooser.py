@@ -128,14 +128,39 @@ def eval_speed() -> pd.DataFrame:
             ts.append(time.perf_counter() - t0)
         per_wl.append(statistics.median(ts))
     med = statistics.median(per_wl)
-    rows.append({"measurement": "chooser: 27 combos, one workload (median of "
-                 f"{len(all_wl)} workloads x 5 reps)",
+    rows.append({"measurement": "chooser WARM scoring: 27 combos, one "
+                 f"workload (median of {len(all_wl)} workloads x 5 reps; "
+                 "excludes one-time Python imports)",
                  "seconds": round(med, 5), "source": "measured (this run)"})
-    rows.append({"measurement": "chooser: per-config scoring cost",
+    rows.append({"measurement": "chooser WARM per-config scoring cost",
                  "seconds": round(med / 27, 6),
                  "source": "measured (this run)"})
-    rows.append({"measurement": "chooser: all 14 workloads x 27 combos",
+    rows.append({"measurement": "chooser WARM: all 14 workloads x 27 combos",
                  "seconds": round(sum(per_wl), 4),
+                 "source": "measured (this run)"})
+
+    # COLD end-to-end: what a user actually experiences per CLI invocation --
+    # interpreter start + library imports + scoring + table print + CSV write
+    # (median of 3 real subprocess runs)
+    import os
+    import subprocess
+    import tempfile
+    env = dict(os.environ, PYTHONPATH=str(ROOT))
+    cold = []
+    with tempfile.TemporaryDirectory() as td:
+        for i in range(3):
+            t0 = time.perf_counter()
+            subprocess.run(
+                [sys.executable, str(ROOT / "scripts/choose_config.py"),
+                 "--workload", str(ROOT / "models/tiny_cnn"),
+                 "--array", "8x8", "--mem", "256KB", "--goal", "offchip",
+                 "--csv", f"{td}/cold_{i}.csv"],
+                cwd=ROOT, env=env, check=True, capture_output=True)
+            cold.append(time.perf_counter() - t0)
+    rows.append({"measurement": "chooser COLD CLI end-to-end (interpreter "
+                 "start + imports + scoring + print + CSV; median of 3 "
+                 "subprocess runs)",
+                 "seconds": round(statistics.median(cold), 3),
                  "source": "measured (this run)"})
 
     # scaling: 27 combos x 6 array sizes x 4 mem sizes = 648 configs (tiny)

@@ -1,8 +1,9 @@
 measurement,seconds,source
-"chooser: 27 combos, one workload (median of 14 workloads x 5 reps)",0.00205,measured (this run)
-chooser: per-config scoring cost,7.6e-05,measured (this run)
-chooser: all 14 workloads x 27 combos,0.0313,measured (this run)
-"chooser: 648-config sweep (27 x 6 arrays x 4 mem sizes, tiny_cnn)",0.0109,measured (this run)
+"chooser WARM scoring: 27 combos, one workload (median of 14 workloads x 5 reps; excludes one-time Python imports)",0.01496,measured (this run)
+chooser WARM per-config scoring cost,0.000554,measured (this run)
+chooser WARM: all 14 workloads x 27 combos,0.2373,measured (this run)
+chooser COLD CLI end-to-end (interpreter start + imports + scoring + print + CSV; median of 3 subprocess runs),1.143,measured (this run)
+"chooser: 648-config sweep (27 x 6 arrays x 4 mem sizes, tiny_cnn)",0.0173,measured (this run)
 "RTL, 27 combos, tiny L0 only: lower-bound estimate (9 combos/casting x recorded same-casting run time; excl. Verilator builds)",146.7,derived from recorded wall_seconds (results/golden_check/raw/*_verdict.json)
 "RTL, 27 combos, mnist L0 only: lower-bound estimate (9 combos/casting x recorded same-casting run time; excl. Verilator builds)",749.7,derived from recorded wall_seconds (results/golden_check/raw/*_verdict.json)
 hardware synthesis per config,,infeasible per query (days per config; no number claimed)

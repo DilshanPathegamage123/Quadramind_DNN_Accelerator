@@ -39,7 +39,8 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
 from pysim.sim_config import LayerConfig
-from pysim.config_chooser import GOALS, choose, goal_value, ties_at_best
+from pysim.config_chooser import (GOALS, choose, goal_value, ties_at_best,
+                                  warm_up)
 
 _LAYER_FIELDS = set(LayerConfig.__dataclass_fields__)
 
@@ -111,12 +112,14 @@ def main() -> None:
     mem_bytes = parse_mem(args.mem)
     weights = parse_weights(args.weights) if args.weights else None
 
+    import_secs = warm_up()
     best, ranked, secs = choose(layers, ah, aw, mem_bytes, args.goal, weights,
                                 args.data_width)
 
     print(f"\nConfiguration chooser -- workload={name} ({len(layers)} layers), "
           f"array={ah}x{aw}, mem={args.mem}, goal={args.goal}")
-    print(f"Scored 27 combinations analytically in {secs*1e3:.1f} ms "
+    print(f"Model libraries loaded in {import_secs*1e3:.0f} ms (one-time per "
+          f"process); scored 27 combinations analytically in {secs*1e3:.1f} ms "
           f"(no RTL run).\n")
     print(f"RECOMMENDED: {best.dataflow} + {best.layout} + {best.casting}")
     print(f"  off-chip elements : {best.offchip_elements:,.0f}  (model)")
