@@ -68,17 +68,33 @@ runs (§4d).
    coalescing). The layout *ordering* agrees (CHANNEL_MAJOR best for OS,
    measured and modelled); the per-layout traffic deltas are model values
    with no measured counterpart.
-2. **WS per-invocation re-fetch not modelled.** The model's prefetch term
-   is dataflow-independent, but the harness runs WS as many invocations
-   (architectural one-input-channel limit), each re-fetching: measured WS
-   beats are 57,996 (tiny) / 80,964 (mnist) vs 1,836 / 10,608 for OS. The
-   chooser therefore **under-penalises WS traffic**; its top pick is
-   unaffected on these anchors (OS is measured best-or-tied), but WS's
-   rank-2 traffic tie is optimistic against measured hardware.
-3. **Latency across dataflows.** Measured cycles put **IS fastest** on both
-   anchors (5,220 vs OS 5,808 tiny; 32,136 vs 36,712 mnist); the model's
-   latency rank puts OS first by a near-tie (0.09 %). Quantified as the
-   measured optimality gap in §4b.
+2. **WS per-invocation re-fetch — FIXED on `fix/chooser-accuracy`
+   (Issue 2).** The prefetch model is now dataflow-aware: WS traffic is
+   computed by replicating the harness's diagonal invocation loop
+   (`_harness_ws`, tb/golden/test_golden_single.py — diagonals
+   d ∈ [−(OH−1), K), oh0 blocks stepped by H, × OW × C), one prefetcher
+   walk per invocation, with zero fitted constants. Validated **exactly**
+   against all four measured WS runs — tiny 8×1/8×2/8×8: 43,254 / 45,360 /
+   57,996 beats (234 invocations each) and mnist 8×8: 80,964 beats
+   (858 invocations) — so the term scales structurally across array
+   widths rather than being fitted at one width. Before the fix WS-CM-MU
+   sat in the rank-1 tie at 5,584 elements on tiny 8×8; after, WS configs
+   occupy ranks 19–27 (WS-CM-MU: 3,541,936 model elements, dominated by
+   the 1,152-invocation re-fetch on the 288-channel dense layer — that
+   layer's WS traffic is a structural extrapolation of the same validated
+   loop; no measured WS run of it exists). No recommendation changed (WS
+   never won a goal); only the false tie was removed. OS/IS traffic is
+   unchanged and still matches measured exactly.
+3. **Latency across dataflows — open Issue 4: IS/OS cycle-model
+   resolution.** Measured cycles put **IS fastest** on both anchors
+   (5,220 vs OS 5,808 tiny, −11.3 %; 32,136 vs 36,712 mnist, −14.2 %);
+   the model's latency rank puts OS first by a genuine but tiny 0.09 %
+   margin. The model therefore under-resolves the OS/IS gap by roughly
+   two orders of magnitude. This is a **distinct open item** — it is a
+   cycle-estimator resolution limit, separate from the WS re-fetch term
+   (Issue 2), and is **not** fixed by tie-breaking (Issue 1) or by the WS
+   traffic correction; closing it needs a finer per-dataflow cycle model
+   against measured RTL. Quantified as the measured optimality gap in §4b.
 
 ## 2. Example run
 

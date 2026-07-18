@@ -207,6 +207,25 @@ def eval_anchor() -> tuple[pd.DataFrame, pd.DataFrame]:
                 "measured_source": "CASTING_FIX_REPORT.md sec.5 / "
                                    "figures/f4_data_delivery_traffic.csv",
             })
+    # d1c: WS dataflow-aware walk (Issue 2 fix) -- model must equal the
+    # measured WS beats exactly at every measured width and workload
+    ws_meas = [("tiny_cnn", 8, 1, "tiny_cnn_layer_00_WS_CHANNEL_MAJOR_STAMP_8x1_b4"),
+               ("tiny_cnn", 8, 2, "tiny_cnn_layer_00_WS_CHANNEL_MAJOR_STAMP_8x2_b4"),
+               ("tiny_cnn", 8, 8, "tiny_cnn_layer_00_WS_CHANNEL_MAJOR_STAMP_8x8_b4"),
+               ("mnist_cnn", 8, 8,
+                "mnist_cnn_layer_00_WS_CHANNEL_MAJOR_STAMP_8x8_b4_wsmnist")]
+    for model, ah, aw, fname in ws_meas:
+        layer = _model_layers(f"models/{model}")[0]
+        pf = prefetch_traffic(layer, ah, aw, "MULTICAST", "WS")
+        d = _raw(fname)
+        beat_rows.append({
+            "anchor": f"{model} L0 WS MULTICAST beats ({ah}x{aw}), "
+                      f"{d['n_runs']} invocations",
+            "model_value": int(pf["beats"]), "measured_value": d["axi_beats"],
+            "exact_match": int(pf["beats"]) == d["axi_beats"]
+                           and int(pf["tiles"]) == d["n_runs"],
+            "measured_source": f"raw/{fname}.json",
+        })
     # d1b: WS width cross-check of the structural terms (whole layer,
     # MULTICAST, 234 invocations)
     tiny = _model_layers("models/tiny_cnn")[0]

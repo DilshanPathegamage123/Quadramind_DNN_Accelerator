@@ -76,39 +76,69 @@ def _layout_penalty(dataflow: str, layout: str, layer: LayerConfig) -> float:
     return (f - 1.0) * tot / aff
 
 
+def _cast_tile(wt_mc: float, it_mc: float, it_uc: float, array_w: int,
+               casting: str) -> tuple[float, float]:
+    """Apply the casting replication semantics to one tile/invocation."""
+    if casting == "MULTICAST":
+        return wt_mc, it_mc
+    if casting == "UNICAST":
+        return wt_mc * array_w, it_uc
+    if casting == "HYBRID":
+        return wt_mc, it_uc
+    raise ValueError(casting)
+
+
 def prefetch_traffic(layer: LayerConfig, array_h: int, array_w: int,
-                     casting: str) -> Dict[str, float]:
+                     casting: str, dataflow: str = "OS") -> Dict[str, float]:
     """Whole-layer prefetch traffic (elements == AXI beats) per the structural
-    prefetcher walk.  Matches the measured RTL beats exactly on tiny/mnist L0
-    for all three castings (see module docstring)."""
+    prefetcher walk, now dataflow-aware.
+
+    OS/IS run the tile walk ceil(K/H) x OH x ceil(OW/W) (measured identical:
+    1,836 beats / 6 invocations on tiny L0 and 10,608 / 104 on mnist L0 for
+    both dataflows).  WS runs one prefetcher walk per harness invocation over
+    the diagonal tiling of the (output-row, channel) grid -- the loop
+    structure of _harness_ws in tb/golden/test_golden_single.py:
+        for d in [-(OH-1), K): for oh0 blocks (step H): for ow: for c_in
+    with per-invocation weights = valid_rows*n and input halo
+    C*KH*(W+KW-1).  Zero fitted constants; validated EXACTLY against all
+    four measured WS runs (tiny 8x1/8x2/8x8: 43,254 / 45,360 / 57,996
+    beats, 234 invocations; mnist 8x8: 80,964 beats, 858 invocations).
+    Casting factors apply per invocation as in the tile walk (measured WS
+    runs are MULTICAST; unicast/hybrid replication is the 8x8-confirmed
+    prefetcher semantics)."""
     K, C = layer.weight_k, layer.weight_c
     KH, KW = layer.weight_kh, layer.weight_kw
     OH, OW = layer.output_height, layer.output_width
     n = C * KH * KW
-    col_tiles = math.ceil(OW / array_w)
-    tiles_per_rowblock = OH * col_tiles
+    it_mc = C * KH * (array_w + KW - 1)          # input halo, deduped
+    it_uc = n * array_w * array_h                # 1 read per consuming PE
 
     wt_elems = 0.0
     it_elems = 0.0
-    n_tiles = 0
-    for ch_start in range(0, K, array_h):
-        valid_rows = min(array_h, K - ch_start)
-        wt_mc = valid_rows * n                       # weights, 1 read/element
-        it_mc = C * KH * (array_w + KW - 1)          # input halo, deduped
-        it_uc = n * array_w * array_h                # 1 read per consuming PE
-        if casting == "MULTICAST":
-            wt_t, it_t = wt_mc, it_mc
-        elif casting == "UNICAST":
-            wt_t, it_t = wt_mc * array_w, it_uc
-        elif casting == "HYBRID":
-            wt_t, it_t = wt_mc, it_uc
-        else:
-            raise ValueError(casting)
-        wt_elems += wt_t * tiles_per_rowblock
-        it_elems += it_t * tiles_per_rowblock
-        n_tiles += tiles_per_rowblock
+    n_inv = 0
+    if dataflow == "WS":
+        for d in range(-(OH - 1), K):
+            oh_lo, oh_hi = max(0, -d), min(OH, K - d)
+            if oh_hi <= oh_lo:
+                continue
+            for oh0 in range(oh_lo, oh_hi, array_h):
+                valid_rows = min(array_h, K - (oh0 + d))
+                wt_t, it_t = _cast_tile(valid_rows * n, it_mc, it_uc,
+                                        array_w, casting)
+                wt_elems += wt_t * OW * C
+                it_elems += it_t * OW * C
+                n_inv += OW * C
+    else:                                        # OS and IS: tile walk
+        tiles_per_rowblock = OH * math.ceil(OW / array_w)
+        for ch_start in range(0, K, array_h):
+            valid_rows = min(array_h, K - ch_start)
+            wt_t, it_t = _cast_tile(valid_rows * n, it_mc, it_uc,
+                                    array_w, casting)
+            wt_elems += wt_t * tiles_per_rowblock
+            it_elems += it_t * tiles_per_rowblock
+            n_inv += tiles_per_rowblock
     return {"weight_elems": wt_elems, "input_elems": it_elems,
-            "beats": wt_elems + it_elems, "tiles": n_tiles}
+            "beats": wt_elems + it_elems, "tiles": n_inv}
 
 
 def _mem_fit_penalty(layer: LayerConfig, mem_bytes: int, dw: int) -> float:
@@ -165,7 +195,7 @@ def score_config(layers: List[LayerConfig], array_h: int, array_w: int,
     macs = 0.0
     beats_total = 0.0
     for layer in layers:
-        pf = prefetch_traffic(layer, array_h, array_w, casting)
+        pf = prefetch_traffic(layer, array_h, array_w, casting, dataflow)
         wt, it = pf["weight_elems"], pf["input_elems"]
         ot = float(layer.weight_k * layer.output_height * layer.output_width)
         pen = _layout_penalty(dataflow, layout, layer)
