@@ -90,7 +90,9 @@ def parse_weights(s: str) -> dict:
 
 
 def main() -> None:
-    ap = argparse.ArgumentParser(description=__doc__.split("\n")[3])
+    ap = argparse.ArgumentParser(
+        description="Analytical configuration chooser: ranks all 27 "
+                    "stationary x layout x casting combinations (no RTL run).")
     ap.add_argument("--workload", required=True,
                     help="model dir (models/tiny_cnn) or layer-shapes JSON")
     ap.add_argument("--array", default="8x8", help="array HxW (default 8x8)")
@@ -131,7 +133,7 @@ def main() -> None:
               f"{s.latency_rank:>13,.0f} {s.energy_pJ/1e6:>12,.2f} "
               f"{s.weighted:>9.3f}")
 
-    csv_path = Path(args.csv) if args.csv else (
+    csv_path = Path(args.csv).expanduser().resolve() if args.csv else (
         ROOT / "results/chooser" / f"ranked_{name}_{args.goal}.csv")
     csv_path.parent.mkdir(parents=True, exist_ok=True)
     with open(csv_path, "w", newline="") as f:
@@ -146,7 +148,11 @@ def main() -> None:
                           f"{s.latency_rank:.0f}", f"{s.energy_pJ:.0f}",
                           f"{s.prefetch_beats:.0f}", f"{s.weighted:.4f}",
                           "model"])
-    print(f"\nRanked table exported: {csv_path.relative_to(ROOT)}")
+    try:
+        shown = csv_path.relative_to(ROOT)
+    except ValueError:
+        shown = csv_path
+    print(f"\nRanked table exported: {shown}")
 
 
 if __name__ == "__main__":
