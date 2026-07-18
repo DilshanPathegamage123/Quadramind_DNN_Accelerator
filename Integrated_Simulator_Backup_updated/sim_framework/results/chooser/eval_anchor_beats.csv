@@ -1,0 +1,11 @@
+anchor,model_value,measured_value,exact_match,measured_source
+tiny_cnn L0 MULTICAST beats (8x8),1836,1836,True,CASTING_FIX_REPORT.md sec.5 / figures/f4_data_delivery_traffic.csv
+tiny_cnn L0 HYBRID beats (8x8),11664,11664,True,CASTING_FIX_REPORT.md sec.5 / figures/f4_data_delivery_traffic.csv
+tiny_cnn L0 UNICAST beats (8x8),20736,20736,True,CASTING_FIX_REPORT.md sec.5 / figures/f4_data_delivery_traffic.csv
+mnist_cnn L0 MULTICAST beats (8x8),10608,10608,True,CASTING_FIX_REPORT.md sec.5 / figures/f4_data_delivery_traffic.csv
+mnist_cnn L0 HYBRID beats (8x8),67392,67392,True,CASTING_FIX_REPORT.md sec.5 / figures/f4_data_delivery_traffic.csv
+mnist_cnn L0 UNICAST beats (8x8),119808,119808,True,CASTING_FIX_REPORT.md sec.5 / figures/f4_data_delivery_traffic.csv
+WS 8x1: measured beats minus structural input-halo term (234 inv x C*KH*(W+KW-1)=27),36936,43254,,raw/tiny_cnn_layer_00_WS_CHANNEL_MAJOR_STAMP_8x1_b4.json
+WS 8x2: measured beats minus structural input-halo term (234 inv x C*KH*(W+KW-1)=36),36936,45360,,raw/tiny_cnn_layer_00_WS_CHANNEL_MAJOR_STAMP_8x2_b4.json
+WS 8x8: measured beats minus structural input-halo term (234 inv x C*KH*(W+KW-1)=90),36936,57996,,raw/tiny_cnn_layer_00_WS_CHANNEL_MAJOR_STAMP_8x8_b4.json
+WS weight-fetch term W-invariance (8x1 == 8x2 == 8x8),36936,36936,True,raw/tiny_cnn_layer_00_WS_*_b4.json

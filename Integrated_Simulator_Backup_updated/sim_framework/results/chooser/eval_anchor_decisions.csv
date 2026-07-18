@@ -1,0 +1,9 @@
+workload,goal,chooser_pick,casting_axis_matches_measured,dataflow_axis_matches_measured,measured_latency_best_dataflow,measured_gap_pct_vs_hw_best,measured_source
+tiny_cnn,offchip,OS-ChM-MU,True,True,IS,,"raw/*_{OS,IS,WS}_CHANNEL_MAJOR_*8x8*.json"
+tiny_cnn,latency,OS-ChM-MU,True,False,IS,11.3,"raw/*_{OS,IS,WS}_CHANNEL_MAJOR_*8x8*.json"
+tiny_cnn,energy,OS-ChM-MU,True,True,IS,,"raw/*_{OS,IS,WS}_CHANNEL_MAJOR_*8x8*.json"
+tiny_cnn,weighted,OS-ChM-MU,True,True,IS,,"raw/*_{OS,IS,WS}_CHANNEL_MAJOR_*8x8*.json"
+mnist_cnn,offchip,OS-ChM-MU,True,True,IS,,"raw/*_{OS,IS,WS}_CHANNEL_MAJOR_*8x8*.json"
+mnist_cnn,latency,OS-ChM-MU,True,False,IS,14.2,"raw/*_{OS,IS,WS}_CHANNEL_MAJOR_*8x8*.json"
+mnist_cnn,energy,OS-ChM-MU,True,True,IS,,"raw/*_{OS,IS,WS}_CHANNEL_MAJOR_*8x8*.json"
+mnist_cnn,weighted,OS-ChM-MU,True,True,IS,,"raw/*_{OS,IS,WS}_CHANNEL_MAJOR_*8x8*.json"
