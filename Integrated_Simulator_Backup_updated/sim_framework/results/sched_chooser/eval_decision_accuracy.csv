@@ -1,0 +1,33 @@
+mix,goal,pick,pick_value,true_best_value,match,n_tied_at_best,n_ranked,n_excluded,source
+Workload mix 1,makespan,HRRN,58596.00,58596.00,True,14,14,0,model
+Workload mix 1,turnaround,HRRN,26322.67,26322.67,True,3,14,0,model
+Workload mix 1,wait,HRRN,6790.67,6790.67,True,3,14,0,model
+Workload mix 1,weighted,HRRN,3.00,3.00,True,3,14,0,model
+Workload mix 1,area,MLQ,755.00,755.00,True,1,11,3,measured (Vivado) / derived
+Workload mix 1,power,MLQ,0.01,0.01,True,1,11,3,measured (Vivado) / derived
+Workload mix 1,throughput,MLQ,5754.66,5754.66,True,1,11,3,measured (Vivado) / derived
+Workload mix 1,turnaround_us,MLQ,327.02,327.02,True,1,11,3,measured (Vivado) / derived
+Workload mix 2,makespan,SJF,84037.00,84037.00,True,14,14,0,model
+Workload mix 2,turnaround,SJF,28268.50,28268.50,True,2,14,0,model
+Workload mix 2,wait,SJF,7259.25,7259.25,True,2,14,0,model
+Workload mix 2,weighted,SJF,3.00,3.00,True,2,14,0,model
+Workload mix 2,area,MLQ,755.00,755.00,True,1,11,3,measured (Vivado) / derived
+Workload mix 2,power,MLQ,0.01,0.01,True,1,11,3,measured (Vivado) / derived
+Workload mix 2,throughput,MLQ,5350.02,5350.02,True,1,11,3,measured (Vivado) / derived
+Workload mix 2,turnaround_us,MLQ,410.74,410.74,True,1,11,3,measured (Vivado) / derived
+Workload mix 3,makespan,SJF,199612.00,199612.00,True,14,14,0,model
+Workload mix 3,turnaround,SJF,90493.33,90493.33,True,2,14,0,model
+Workload mix 3,wait,SJF,23956.00,23956.00,True,2,14,0,model
+Workload mix 3,weighted,SJF,3.00,3.00,True,2,14,0,model
+Workload mix 3,area,MLQ,755.00,755.00,True,1,11,3,measured (Vivado) / derived
+Workload mix 3,power,MLQ,0.01,0.01,True,1,11,3,measured (Vivado) / derived
+Workload mix 3,throughput,MLQ,1689.28,1689.28,True,1,11,3,measured (Vivado) / derived
+Workload mix 3,turnaround_us,MLQ,985.60,985.60,True,1,11,3,measured (Vivado) / derived
+Workload mix 4,makespan,SJF,66064.00,66064.00,True,14,14,0,model
+Workload mix 4,turnaround,SJF,20034.00,20034.00,True,2,14,0,model
+Workload mix 4,wait,SJF,3518.00,3518.00,True,2,14,0,model
+Workload mix 4,weighted,SJF,3.00,3.00,True,2,14,0,model
+Workload mix 4,area,MLQ,755.00,755.00,True,1,11,3,measured (Vivado) / derived
+Workload mix 4,power,MLQ,0.01,0.01,True,1,11,3,measured (Vivado) / derived
+Workload mix 4,throughput,MLQ,6805.52,6805.52,True,1,11,3,measured (Vivado) / derived
+Workload mix 4,turnaround_us,LIFO,197.61,197.61,True,1,11,3,measured (Vivado) / derived

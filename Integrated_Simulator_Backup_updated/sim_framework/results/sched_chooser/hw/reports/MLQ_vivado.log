@@ -1,0 +1,552 @@
+
+****** Vivado v2025.2 (64-bit)
+  **** SW Build 6299465 on Fri Nov 14 12:34:56 MST 2025
+  **** IP Build 6300035 on Fri Nov 14 10:48:45 MST 2025
+  **** SharedData Build 6298862 on Thu Nov 13 04:50:51 MST 2025
+  **** Start of session at: Tue Jul 28 00:39:54 2026
+    ** Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+    ** Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
+
+source run.tcl
+# create_project -part xc7a100tcsg324-1 -in_memory sched_probe
+create_project: Time (s): cpu = 00:00:20 ; elapsed = 00:00:06 . Memory (MB): peak = 1615.008 ; gain = 129.059 ; free physical = 7386 ; free virtual = 14346
+# read_verilog -sv advanced_task_scheduler.sv
+# read_xdc c.xdc
+# synth_design -top advanced_task_scheduler -part xc7a100tcsg324-1 -mode out_of_context -generic {SCHEDULER_TYPE=2}
+Command: synth_design -top advanced_task_scheduler -part xc7a100tcsg324-1 -mode out_of_context -generic SCHEDULER_TYPE=2
+Starting synth_design
+Attempting to get a license for feature 'Synthesis' and/or device 'xc7a100t'
+INFO: [Common 17-349] Got license for feature 'Synthesis' and/or device 'xc7a100t'
+INFO: [Device 21-403] Loading part xc7a100tcsg324-1
+INFO: [Synth 8-7079] Multithreading enabled for synth_design using a maximum of 7 processes.
+INFO: [Synth 8-7078] Launching helper process for spawning children vivado processes
+INFO: [Synth 8-7075] Helper process launched with PID 24222
+---------------------------------------------------------------------------------
+Starting RTL Elaboration : Time (s): cpu = 00:00:06 ; elapsed = 00:00:07 . Memory (MB): peak = 2242.281 ; gain = 482.188 ; free physical = 6452 ; free virtual = 13403
+---------------------------------------------------------------------------------
+INFO: [Synth 8-6157] synthesizing module 'advanced_task_scheduler' [/tmp/sched_synth_MLQ_3nx0ivkk/advanced_task_scheduler.sv:8]
+	Parameter SCHEDULER_TYPE bound to: 2 - type: integer 
+INFO: [Synth 8-6155] done synthesizing module 'advanced_task_scheduler' (0#1) [/tmp/sched_synth_MLQ_3nx0ivkk/advanced_task_scheduler.sv:8]
+WARNING: [Synth 8-6014] Unused sequential element current_time_reg was removed.  [/tmp/sched_synth_MLQ_3nx0ivkk/advanced_task_scheduler.sv:65]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[15][valid] was removed.  [/tmp/sched_synth_MLQ_3nx0ivkk/advanced_task_scheduler.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[15][remaining_time] was removed.  [/tmp/sched_synth_MLQ_3nx0ivkk/advanced_task_scheduler.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[15][deadline] was removed.  [/tmp/sched_synth_MLQ_3nx0ivkk/advanced_task_scheduler.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[15][arrival_time] was removed.  [/tmp/sched_synth_MLQ_3nx0ivkk/advanced_task_scheduler.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[15][wait_time] was removed.  [/tmp/sched_synth_MLQ_3nx0ivkk/advanced_task_scheduler.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[14][valid] was removed.  [/tmp/sched_synth_MLQ_3nx0ivkk/advanced_task_scheduler.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[14][remaining_time] was removed.  [/tmp/sched_synth_MLQ_3nx0ivkk/advanced_task_scheduler.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[14][deadline] was removed.  [/tmp/sched_synth_MLQ_3nx0ivkk/advanced_task_scheduler.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[14][arrival_time] was removed.  [/tmp/sched_synth_MLQ_3nx0ivkk/advanced_task_scheduler.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[14][wait_time] was removed.  [/tmp/sched_synth_MLQ_3nx0ivkk/advanced_task_scheduler.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[13][valid] was removed.  [/tmp/sched_synth_MLQ_3nx0ivkk/advanced_task_scheduler.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[13][remaining_time] was removed.  [/tmp/sched_synth_MLQ_3nx0ivkk/advanced_task_scheduler.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[13][deadline] was removed.  [/tmp/sched_synth_MLQ_3nx0ivkk/advanced_task_scheduler.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[13][arrival_time] was removed.  [/tmp/sched_synth_MLQ_3nx0ivkk/advanced_task_scheduler.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[13][wait_time] was removed.  [/tmp/sched_synth_MLQ_3nx0ivkk/advanced_task_scheduler.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[12][valid] was removed.  [/tmp/sched_synth_MLQ_3nx0ivkk/advanced_task_scheduler.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[12][remaining_time] was removed.  [/tmp/sched_synth_MLQ_3nx0ivkk/advanced_task_scheduler.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[12][deadline] was removed.  [/tmp/sched_synth_MLQ_3nx0ivkk/advanced_task_scheduler.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[12][arrival_time] was removed.  [/tmp/sched_synth_MLQ_3nx0ivkk/advanced_task_scheduler.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[12][wait_time] was removed.  [/tmp/sched_synth_MLQ_3nx0ivkk/advanced_task_scheduler.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[11][valid] was removed.  [/tmp/sched_synth_MLQ_3nx0ivkk/advanced_task_scheduler.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[11][remaining_time] was removed.  [/tmp/sched_synth_MLQ_3nx0ivkk/advanced_task_scheduler.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[11][deadline] was removed.  [/tmp/sched_synth_MLQ_3nx0ivkk/advanced_task_scheduler.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[11][arrival_time] was removed.  [/tmp/sched_synth_MLQ_3nx0ivkk/advanced_task_scheduler.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[11][wait_time] was removed.  [/tmp/sched_synth_MLQ_3nx0ivkk/advanced_task_scheduler.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[10][valid] was removed.  [/tmp/sched_synth_MLQ_3nx0ivkk/advanced_task_scheduler.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[10][remaining_time] was removed.  [/tmp/sched_synth_MLQ_3nx0ivkk/advanced_task_scheduler.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[10][deadline] was removed.  [/tmp/sched_synth_MLQ_3nx0ivkk/advanced_task_scheduler.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[10][arrival_time] was removed.  [/tmp/sched_synth_MLQ_3nx0ivkk/advanced_task_scheduler.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[10][wait_time] was removed.  [/tmp/sched_synth_MLQ_3nx0ivkk/advanced_task_scheduler.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[9][valid] was removed.  [/tmp/sched_synth_MLQ_3nx0ivkk/advanced_task_scheduler.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[9][remaining_time] was removed.  [/tmp/sched_synth_MLQ_3nx0ivkk/advanced_task_scheduler.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[9][deadline] was removed.  [/tmp/sched_synth_MLQ_3nx0ivkk/advanced_task_scheduler.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[9][arrival_time] was removed.  [/tmp/sched_synth_MLQ_3nx0ivkk/advanced_task_scheduler.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[9][wait_time] was removed.  [/tmp/sched_synth_MLQ_3nx0ivkk/advanced_task_scheduler.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[8][valid] was removed.  [/tmp/sched_synth_MLQ_3nx0ivkk/advanced_task_scheduler.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[8][remaining_time] was removed.  [/tmp/sched_synth_MLQ_3nx0ivkk/advanced_task_scheduler.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[8][deadline] was removed.  [/tmp/sched_synth_MLQ_3nx0ivkk/advanced_task_scheduler.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[8][arrival_time] was removed.  [/tmp/sched_synth_MLQ_3nx0ivkk/advanced_task_scheduler.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[8][wait_time] was removed.  [/tmp/sched_synth_MLQ_3nx0ivkk/advanced_task_scheduler.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[7][valid] was removed.  [/tmp/sched_synth_MLQ_3nx0ivkk/advanced_task_scheduler.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[7][remaining_time] was removed.  [/tmp/sched_synth_MLQ_3nx0ivkk/advanced_task_scheduler.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[7][deadline] was removed.  [/tmp/sched_synth_MLQ_3nx0ivkk/advanced_task_scheduler.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[7][arrival_time] was removed.  [/tmp/sched_synth_MLQ_3nx0ivkk/advanced_task_scheduler.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[7][wait_time] was removed.  [/tmp/sched_synth_MLQ_3nx0ivkk/advanced_task_scheduler.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[6][valid] was removed.  [/tmp/sched_synth_MLQ_3nx0ivkk/advanced_task_scheduler.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[6][remaining_time] was removed.  [/tmp/sched_synth_MLQ_3nx0ivkk/advanced_task_scheduler.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[6][deadline] was removed.  [/tmp/sched_synth_MLQ_3nx0ivkk/advanced_task_scheduler.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[6][arrival_time] was removed.  [/tmp/sched_synth_MLQ_3nx0ivkk/advanced_task_scheduler.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[6][wait_time] was removed.  [/tmp/sched_synth_MLQ_3nx0ivkk/advanced_task_scheduler.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[5][valid] was removed.  [/tmp/sched_synth_MLQ_3nx0ivkk/advanced_task_scheduler.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[5][remaining_time] was removed.  [/tmp/sched_synth_MLQ_3nx0ivkk/advanced_task_scheduler.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[5][deadline] was removed.  [/tmp/sched_synth_MLQ_3nx0ivkk/advanced_task_scheduler.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[5][arrival_time] was removed.  [/tmp/sched_synth_MLQ_3nx0ivkk/advanced_task_scheduler.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[5][wait_time] was removed.  [/tmp/sched_synth_MLQ_3nx0ivkk/advanced_task_scheduler.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[4][valid] was removed.  [/tmp/sched_synth_MLQ_3nx0ivkk/advanced_task_scheduler.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[4][remaining_time] was removed.  [/tmp/sched_synth_MLQ_3nx0ivkk/advanced_task_scheduler.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[4][deadline] was removed.  [/tmp/sched_synth_MLQ_3nx0ivkk/advanced_task_scheduler.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[4][arrival_time] was removed.  [/tmp/sched_synth_MLQ_3nx0ivkk/advanced_task_scheduler.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[4][wait_time] was removed.  [/tmp/sched_synth_MLQ_3nx0ivkk/advanced_task_scheduler.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[3][valid] was removed.  [/tmp/sched_synth_MLQ_3nx0ivkk/advanced_task_scheduler.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[3][remaining_time] was removed.  [/tmp/sched_synth_MLQ_3nx0ivkk/advanced_task_scheduler.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[3][deadline] was removed.  [/tmp/sched_synth_MLQ_3nx0ivkk/advanced_task_scheduler.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[3][arrival_time] was removed.  [/tmp/sched_synth_MLQ_3nx0ivkk/advanced_task_scheduler.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[3][wait_time] was removed.  [/tmp/sched_synth_MLQ_3nx0ivkk/advanced_task_scheduler.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[2][valid] was removed.  [/tmp/sched_synth_MLQ_3nx0ivkk/advanced_task_scheduler.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[2][remaining_time] was removed.  [/tmp/sched_synth_MLQ_3nx0ivkk/advanced_task_scheduler.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[2][deadline] was removed.  [/tmp/sched_synth_MLQ_3nx0ivkk/advanced_task_scheduler.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[2][arrival_time] was removed.  [/tmp/sched_synth_MLQ_3nx0ivkk/advanced_task_scheduler.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[2][wait_time] was removed.  [/tmp/sched_synth_MLQ_3nx0ivkk/advanced_task_scheduler.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[1][valid] was removed.  [/tmp/sched_synth_MLQ_3nx0ivkk/advanced_task_scheduler.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[1][remaining_time] was removed.  [/tmp/sched_synth_MLQ_3nx0ivkk/advanced_task_scheduler.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[1][deadline] was removed.  [/tmp/sched_synth_MLQ_3nx0ivkk/advanced_task_scheduler.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[1][arrival_time] was removed.  [/tmp/sched_synth_MLQ_3nx0ivkk/advanced_task_scheduler.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[1][wait_time] was removed.  [/tmp/sched_synth_MLQ_3nx0ivkk/advanced_task_scheduler.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[0][valid] was removed.  [/tmp/sched_synth_MLQ_3nx0ivkk/advanced_task_scheduler.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[0][remaining_time] was removed.  [/tmp/sched_synth_MLQ_3nx0ivkk/advanced_task_scheduler.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[0][deadline] was removed.  [/tmp/sched_synth_MLQ_3nx0ivkk/advanced_task_scheduler.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[0][arrival_time] was removed.  [/tmp/sched_synth_MLQ_3nx0ivkk/advanced_task_scheduler.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[0][wait_time] was removed.  [/tmp/sched_synth_MLQ_3nx0ivkk/advanced_task_scheduler.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element task_running_reg was removed.  [/tmp/sched_synth_MLQ_3nx0ivkk/advanced_task_scheduler.sv:82]
+WARNING: [Synth 8-6014] Unused sequential element current_task_id_reg was removed.  [/tmp/sched_synth_MLQ_3nx0ivkk/advanced_task_scheduler.sv:87]
+WARNING: [Synth 8-6014] Unused sequential element remove_idx_reg was removed.  [/tmp/sched_synth_MLQ_3nx0ivkk/advanced_task_scheduler.sv:121]
+WARNING: [Synth 8-7129] Port deadline[31] in module advanced_task_scheduler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port deadline[30] in module advanced_task_scheduler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port deadline[29] in module advanced_task_scheduler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port deadline[28] in module advanced_task_scheduler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port deadline[27] in module advanced_task_scheduler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port deadline[26] in module advanced_task_scheduler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port deadline[25] in module advanced_task_scheduler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port deadline[24] in module advanced_task_scheduler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port deadline[23] in module advanced_task_scheduler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port deadline[22] in module advanced_task_scheduler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port deadline[21] in module advanced_task_scheduler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port deadline[20] in module advanced_task_scheduler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port deadline[19] in module advanced_task_scheduler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port deadline[18] in module advanced_task_scheduler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port deadline[17] in module advanced_task_scheduler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port deadline[16] in module advanced_task_scheduler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port deadline[15] in module advanced_task_scheduler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port deadline[14] in module advanced_task_scheduler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port deadline[13] in module advanced_task_scheduler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port deadline[12] in module advanced_task_scheduler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port deadline[11] in module advanced_task_scheduler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port deadline[10] in module advanced_task_scheduler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port deadline[9] in module advanced_task_scheduler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port deadline[8] in module advanced_task_scheduler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port deadline[7] in module advanced_task_scheduler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port deadline[6] in module advanced_task_scheduler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port deadline[5] in module advanced_task_scheduler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port deadline[4] in module advanced_task_scheduler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port deadline[3] in module advanced_task_scheduler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port deadline[2] in module advanced_task_scheduler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port deadline[1] in module advanced_task_scheduler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port deadline[0] in module advanced_task_scheduler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port task_tick in module advanced_task_scheduler is either unconnected or has no load
+---------------------------------------------------------------------------------
+Finished RTL Elaboration : Time (s): cpu = 00:00:09 ; elapsed = 00:00:09 . Memory (MB): peak = 2346.250 ; gain = 586.156 ; free physical = 6349 ; free virtual = 13301
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Handling Custom Attributes
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Handling Custom Attributes : Time (s): cpu = 00:00:09 ; elapsed = 00:00:10 . Memory (MB): peak = 2358.125 ; gain = 598.031 ; free physical = 6357 ; free virtual = 13305
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished RTL Optimization Phase 1 : Time (s): cpu = 00:00:09 ; elapsed = 00:00:10 . Memory (MB): peak = 2358.125 ; gain = 598.031 ; free physical = 6357 ; free virtual = 13305
+---------------------------------------------------------------------------------
+Netlist sorting complete. Time (s): cpu = 00:00:00.03 ; elapsed = 00:00:00.03 . Memory (MB): peak = 2358.125 ; gain = 0.000 ; free physical = 6357 ; free virtual = 13305
+INFO: [Project 1-570] Preparing netlist for logic optimization
+
+Processing XDC Constraints
+Initializing timing engine
+Parsing XDC File [/tmp/sched_synth_MLQ_3nx0ivkk/c.xdc]
+Finished Parsing XDC File [/tmp/sched_synth_MLQ_3nx0ivkk/c.xdc]
+Completed Processing XDC Constraints
+
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 2461.926 ; gain = 0.000 ; free physical = 6411 ; free virtual = 13353
+INFO: [Project 1-111] Unisim Transformation Summary:
+No Unisim elements were transformed.
+
+Constraint Validation Runtime : Time (s): cpu = 00:00:00.04 ; elapsed = 00:00:00.02 . Memory (MB): peak = 2461.961 ; gain = 0.000 ; free physical = 6411 ; free virtual = 13352
+---------------------------------------------------------------------------------
+Finished Constraint Validation : Time (s): cpu = 00:00:19 ; elapsed = 00:00:19 . Memory (MB): peak = 2461.961 ; gain = 701.867 ; free physical = 6440 ; free virtual = 13388
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Loading Part and Timing Information
+---------------------------------------------------------------------------------
+Loading part: xc7a100tcsg324-1
+---------------------------------------------------------------------------------
+Finished Loading Part and Timing Information : Time (s): cpu = 00:00:19 ; elapsed = 00:00:19 . Memory (MB): peak = 2469.930 ; gain = 709.836 ; free physical = 6440 ; free virtual = 13388
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Applying 'set_property' XDC Constraints
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished applying 'set_property' XDC Constraints : Time (s): cpu = 00:00:19 ; elapsed = 00:00:19 . Memory (MB): peak = 2469.930 ; gain = 709.836 ; free physical = 6440 ; free virtual = 13387
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished RTL Optimization Phase 2 : Time (s): cpu = 00:00:21 ; elapsed = 00:00:21 . Memory (MB): peak = 2469.930 ; gain = 709.836 ; free physical = 6441 ; free virtual = 13390
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start RTL Component Statistics 
+---------------------------------------------------------------------------------
+Detailed RTL Component Info : 
++---Adders : 
+	   2 Input    6 Bit       Adders := 1     
+	   2 Input    5 Bit       Adders := 2     
++---Registers : 
+	               16 Bit    Registers := 17    
+	                8 Bit    Registers := 18    
+	                4 Bit    Registers := 17    
+	                2 Bit    Registers := 16    
+	                1 Bit    Registers := 1     
++---Muxes : 
+	   2 Input   32 Bit        Muxes := 1     
+	   2 Input   16 Bit        Muxes := 47    
+	   2 Input    8 Bit        Muxes := 47    
+	   2 Input    5 Bit        Muxes := 2     
+	   2 Input    4 Bit        Muxes := 47    
+	   2 Input    2 Bit        Muxes := 45    
+	   2 Input    1 Bit        Muxes := 65    
+---------------------------------------------------------------------------------
+Finished RTL Component Statistics 
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Part Resource Summary
+---------------------------------------------------------------------------------
+Part Resources:
+DSPs: 240 (col length:80)
+BRAMs: 270 (col length: RAMB18 80 RAMB36 40)
+---------------------------------------------------------------------------------
+Finished Part Resource Summary
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Cross Boundary and Area Optimization
+---------------------------------------------------------------------------------
+WARNING: [Synth 8-7129] Port deadline[31] in module advanced_task_scheduler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port deadline[30] in module advanced_task_scheduler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port deadline[29] in module advanced_task_scheduler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port deadline[28] in module advanced_task_scheduler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port deadline[27] in module advanced_task_scheduler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port deadline[26] in module advanced_task_scheduler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port deadline[25] in module advanced_task_scheduler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port deadline[24] in module advanced_task_scheduler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port deadline[23] in module advanced_task_scheduler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port deadline[22] in module advanced_task_scheduler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port deadline[21] in module advanced_task_scheduler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port deadline[20] in module advanced_task_scheduler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port deadline[19] in module advanced_task_scheduler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port deadline[18] in module advanced_task_scheduler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port deadline[17] in module advanced_task_scheduler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port deadline[16] in module advanced_task_scheduler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port deadline[15] in module advanced_task_scheduler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port deadline[14] in module advanced_task_scheduler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port deadline[13] in module advanced_task_scheduler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port deadline[12] in module advanced_task_scheduler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port deadline[11] in module advanced_task_scheduler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port deadline[10] in module advanced_task_scheduler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port deadline[9] in module advanced_task_scheduler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port deadline[8] in module advanced_task_scheduler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port deadline[7] in module advanced_task_scheduler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port deadline[6] in module advanced_task_scheduler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port deadline[5] in module advanced_task_scheduler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port deadline[4] in module advanced_task_scheduler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port deadline[3] in module advanced_task_scheduler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port deadline[2] in module advanced_task_scheduler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port deadline[1] in module advanced_task_scheduler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port deadline[0] in module advanced_task_scheduler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port task_tick in module advanced_task_scheduler is either unconnected or has no load
+---------------------------------------------------------------------------------
+Finished Cross Boundary and Area Optimization : Time (s): cpu = 00:00:35 ; elapsed = 00:00:36 . Memory (MB): peak = 2469.930 ; gain = 709.836 ; free physical = 6420 ; free virtual = 13369
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Applying XDC Timing Constraints
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Applying XDC Timing Constraints : Time (s): cpu = 00:00:42 ; elapsed = 00:00:43 . Memory (MB): peak = 2524.930 ; gain = 764.836 ; free physical = 6346 ; free virtual = 13295
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Timing Optimization
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Timing Optimization : Time (s): cpu = 00:01:36 ; elapsed = 00:01:37 . Memory (MB): peak = 3016.023 ; gain = 1255.930 ; free physical = 5837 ; free virtual = 12805
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Technology Mapping
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Technology Mapping : Time (s): cpu = 00:01:37 ; elapsed = 00:01:38 . Memory (MB): peak = 3016.023 ; gain = 1255.930 ; free physical = 5837 ; free virtual = 12805
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start IO Insertion
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Flattening Before IO Insertion
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Flattening Before IO Insertion
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Final Netlist Cleanup
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Final Netlist Cleanup
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished IO Insertion : Time (s): cpu = 00:01:42 ; elapsed = 00:01:43 . Memory (MB): peak = 3107.836 ; gain = 1347.742 ; free physical = 5763 ; free virtual = 12731
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Renaming Generated Instances
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Renaming Generated Instances : Time (s): cpu = 00:01:42 ; elapsed = 00:01:43 . Memory (MB): peak = 3107.836 ; gain = 1347.742 ; free physical = 5763 ; free virtual = 12731
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Rebuilding User Hierarchy
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Rebuilding User Hierarchy : Time (s): cpu = 00:01:42 ; elapsed = 00:01:43 . Memory (MB): peak = 3107.836 ; gain = 1347.742 ; free physical = 5763 ; free virtual = 12731
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Renaming Generated Ports
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Renaming Generated Ports : Time (s): cpu = 00:01:42 ; elapsed = 00:01:43 . Memory (MB): peak = 3107.836 ; gain = 1347.742 ; free physical = 5763 ; free virtual = 12731
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Handling Custom Attributes
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Handling Custom Attributes : Time (s): cpu = 00:01:42 ; elapsed = 00:01:44 . Memory (MB): peak = 3107.836 ; gain = 1347.742 ; free physical = 5758 ; free virtual = 12725
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Renaming Generated Nets
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Renaming Generated Nets : Time (s): cpu = 00:01:42 ; elapsed = 00:01:44 . Memory (MB): peak = 3107.836 ; gain = 1347.742 ; free physical = 5758 ; free virtual = 12725
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Writing Synthesis Report
+---------------------------------------------------------------------------------
+
+Report BlackBoxes: 
++-+--------------+----------+
+| |BlackBox name |Instances |
++-+--------------+----------+
++-+--------------+----------+
+
+Report Cell Usage: 
++------+-------+------+
+|      |Cell   |Count |
++------+-------+------+
+|1     |CARRY4 |    45|
+|2     |LUT1   |    10|
+|3     |LUT2   |    35|
+|4     |LUT3   |    45|
+|5     |LUT4   |    30|
+|6     |LUT5   |   522|
+|7     |LUT6   |   162|
+|8     |FDCE   |   490|
++------+-------+------+
+---------------------------------------------------------------------------------
+Finished Writing Synthesis Report : Time (s): cpu = 00:01:42 ; elapsed = 00:01:44 . Memory (MB): peak = 3107.836 ; gain = 1347.742 ; free physical = 5758 ; free virtual = 12725
+---------------------------------------------------------------------------------
+Synthesis finished with 0 errors, 0 critical warnings and 33 warnings.
+Synthesis Optimization Runtime : Time (s): cpu = 00:01:40 ; elapsed = 00:01:41 . Memory (MB): peak = 3107.836 ; gain = 1243.906 ; free physical = 5758 ; free virtual = 12725
+Synthesis Optimization Complete : Time (s): cpu = 00:01:43 ; elapsed = 00:01:44 . Memory (MB): peak = 3107.844 ; gain = 1347.742 ; free physical = 5758 ; free virtual = 12725
+INFO: [Project 1-571] Translating synthesized netlist
+Netlist sorting complete. Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00 . Memory (MB): peak = 3107.844 ; gain = 0.000 ; free physical = 5758 ; free virtual = 12725
+INFO: [Netlist 29-17] Analyzing 45 Unisim elements for replacement
+INFO: [Netlist 29-28] Unisim Transformation completed in 0 CPU seconds
+WARNING: [Netlist 29-101] Netlist 'advanced_task_scheduler' is not ideal for floorplanning, since the cellview 'advanced_task_scheduler' contains a large number of primitives.  Please consider enabling hierarchy in synthesis if you want to do floorplanning.
+INFO: [Project 1-570] Preparing netlist for logic optimization
+Parsing XDC File [/tmp/sched_synth_MLQ_3nx0ivkk/c.xdc]
+Finished Parsing XDC File [/tmp/sched_synth_MLQ_3nx0ivkk/c.xdc]
+INFO: [Opt 31-138] Pushed 0 inverter(s) to 0 load pin(s).
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 3131.848 ; gain = 0.000 ; free physical = 5911 ; free virtual = 12879
+INFO: [Project 1-111] Unisim Transformation Summary:
+No Unisim elements were transformed.
+
+Synth Design complete | Checksum: e831eb21
+INFO: [Common 17-83] Releasing license: Synthesis
+16 Infos, 151 Warnings, 0 Critical Warnings and 0 Errors encountered.
+synth_design completed successfully
+synth_design: Time (s): cpu = 00:01:55 ; elapsed = 00:01:52 . Memory (MB): peak = 3131.883 ; gain = 1516.875 ; free physical = 5917 ; free virtual = 12889
+INFO: [Common 17-2834] synth_design peak Physical Memory [PSS] (MB): overall = 2639.720; main = 2526.764; forked = 343.322
+INFO: [Common 17-2834] synth_design peak Virtual Memory [VSS] (MB): overall = 4032.242; main = 3131.852; forked = 994.215
+# opt_design
+Command: opt_design
+Attempting to get a license for feature 'Implementation' and/or device 'xc7a100t'
+INFO: [Common 17-349] Got license for feature 'Implementation' and/or device 'xc7a100t'
+Running DRC as a precondition to command opt_design
+
+Starting DRC Task
+INFO: [DRC 23-27] Running DRC with 8 threads
+WARNING: [DRC 23-814] Not all possible (connectivity based) DRCs may have been run because this design is seen as Out of Context.
+INFO: [Project 1-461] DRC finished with 0 Errors
+INFO: [Project 1-462] Please refer to the DRC report (report_drc) for more information.
+
+Time (s): cpu = 00:00:00.65 ; elapsed = 00:00:00.45 . Memory (MB): peak = 3131.883 ; gain = 0.000 ; free physical = 5923 ; free virtual = 12895
+
+Starting Cache Timing Information Task
+INFO: [Timing 38-35] Done setting XDC timing constraints.
+Ending Cache Timing Information Task | Checksum: 383723d95
+
+Time (s): cpu = 00:00:06 ; elapsed = 00:00:06 . Memory (MB): peak = 3131.883 ; gain = 0.000 ; free physical = 5918 ; free virtual = 12890
+
+Starting Logic Optimization Task
+
+Phase 1 Initialization
+
+Phase 1.1 Core Generation And Design Setup
+Phase 1.1 Core Generation And Design Setup | Checksum: 383723d95
+
+Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 3131.883 ; gain = 0.000 ; free physical = 5918 ; free virtual = 12888
+
+Phase 1.2 Setup Constraints And Sort Netlist
+Phase 1.2 Setup Constraints And Sort Netlist | Checksum: 383723d95
+
+Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 3131.883 ; gain = 0.000 ; free physical = 5918 ; free virtual = 12888
+Phase 1 Initialization | Checksum: 383723d95
+
+Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00 . Memory (MB): peak = 3131.883 ; gain = 0.000 ; free physical = 5918 ; free virtual = 12888
+
+Phase 2 Timer Update And Timing Data Collection
+
+Phase 2.1 Detect if minReqCache needed
+Phase 2.1 Detect if minReqCache needed | Checksum: 383723d95
+
+Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00.01 . Memory (MB): peak = 3131.883 ; gain = 0.000 ; free physical = 5918 ; free virtual = 12888
+
+Phase 2.2 Timer Update
+Phase 2.2 Timer Update | Checksum: 383723d95
+
+Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00.01 . Memory (MB): peak = 3131.883 ; gain = 0.000 ; free physical = 5918 ; free virtual = 12888
+Phase 2 Timer Update And Timing Data Collection | Checksum: 383723d95
+
+Time (s): cpu = 00:00:00.02 ; elapsed = 00:00:00.01 . Memory (MB): peak = 3131.883 ; gain = 0.000 ; free physical = 5918 ; free virtual = 12888
+
+Phase 3 Retarget
+INFO: [Opt 31-1851] Number of loadless carry chains removed were: 0
+INFO: [Opt 31-1834] Total Chains To Be Transformed Were: 0 AND Number of Transformed insts Created are: 0
+INFO: [Opt 31-1566] Pulled 1 inverters resulting in an inversion of 148 pins
+INFO: [Opt 31-138] Pushed 0 inverter(s) to 0 load pin(s).
+INFO: [Opt 31-49] Retargeted 0 cell(s).
+Phase 3 Retarget | Checksum: 243c9b698
+
+Time (s): cpu = 00:00:00.07 ; elapsed = 00:00:00.07 . Memory (MB): peak = 3131.883 ; gain = 0.000 ; free physical = 5918 ; free virtual = 12888
+Retarget | Checksum: 243c9b698
+INFO: [Opt 31-389] Phase Retarget created 0 cells and removed 8 cells
+
+Phase 4 Constant propagation
+INFO: [Opt 31-138] Pushed 0 inverter(s) to 0 load pin(s).
+Phase 4 Constant propagation | Checksum: 21b1126d2
+
+Time (s): cpu = 00:00:00.08 ; elapsed = 00:00:00.08 . Memory (MB): peak = 3131.883 ; gain = 0.000 ; free physical = 5918 ; free virtual = 12888
+Constant propagation | Checksum: 21b1126d2
+INFO: [Opt 31-389] Phase Constant propagation created 0 cells and removed 0 cells
+
+Phase 5 Sweep
+INFO: [Constraints 18-11670] Building netlist checker database with flags, 0x8
+Done building netlist checker database: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 3131.883 ; gain = 0.000 ; free physical = 5918 ; free virtual = 12888
+Phase 5 Sweep | Checksum: 22ce03359
+
+Time (s): cpu = 00:00:00.09 ; elapsed = 00:00:00.09 . Memory (MB): peak = 3131.883 ; gain = 0.000 ; free physical = 5918 ; free virtual = 12888
+Sweep | Checksum: 22ce03359
+INFO: [Opt 31-389] Phase Sweep created 0 cells and removed 0 cells
+
+Phase 6 BUFG optimization
+Phase 6 BUFG optimization | Checksum: 22ce03359
+
+Time (s): cpu = 00:00:00.1 ; elapsed = 00:00:00.11 . Memory (MB): peak = 3163.863 ; gain = 31.980 ; free physical = 5918 ; free virtual = 12888
+BUFG optimization | Checksum: 22ce03359
+INFO: [Opt 31-662] Phase BUFG optimization created 0 cells of which 0 are BUFGs and removed 0 cells.
+
+Phase 7 Shift Register Optimization
+INFO: [Opt 31-1064] SRL Remap converted 0 SRLs to 0 registers and converted 0 registers of register chains to 0 SRLs
+Phase 7 Shift Register Optimization | Checksum: 22ce03359
+
+Time (s): cpu = 00:00:00.1 ; elapsed = 00:00:00.11 . Memory (MB): peak = 3163.863 ; gain = 31.980 ; free physical = 5918 ; free virtual = 12888
+Shift Register Optimization | Checksum: 22ce03359
+INFO: [Opt 31-389] Phase Shift Register Optimization created 0 cells and removed 0 cells
+
+Phase 8 Post Processing Netlist
+Phase 8 Post Processing Netlist | Checksum: 22ce03359
+
+Time (s): cpu = 00:00:00.11 ; elapsed = 00:00:00.11 . Memory (MB): peak = 3163.863 ; gain = 31.980 ; free physical = 5918 ; free virtual = 12888
+Post Processing Netlist | Checksum: 22ce03359
+INFO: [Opt 31-389] Phase Post Processing Netlist created 0 cells and removed 0 cells
+
+Phase 9 Finalization
+
+Phase 9.1 Finalizing Design Cores and Updating Shapes
+Phase 9.1 Finalizing Design Cores and Updating Shapes | Checksum: 3472b4a11
+
+Time (s): cpu = 00:00:00.13 ; elapsed = 00:00:00.14 . Memory (MB): peak = 3163.863 ; gain = 31.980 ; free physical = 5918 ; free virtual = 12888
+
+Phase 9.2 Verifying Netlist Connectivity
+
+Starting Connectivity Check Task
+
+Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00 . Memory (MB): peak = 3163.863 ; gain = 0.000 ; free physical = 5918 ; free virtual = 12888
+Phase 9.2 Verifying Netlist Connectivity | Checksum: 3472b4a11
+
+Time (s): cpu = 00:00:00.14 ; elapsed = 00:00:00.14 . Memory (MB): peak = 3163.863 ; gain = 31.980 ; free physical = 5918 ; free virtual = 12888
+Phase 9 Finalization | Checksum: 3472b4a11
+
+Time (s): cpu = 00:00:00.14 ; elapsed = 00:00:00.14 . Memory (MB): peak = 3163.863 ; gain = 31.980 ; free physical = 5918 ; free virtual = 12888
+Opt_design Change Summary
+=========================
+
+
+-------------------------------------------------------------------------------------------------------------------------
+|  Phase                        |  #Cells created  |  #Cells Removed  |  #Constrained objects preventing optimizations  |
+-------------------------------------------------------------------------------------------------------------------------
+|  Retarget                     |               0  |               8  |                                              0  |
+|  Constant propagation         |               0  |               0  |                                              0  |
+|  Sweep                        |               0  |               0  |                                              0  |
+|  BUFG optimization            |               0  |               0  |                                              0  |
+|  Shift Register Optimization  |               0  |               0  |                                              0  |
+|  Post Processing Netlist      |               0  |               0  |                                              0  |
+-------------------------------------------------------------------------------------------------------------------------
+
+
+Ending Logic Optimization Task | Checksum: 3472b4a11
+
+Time (s): cpu = 00:00:00.14 ; elapsed = 00:00:00.15 . Memory (MB): peak = 3163.863 ; gain = 31.980 ; free physical = 5918 ; free virtual = 12888
+
+Starting Power Optimization Task
+INFO: [Pwropt 34-132] Skipping clock gating for clocks with a period < 2.00 ns.
+Ending Power Optimization Task | Checksum: 3472b4a11
+
+Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00.01 . Memory (MB): peak = 3163.863 ; gain = 0.000 ; free physical = 5916 ; free virtual = 12886
+
+Starting Final Cleanup Task
+Ending Final Cleanup Task | Checksum: 3472b4a11
+
+Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 3163.863 ; gain = 0.000 ; free physical = 5916 ; free virtual = 12886
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 3163.863 ; gain = 0.000 ; free physical = 5916 ; free virtual = 12886
+INFO: [Common 17-83] Releasing license: Implementation
+21 Infos, 1 Warnings, 0 Critical Warnings and 0 Errors encountered.
+opt_design completed successfully
+opt_design: Time (s): cpu = 00:00:10 ; elapsed = 00:00:10 . Memory (MB): peak = 3163.863 ; gain = 31.980 ; free physical = 5916 ; free virtual = 12886
+# report_utilization    -file util.rpt
+# report_power          -file power.rpt
+Command: report_power -file power.rpt
+INFO: [Timing 38-35] Done setting XDC timing constraints.
+Running Vector-less Activity Propagation...
+WARNING: [Timing 38-242] The property HD.CLK_SRC of clock port "clk" is not set. In out-of-context mode, this prevents timing estimation for clock delay/skew
+Resolution: Set the HD.CLK_SRC property of the out-of-context port to the location of the clock buffer instance in the top-level design
+
+Finished Running Vector-less Activity Propagation
+1 Infos, 1 Warnings, 0 Critical Warnings and 0 Errors encountered.
+report_power completed successfully
+# report_timing_summary -file timing.rpt
+INFO: [Timing 38-91] UpdateTimingParams: Speed grade: -1, Delay Type: min_max.
+INFO: [Timing 38-191] Multithreading enabled for timing update using a maximum of 4 CPUs
+# puts "SCHED_PROBE_OK"
+SCHED_PROBE_OK
+# exit 0
+INFO: [Common 17-206] Exiting Vivado at Tue Jul 28 00:42:09 2026...

@@ -1,0 +1,496 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
+---------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2025.2 (lin64) Build 6299465 Fri Nov 14 12:34:56 MST 2025
+| Date         : Tue Jul 28 00:39:26 2026
+| Host         : dilshanpathegamage-Aspire-E5-575G running 64-bit Ubuntu 24.04.3 LTS
+| Command      : report_timing_summary -file timing.rpt
+| Design       : advanced_task_scheduler
+| Device       : 7a100t-csg324
+| Speed File   : -1  PRODUCTION 1.23 2018-06-13
+| Design State : Optimized
+---------------------------------------------------------------------------------------------------------------------------------------------
+
+Timing Summary Report
+
+------------------------------------------------------------------------------------------------
+| Timer Settings
+| --------------
+------------------------------------------------------------------------------------------------
+
+  Enable Multi Corner Analysis               :  Yes
+  Enable Pessimism Removal                   :  Yes
+  Pessimism Removal Resolution               :  Nearest Common Node
+  Enable Input Delay Default Clock           :  No
+  Enable Preset / Clear Arcs                 :  No
+  Disable Flight Delays                      :  No
+  Ignore I/O Paths                           :  No
+  Timing Early Launch at Borrowing Latches   :  No
+  Borrow Time for Max Delay Exceptions       :  Yes
+  Merge Timing Exceptions                    :  Yes
+  Inter-SLR Compensation                     :  Conservative
+
+  Corner  Analyze    Analyze    
+  Name    Max Paths  Min Paths  
+  ------  ---------  ---------  
+  Slow    Yes        Yes        
+  Fast    Yes        Yes        
+
+
+------------------------------------------------------------------------------------------------
+| Report Methodology
+| ------------------
+------------------------------------------------------------------------------------------------
+
+No report available as report_methodology has not been run prior. Run report_methodology on the current design for the summary of methodology violations.
+
+
+
+check_timing report
+
+Table of Contents
+-----------------
+1. checking no_clock (0)
+2. checking constant_clock (0)
+3. checking pulse_width_clock (0)
+4. checking unconstrained_internal_endpoints (0)
+5. checking no_input_delay (32)
+6. checking no_output_delay (37)
+7. checking multiple_clock (0)
+8. checking generated_clocks (0)
+9. checking loops (0)
+10. checking partial_input_delay (0)
+11. checking partial_output_delay (0)
+12. checking latch_loops (0)
+
+1. checking no_clock (0)
+------------------------
+ There are 0 register/latch pins with no clock.
+
+
+2. checking constant_clock (0)
+------------------------------
+ There are 0 register/latch pins with constant_clock.
+
+
+3. checking pulse_width_clock (0)
+---------------------------------
+ There are 0 register/latch pins which need pulse_width check
+
+
+4. checking unconstrained_internal_endpoints (0)
+------------------------------------------------
+ There are 0 pins that are not constrained for maximum delay.
+
+ There are 0 pins that are not constrained for maximum delay due to constant clock.
+
+
+5. checking no_input_delay (32)
+-------------------------------
+ There are 32 input ports with no input delay specified. (HIGH)
+
+ There are 0 input ports with no input delay but user has a false path constraint.
+
+
+6. checking no_output_delay (37)
+--------------------------------
+ There are 37 ports with no output delay specified. (HIGH)
+
+ There are 0 ports with no output delay but user has a false path constraint
+
+ There are 0 ports with no output delay but with a timing clock defined on it or propagating through it
+
+
+7. checking multiple_clock (0)
+------------------------------
+ There are 0 register/latch pins with multiple clocks.
+
+
+8. checking generated_clocks (0)
+--------------------------------
+ There are 0 generated clocks that are not connected to a clock source.
+
+
+9. checking loops (0)
+---------------------
+ There are 0 combinational loops in the design.
+
+
+10. checking partial_input_delay (0)
+------------------------------------
+ There are 0 input ports with partial input delay specified.
+
+
+11. checking partial_output_delay (0)
+-------------------------------------
+ There are 0 ports with partial output delay specified.
+
+
+12. checking latch_loops (0)
+----------------------------
+ There are 0 combinational latch loops in the design through latch input
+
+
+
+------------------------------------------------------------------------------------------------
+| Design Timing Summary
+| ---------------------
+------------------------------------------------------------------------------------------------
+
+    WNS(ns)      TNS(ns)  TNS Failing Endpoints  TNS Total Endpoints      WHS(ns)      THS(ns)  THS Failing Endpoints  THS Total Endpoints     WPWS(ns)     TPWS(ns)  TPWS Failing Endpoints  TPWS Total Endpoints  
+    -------      -------  ---------------------  -------------------      -------      -------  ---------------------  -------------------     --------     --------  ----------------------  --------------------  
+    -37.416    -1047.649                     28                  971        0.297        0.000                      0                  971        4.500        0.000                       0                   490  
+
+
+Timing constraints are not met.
+
+
+------------------------------------------------------------------------------------------------
+| Clock Summary
+| -------------
+------------------------------------------------------------------------------------------------
+
+Clock  Waveform(ns)       Period(ns)      Frequency(MHz)
+-----  ------------       ----------      --------------
+clk    {0.000 5.000}      10.000          100.000         
+
+
+------------------------------------------------------------------------------------------------
+| Intra Clock Table
+| -----------------
+------------------------------------------------------------------------------------------------
+
+Clock             WNS(ns)      TNS(ns)  TNS Failing Endpoints  TNS Total Endpoints      WHS(ns)      THS(ns)  THS Failing Endpoints  THS Total Endpoints     WPWS(ns)     TPWS(ns)  TPWS Failing Endpoints  TPWS Total Endpoints  
+-----             -------      -------  ---------------------  -------------------      -------      -------  ---------------------  -------------------     --------     --------  ----------------------  --------------------  
+clk               -37.416    -1047.649                     28                  971        0.297        0.000                      0                  971        4.500        0.000                       0                   490  
+
+
+------------------------------------------------------------------------------------------------
+| Inter Clock Table
+| -----------------
+------------------------------------------------------------------------------------------------
+
+From Clock    To Clock          WNS(ns)      TNS(ns)  TNS Failing Endpoints  TNS Total Endpoints      WHS(ns)      THS(ns)  THS Failing Endpoints  THS Total Endpoints  
+----------    --------          -------      -------  ---------------------  -------------------      -------      -------  ---------------------  -------------------  
+
+
+------------------------------------------------------------------------------------------------
+| Other Path Groups Table
+| -----------------------
+------------------------------------------------------------------------------------------------
+
+Path Group    From Clock    To Clock          WNS(ns)      TNS(ns)  TNS Failing Endpoints  TNS Total Endpoints      WHS(ns)      THS(ns)  THS Failing Endpoints  THS Total Endpoints  
+----------    ----------    --------          -------      -------  ---------------------  -------------------      -------      -------  ---------------------  -------------------  
+
+
+------------------------------------------------------------------------------------------------
+| Timing Details
+| --------------
+------------------------------------------------------------------------------------------------
+
+
+---------------------------------------------------------------------------------------------------
+From Clock:  clk
+  To Clock:  clk
+
+Setup :           28  Failing Endpoints,  Worst Slack      -37.416ns,  Total Violation    -1047.649ns
+Hold  :            0  Failing Endpoints,  Worst Slack        0.297ns,  Total Violation        0.000ns
+PW    :            0  Failing Endpoints,  Worst Slack        4.500ns,  Total Violation        0.000ns
+---------------------------------------------------------------------------------------------------
+
+
+Max Delay Paths
+--------------------------------------------------------------------------------------
+Slack (VIOLATED) :        -37.416ns  (required time - arrival time)
+  Source:                 task_queue_reg[1][remaining_time][0]/C
+                            (rising edge-triggered cell FDCE clocked by clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            scheduled_burst_time_reg[0]/D
+                            (rising edge-triggered cell FDCE clocked by clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (clk rise@10.000ns - clk rise@0.000ns)
+  Data Path Delay:        47.445ns  (logic 16.619ns (35.028%)  route 30.826ns (64.972%))
+  Logic Levels:           77  (CARRY4=30 LUT3=2 LUT4=8 LUT5=14 LUT6=21 MUXF7=1 MUXF8=1)
+  Clock Path Skew:        -0.049ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    0.924ns = ( 10.924 - 10.000 ) 
+    Source Clock Delay      (SCD):    0.973ns
+    Clock Pessimism Removal (CPR):    0.000ns
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock clk rise edge)        0.000     0.000 r  
+                                                      0.000     0.000 r  clk (IN)
+                         net (fo=489, unset)          0.973     0.973    clk
+                         FDCE                                         r  task_queue_reg[1][remaining_time][0]/C
+  -------------------------------------------------------------------    -------------------
+                         FDCE (Prop_fdce_C_Q)         0.478     1.451 f  task_queue_reg[1][remaining_time][0]/Q
+                         net (fo=11, unplaced)        0.809     2.260    task_queue_reg[1][remaining_time_n_0_][0]
+                         LUT4 (Prop_lut4_I1_O)        0.319     2.579 r  scheduled_task_id[7]_i_618/O
+                         net (fo=1, unplaced)         0.000     2.579    scheduled_task_id[7]_i_618_n_0
+                         CARRY4 (Prop_carry4_DI[0]_CO[3])
+                                                      0.576     3.155 r  scheduled_task_id_reg[7]_i_558/CO[3]
+                         net (fo=1, unplaced)         0.000     3.155    scheduled_task_id_reg[7]_i_558_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117     3.272 r  scheduled_task_id_reg[7]_i_433/CO[3]
+                         net (fo=33, unplaced)        0.820     4.092    min_time2
+                         LUT5 (Prop_lut5_I4_O)        0.124     4.216 r  scheduled_task_id[7]_i_237/O
+                         net (fo=33, unplaced)        0.491     4.707    min_time1
+                         LUT6 (Prop_lut6_I0_O)        0.124     4.831 r  scheduled_task_id[7]_i_552/O
+                         net (fo=1, unplaced)         0.469     5.300    scheduled_task_id[7]_i_552_n_0
+                         CARRY4 (Prop_carry4_DI[1]_CO[3])
+                                                      0.520     5.820 r  scheduled_task_id_reg[7]_i_424/CO[3]
+                         net (fo=1, unplaced)         0.000     5.820    scheduled_task_id_reg[7]_i_424_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117     5.937 r  scheduled_task_id_reg[7]_i_235/CO[3]
+                         net (fo=33, unplaced)        0.820     6.757    min_time22_in
+                         LUT6 (Prop_lut6_I5_O)        0.124     6.881 r  scheduled_task_id[7]_i_84/O
+                         net (fo=34, unplaced)        0.522     7.403    min_time14_out
+                         LUT5 (Prop_lut5_I4_O)        0.124     7.527 r  scheduled_task_id[7]_i_536/O
+                         net (fo=4, unplaced)         0.443     7.970    scheduled_task_id[7]_i_536_n_0
+                         LUT4 (Prop_lut4_I0_O)        0.150     8.120 r  scheduled_task_id[7]_i_545/O
+                         net (fo=1, unplaced)         0.000     8.120    scheduled_task_id[7]_i_545_n_0
+                         CARRY4 (Prop_carry4_DI[0]_CO[3])
+                                                      0.576     8.696 r  scheduled_task_id_reg[7]_i_415/CO[3]
+                         net (fo=1, unplaced)         0.000     8.696    scheduled_task_id_reg[7]_i_415_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117     8.813 r  scheduled_task_id_reg[7]_i_234/CO[3]
+                         net (fo=1, unplaced)         0.748     9.561    min_time25_in
+                         LUT4 (Prop_lut4_I3_O)        0.124     9.685 r  scheduled_task_id[7]_i_83/O
+                         net (fo=58, unplaced)        0.535    10.220    min_time17_out
+                         LUT5 (Prop_lut5_I4_O)        0.124    10.344 r  scheduled_task_id[7]_i_535/O
+                         net (fo=3, unplaced)         0.467    10.811    scheduled_task_id[7]_i_535_n_0
+                         LUT6 (Prop_lut6_I5_O)        0.124    10.935 r  scheduled_task_id[7]_i_401/O
+                         net (fo=1, unplaced)         0.469    11.404    scheduled_task_id[7]_i_401_n_0
+                         CARRY4 (Prop_carry4_DI[1]_CO[3])
+                                                      0.520    11.924 r  scheduled_task_id_reg[7]_i_225/CO[3]
+                         net (fo=1, unplaced)         0.000    11.924    scheduled_task_id_reg[7]_i_225_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    12.041 r  scheduled_task_id_reg[7]_i_81/CO[3]
+                         net (fo=1, unplaced)         0.748    12.789    min_time28_in
+                         LUT6 (Prop_lut6_I5_O)        0.124    12.913 r  scheduled_task_id[7]_i_27/O
+                         net (fo=59, unplaced)        0.535    13.448    min_time110_out
+                         LUT6 (Prop_lut6_I5_O)        0.124    13.572 r  scheduled_task_id[7]_i_507/O
+                         net (fo=3, unplaced)         0.467    14.039    scheduled_task_id[7]_i_507_n_0
+                         LUT6 (Prop_lut6_I5_O)        0.124    14.163 r  scheduled_task_id[7]_i_381/O
+                         net (fo=1, unplaced)         0.469    14.632    scheduled_task_id[7]_i_381_n_0
+                         CARRY4 (Prop_carry4_DI[1]_CO[3])
+                                                      0.520    15.152 r  scheduled_task_id_reg[7]_i_216/CO[3]
+                         net (fo=1, unplaced)         0.000    15.152    scheduled_task_id_reg[7]_i_216_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    15.269 r  scheduled_task_id_reg[7]_i_80/CO[3]
+                         net (fo=2, unplaced)         0.759    16.028    min_time211_in
+                         LUT5 (Prop_lut5_I4_O)        0.124    16.152 r  scheduled_task_id[7]_i_26/O
+                         net (fo=50, unplaced)        0.531    16.683    min_time113_out
+                         LUT5 (Prop_lut5_I4_O)        0.124    16.807 r  scheduled_task_id[7]_i_476/O
+                         net (fo=5, unplaced)         0.447    17.254    scheduled_task_id[7]_i_476_n_0
+                         LUT4 (Prop_lut4_I0_O)        0.150    17.404 r  scheduled_task_id[7]_i_362/O
+                         net (fo=1, unplaced)         0.000    17.404    scheduled_task_id[7]_i_362_n_0
+                         CARRY4 (Prop_carry4_DI[0]_CO[3])
+                                                      0.576    17.980 r  scheduled_task_id_reg[7]_i_198/CO[3]
+                         net (fo=1, unplaced)         0.000    17.980    scheduled_task_id_reg[7]_i_198_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    18.097 r  scheduled_task_id_reg[7]_i_78/CO[3]
+                         net (fo=1, unplaced)         0.748    18.845    min_time214_in
+                         LUT6 (Prop_lut6_I5_O)        0.124    18.969 r  scheduled_task_id[7]_i_24/O
+                         net (fo=77, unplaced)        0.542    19.511    min_time116_out
+                         LUT5 (Prop_lut5_I4_O)        0.124    19.635 r  scheduled_task_id[7]_i_475/O
+                         net (fo=2, unplaced)         0.460    20.095    scheduled_task_id[7]_i_475_n_0
+                         LUT6 (Prop_lut6_I5_O)        0.124    20.219 r  scheduled_task_id[7]_i_369/O
+                         net (fo=1, unplaced)         0.469    20.688    scheduled_task_id[7]_i_369_n_0
+                         CARRY4 (Prop_carry4_DI[1]_CO[3])
+                                                      0.520    21.208 r  scheduled_task_id_reg[7]_i_207/CO[3]
+                         net (fo=1, unplaced)         0.000    21.208    scheduled_task_id_reg[7]_i_207_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    21.325 r  scheduled_task_id_reg[7]_i_79/CO[3]
+                         net (fo=18, unplaced)        0.805    22.130    min_time217_in
+                         LUT3 (Prop_lut3_I0_O)        0.124    22.254 r  scheduled_task_id[7]_i_25/O
+                         net (fo=52, unplaced)        0.532    22.786    scheduled_task_id[7]_i_25_n_0
+                         LUT5 (Prop_lut5_I4_O)        0.124    22.910 r  scheduled_task_id[7]_i_309/O
+                         net (fo=4, unplaced)         0.443    23.353    scheduled_task_id[7]_i_309_n_0
+                         LUT4 (Prop_lut4_I0_O)        0.150    23.503 r  scheduled_task_id[7]_i_153/O
+                         net (fo=1, unplaced)         0.000    23.503    scheduled_task_id[7]_i_153_n_0
+                         CARRY4 (Prop_carry4_DI[0]_CO[3])
+                                                      0.576    24.079 r  scheduled_task_id_reg[7]_i_51/CO[3]
+                         net (fo=1, unplaced)         0.000    24.079    scheduled_task_id_reg[7]_i_51_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    24.196 r  scheduled_task_id_reg[7]_i_20/CO[3]
+                         net (fo=1, unplaced)         0.748    24.944    min_time220_in
+                         LUT6 (Prop_lut6_I5_O)        0.124    25.068 r  scheduled_task_id[7]_i_7/O
+                         net (fo=60, unplaced)        0.536    25.604    min_time122_out
+                         LUT5 (Prop_lut5_I4_O)        0.124    25.728 r  scheduled_task_id[7]_i_308/O
+                         net (fo=3, unplaced)         0.467    26.195    scheduled_task_id[7]_i_308_n_0
+                         LUT6 (Prop_lut6_I5_O)        0.124    26.319 r  scheduled_task_id[7]_i_136/O
+                         net (fo=1, unplaced)         0.469    26.788    scheduled_task_id[7]_i_136_n_0
+                         CARRY4 (Prop_carry4_DI[1]_CO[3])
+                                                      0.520    27.308 r  scheduled_task_id_reg[7]_i_42/CO[3]
+                         net (fo=1, unplaced)         0.000    27.308    scheduled_task_id_reg[7]_i_42_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    27.425 r  scheduled_task_id_reg[7]_i_19/CO[3]
+                         net (fo=1, unplaced)         0.748    28.173    min_time223_in
+                         LUT5 (Prop_lut5_I4_O)        0.124    28.297 r  scheduled_task_id[7]_i_6/O
+                         net (fo=60, unplaced)        0.536    28.833    min_time125_out
+                         LUT6 (Prop_lut6_I5_O)        0.124    28.957 r  scheduled_task_id[7]_i_340/O
+                         net (fo=3, unplaced)         0.467    29.424    scheduled_task_id[7]_i_340_n_0
+                         LUT6 (Prop_lut6_I5_O)        0.124    29.548 r  scheduled_task_id[7]_i_180/O
+                         net (fo=1, unplaced)         0.469    30.017    scheduled_task_id[7]_i_180_n_0
+                         CARRY4 (Prop_carry4_DI[1]_CO[3])
+                                                      0.520    30.537 r  scheduled_task_id_reg[7]_i_69/CO[3]
+                         net (fo=1, unplaced)         0.000    30.537    scheduled_task_id_reg[7]_i_69_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    30.654 r  scheduled_task_id_reg[7]_i_22/CO[3]
+                         net (fo=1, unplaced)         0.748    31.402    min_time226_in
+                         LUT6 (Prop_lut6_I5_O)        0.124    31.526 r  scheduled_task_id[7]_i_9/O
+                         net (fo=46, unplaced)        0.529    32.055    min_time128_out
+                         LUT5 (Prop_lut5_I4_O)        0.124    32.179 r  scheduled_task_id[7]_i_333/O
+                         net (fo=5, unplaced)         0.447    32.626    scheduled_task_id[7]_i_333_n_0
+                         LUT4 (Prop_lut4_I0_O)        0.150    32.776 r  scheduled_task_id[7]_i_165/O
+                         net (fo=1, unplaced)         0.000    32.776    scheduled_task_id[7]_i_165_n_0
+                         CARRY4 (Prop_carry4_DI[0]_CO[3])
+                                                      0.576    33.352 r  scheduled_task_id_reg[7]_i_60/CO[3]
+                         net (fo=1, unplaced)         0.000    33.352    scheduled_task_id_reg[7]_i_60_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    33.469 r  scheduled_task_id_reg[7]_i_21/CO[3]
+                         net (fo=2, unplaced)         0.759    34.228    min_time229_in
+                         LUT4 (Prop_lut4_I3_O)        0.124    34.352 r  scheduled_task_id[7]_i_8/O
+                         net (fo=68, unplaced)        0.539    34.891    min_time131_out
+                         LUT5 (Prop_lut5_I4_O)        0.124    35.015 r  scheduled_task_id[7]_i_460/O
+                         net (fo=2, unplaced)         0.460    35.475    scheduled_task_id[7]_i_460_n_0
+                         LUT6 (Prop_lut6_I5_O)        0.124    35.599 r  scheduled_task_id[7]_i_277/O
+                         net (fo=1, unplaced)         0.469    36.068    scheduled_task_id[7]_i_277_n_0
+                         CARRY4 (Prop_carry4_DI[1]_CO[3])
+                                                      0.520    36.588 r  scheduled_task_id_reg[7]_i_116/CO[3]
+                         net (fo=1, unplaced)         0.000    36.588    scheduled_task_id_reg[7]_i_116_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    36.705 r  scheduled_task_id_reg[7]_i_40/CO[3]
+                         net (fo=1, unplaced)         0.748    37.453    min_time232_in
+                         LUT6 (Prop_lut6_I5_O)        0.124    37.577 r  scheduled_task_id[7]_i_17/O
+                         net (fo=52, unplaced)        0.532    38.109    min_time134_out
+                         LUT5 (Prop_lut5_I4_O)        0.124    38.233 r  scheduled_task_id[7]_i_456/O
+                         net (fo=4, unplaced)         0.443    38.676    scheduled_task_id[7]_i_456_n_0
+                         LUT4 (Prop_lut4_I0_O)        0.150    38.826 r  scheduled_task_id[7]_i_294/O
+                         net (fo=1, unplaced)         0.000    38.826    scheduled_task_id[7]_i_294_n_0
+                         CARRY4 (Prop_carry4_DI[0]_CO[3])
+                                                      0.576    39.402 r  scheduled_task_id_reg[7]_i_125/CO[3]
+                         net (fo=1, unplaced)         0.000    39.402    scheduled_task_id_reg[7]_i_125_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    39.519 r  scheduled_task_id_reg[7]_i_41/CO[3]
+                         net (fo=1, unplaced)         0.748    40.267    min_time235_in
+                         LUT5 (Prop_lut5_I4_O)        0.124    40.391 r  scheduled_task_id[7]_i_18/O
+                         net (fo=43, unplaced)        0.528    40.919    min_time137_out
+                         LUT5 (Prop_lut5_I4_O)        0.124    41.043 r  scheduled_task_id[7]_i_455/O
+                         net (fo=2, unplaced)         0.460    41.503    scheduled_task_id[7]_i_455_n_0
+                         LUT6 (Prop_lut6_I5_O)        0.124    41.627 r  scheduled_task_id[7]_i_261/O
+                         net (fo=1, unplaced)         0.469    42.096    scheduled_task_id[7]_i_261_n_0
+                         CARRY4 (Prop_carry4_DI[1]_CO[3])
+                                                      0.520    42.616 r  scheduled_task_id_reg[7]_i_107/CO[3]
+                         net (fo=1, unplaced)         0.000    42.616    scheduled_task_id_reg[7]_i_107_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    42.733 r  scheduled_task_id_reg[7]_i_39/CO[3]
+                         net (fo=1, unplaced)         0.748    43.481    min_time238_in
+                         LUT6 (Prop_lut6_I5_O)        0.124    43.605 r  scheduled_task_id[7]_i_16/O
+                         net (fo=27, unplaced)        0.516    44.121    min_time140_out
+                         LUT6 (Prop_lut6_I5_O)        0.124    44.245 r  scheduled_task_id[7]_i_244/O
+                         net (fo=2, unplaced)         0.460    44.705    scheduled_task_id[7]_i_244_n_0
+                         LUT6 (Prop_lut6_I5_O)        0.124    44.829 r  scheduled_task_id[7]_i_93/O
+                         net (fo=1, unplaced)         0.469    45.298    scheduled_task_id[7]_i_93_n_0
+                         CARRY4 (Prop_carry4_DI[1]_CO[3])
+                                                      0.520    45.818 r  scheduled_task_id_reg[7]_i_30/CO[3]
+                         net (fo=1, unplaced)         0.000    45.818    scheduled_task_id_reg[7]_i_30_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    45.935 r  scheduled_task_id_reg[7]_i_15/CO[3]
+                         net (fo=3, unplaced)         0.766    46.701    shortest_idx2
+                         LUT3 (Prop_lut3_I1_O)        0.124    46.825 r  scheduled_task_id[7]_i_87/O
+                         net (fo=1, unplaced)         0.449    47.274    scheduled_task_id[7]_i_87_n_0
+                         LUT6 (Prop_lut6_I5_O)        0.124    47.398 r  scheduled_task_id[7]_i_28/O
+                         net (fo=112, unplaced)       0.551    47.949    scheduled_task_id[7]_i_28_n_0
+                         LUT6 (Prop_lut6_I2_O)        0.124    48.073 r  scheduled_burst_time[0]_i_5/O
+                         net (fo=1, unplaced)         0.000    48.073    scheduled_burst_time[0]_i_5_n_0
+                         MUXF7 (Prop_muxf7_I1_O)      0.247    48.320 r  scheduled_burst_time_reg[0]_i_2/O
+                         net (fo=1, unplaced)         0.000    48.320    scheduled_burst_time_reg[0]_i_2_n_0
+                         MUXF8 (Prop_muxf8_I0_O)      0.098    48.418 r  scheduled_burst_time_reg[0]_i_1/O
+                         net (fo=1, unplaced)         0.000    48.418    scheduled_burst_time_reg[0]_i_1_n_0
+                         FDCE                                         r  scheduled_burst_time_reg[0]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock clk rise edge)       10.000    10.000 r  
+                                                      0.000    10.000 r  clk (IN)
+                         net (fo=489, unset)          0.924    10.924    clk
+                         FDCE                                         r  scheduled_burst_time_reg[0]/C
+                         clock pessimism              0.000    10.924    
+                         clock uncertainty           -0.035    10.889    
+                         FDCE (Setup_fdce_C_D)        0.113    11.002    scheduled_burst_time_reg[0]
+  -------------------------------------------------------------------
+                         required time                         11.002    
+                         arrival time                         -48.418    
+  -------------------------------------------------------------------
+                         slack                                -37.416    
+
+
+
+
+
+Min Delay Paths
+--------------------------------------------------------------------------------------
+Slack (MET) :             0.297ns  (arrival time - required time)
+  Source:                 num_tasks_reg[0]/C
+                            (rising edge-triggered cell FDCE clocked by clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            num_tasks_reg[0]/D
+                            (rising edge-triggered cell FDCE clocked by clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             clk
+  Path Type:              Hold (Min at Fast Process Corner)
+  Requirement:            0.000ns  (clk rise@0.000ns - clk rise@0.000ns)
+  Data Path Delay:        0.418ns  (logic 0.245ns (58.637%)  route 0.173ns (41.363%))
+  Logic Levels:           1  (LUT1=1)
+  Clock Path Skew:        0.022ns (DCD - SCD - CPR)
+    Destination Clock Delay (DCD):    0.432ns
+    Source Clock Delay      (SCD):    0.410ns
+    Clock Pessimism Removal (CPR):    -0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock clk rise edge)        0.000     0.000 r  
+                                                      0.000     0.000 r  clk (IN)
+                         net (fo=489, unset)          0.410     0.410    clk
+                         FDCE                                         r  num_tasks_reg[0]/C
+  -------------------------------------------------------------------    -------------------
+                         FDCE (Prop_fdce_C_Q)         0.147     0.557 f  num_tasks_reg[0]/Q
+                         net (fo=98, unplaced)        0.173     0.730    queue_count[0]
+                         LUT1 (Prop_lut1_I0_O)        0.098     0.828 r  num_tasks[0]_i_1/O
+                         net (fo=1, unplaced)         0.000     0.828    num_tasks[0]_i_1_n_0
+                         FDCE                                         r  num_tasks_reg[0]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock clk rise edge)        0.000     0.000 r  
+                                                      0.000     0.000 r  clk (IN)
+                         net (fo=489, unset)          0.432     0.432    clk
+                         FDCE                                         r  num_tasks_reg[0]/C
+                         clock pessimism              0.000     0.432    
+                         FDCE (Hold_fdce_C_D)         0.099     0.531    num_tasks_reg[0]
+  -------------------------------------------------------------------
+                         required time                         -0.531    
+                         arrival time                           0.828    
+  -------------------------------------------------------------------
+                         slack                                  0.297    
+
+
+
+
+
+Pulse Width Checks
+--------------------------------------------------------------------------------------
+Clock Name:         clk
+Waveform(ns):       { 0.000 5.000 }
+Period(ns):         10.000
+Sources:            { clk }
+
+Check Type        Corner  Lib Pin  Reference Pin  Required(ns)  Actual(ns)  Slack(ns)  Location  Pin
+Min Period        n/a     FDCE/C   n/a            1.000         10.000      9.000                num_tasks_reg[0]/C
+Low Pulse Width   Slow    FDCE/C   n/a            0.500         5.000       4.500                num_tasks_reg[0]/C
+High Pulse Width  Slow    FDCE/C   n/a            0.500         5.000       4.500                num_tasks_reg[0]/C
+
+
+

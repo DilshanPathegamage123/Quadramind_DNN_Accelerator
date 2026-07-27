@@ -1,0 +1,42 @@
+
+****** Vivado v2025.2 (64-bit)
+  **** SW Build 6299465 on Fri Nov 14 12:34:56 MST 2025
+  **** IP Build 6300035 on Fri Nov 14 10:48:45 MST 2025
+  **** SharedData Build 6298862 on Thu Nov 13 04:50:51 MST 2025
+  **** Start of session at: Tue Jul 28 01:00:55 2026
+    ** Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+    ** Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
+
+source run.tcl
+# create_project -part xc7a100tcsg324-1 -in_memory sched_probe
+create_project: Time (s): cpu = 00:00:20 ; elapsed = 00:00:06 . Memory (MB): peak = 1608.777 ; gain = 99.059 ; free physical = 7429 ; free virtual = 14396
+# read_verilog -sv advanced_task_scheduler.sv
+# read_xdc c.xdc
+# synth_design -top advanced_task_scheduler -part xc7a100tcsg324-1 -mode out_of_context -generic {SCHEDULER_TYPE=1}
+Command: synth_design -top advanced_task_scheduler -part xc7a100tcsg324-1 -mode out_of_context -generic SCHEDULER_TYPE=1
+Starting synth_design
+Attempting to get a license for feature 'Synthesis' and/or device 'xc7a100t'
+INFO: [Common 17-349] Got license for feature 'Synthesis' and/or device 'xc7a100t'
+INFO: [Device 21-403] Loading part xc7a100tcsg324-1
+INFO: [Synth 8-7079] Multithreading enabled for synth_design using a maximum of 7 processes.
+INFO: [Synth 8-7078] Launching helper process for spawning children vivado processes
+INFO: [Synth 8-7075] Helper process launched with PID 26844
+---------------------------------------------------------------------------------
+Starting RTL Elaboration : Time (s): cpu = 00:00:07 ; elapsed = 00:00:07 . Memory (MB): peak = 2242.020 ; gain = 480.188 ; free physical = 6502 ; free virtual = 13470
+---------------------------------------------------------------------------------
+INFO: [Synth 8-6157] synthesizing module 'advanced_task_scheduler' [/tmp/sched_synth_HRRN_wsmanxco/advanced_task_scheduler.sv:8]
+	Parameter SCHEDULER_TYPE bound to: 1 - type: integer 
+---------------------------------------------------------------------------------
+Finished RTL Elaboration : Time (s): cpu = 00:00:09 ; elapsed = 00:00:09 . Memory (MB): peak = 2328.988 ; gain = 567.156 ; free physical = 6395 ; free virtual = 13365
+---------------------------------------------------------------------------------
+RTL Elaboration failed
+INFO: [Common 17-83] Releasing license: Synthesis
+7 Infos, 0 Warnings, 0 Critical Warnings and 3 Errors encountered.
+synth_design failed
+synth_design: Time (s): cpu = 00:00:13 ; elapsed = 00:00:14 . Memory (MB): peak = 2328.996 ; gain = 720.219 ; free physical = 6395 ; free virtual = 13365
+INFO: [Common 17-2834] synth_design peak Physical Memory [PSS] (MB): overall = 1962.234; main = 1610.702; forked = 351.532
+INFO: [Common 17-2834] synth_design peak Virtual Memory [VSS] (MB): overall = 3323.191; main = 2328.992; forked = 994.199
+INFO: [Common 17-206] Exiting Vivado at Tue Jul 28 01:01:19 2026...
+ERROR: [Synth 8-27] real number expression not supported [/tmp/sched_synth_HRRN_wsmanxco/advanced_task_scheduler.sv:180]
+ERROR: [Synth 8-6156] failed synthesizing module 'advanced_task_scheduler' [/tmp/sched_synth_HRRN_wsmanxco/advanced_task_scheduler.sv:8]
+ERROR: [Common 17-69] Command failed: Synthesis failed - please see the console or run log file for details

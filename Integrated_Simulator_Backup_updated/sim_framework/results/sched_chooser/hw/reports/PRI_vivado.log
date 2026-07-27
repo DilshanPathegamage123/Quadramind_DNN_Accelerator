@@ -1,0 +1,454 @@
+
+****** Vivado v2025.2 (64-bit)
+  **** SW Build 6299465 on Fri Nov 14 12:34:56 MST 2025
+  **** IP Build 6300035 on Fri Nov 14 10:48:45 MST 2025
+  **** SharedData Build 6298862 on Thu Nov 13 04:50:51 MST 2025
+  **** Start of session at: Tue Jul 28 00:32:34 2026
+    ** Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+    ** Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
+
+source run.tcl
+# create_project -part xc7a100tcsg324-1 -in_memory sched_probe
+create_project: Time (s): cpu = 00:00:19 ; elapsed = 00:00:06 . Memory (MB): peak = 1612.691 ; gain = 73.059 ; free physical = 7412 ; free virtual = 14353
+# read_verilog -sv task_scheduler.sv
+# read_xdc c.xdc
+# synth_design -top task_scheduler -part xc7a100tcsg324-1 -mode out_of_context -generic {SCHEDULER_TYPE=4}
+Command: synth_design -top task_scheduler -part xc7a100tcsg324-1 -mode out_of_context -generic SCHEDULER_TYPE=4
+Starting synth_design
+Attempting to get a license for feature 'Synthesis' and/or device 'xc7a100t'
+INFO: [Common 17-349] Got license for feature 'Synthesis' and/or device 'xc7a100t'
+INFO: [Device 21-403] Loading part xc7a100tcsg324-1
+INFO: [Synth 8-7079] Multithreading enabled for synth_design using a maximum of 7 processes.
+INFO: [Synth 8-7078] Launching helper process for spawning children vivado processes
+INFO: [Synth 8-7075] Helper process launched with PID 22319
+---------------------------------------------------------------------------------
+Starting RTL Elaboration : Time (s): cpu = 00:00:06 ; elapsed = 00:00:06 . Memory (MB): peak = 2242.402 ; gain = 480.594 ; free physical = 6500 ; free virtual = 13441
+---------------------------------------------------------------------------------
+INFO: [Synth 8-6157] synthesizing module 'task_scheduler' [/tmp/sched_synth_PRI_q5bn0vc9/task_scheduler.sv:8]
+	Parameter SCHEDULER_TYPE bound to: 4 - type: integer 
+INFO: [Synth 8-6155] done synthesizing module 'task_scheduler' (0#1) [/tmp/sched_synth_PRI_q5bn0vc9/task_scheduler.sv:8]
+WARNING: [Synth 8-6014] Unused sequential element current_time_reg was removed.  [/tmp/sched_synth_PRI_q5bn0vc9/task_scheduler.sv:77]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[15][remaining_time] was removed.  [/tmp/sched_synth_PRI_q5bn0vc9/task_scheduler.sv:211]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[15][arrival_time] was removed.  [/tmp/sched_synth_PRI_q5bn0vc9/task_scheduler.sv:211]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[15][last_access_time] was removed.  [/tmp/sched_synth_PRI_q5bn0vc9/task_scheduler.sv:211]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[14][remaining_time] was removed.  [/tmp/sched_synth_PRI_q5bn0vc9/task_scheduler.sv:211]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[14][arrival_time] was removed.  [/tmp/sched_synth_PRI_q5bn0vc9/task_scheduler.sv:211]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[14][last_access_time] was removed.  [/tmp/sched_synth_PRI_q5bn0vc9/task_scheduler.sv:211]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[13][remaining_time] was removed.  [/tmp/sched_synth_PRI_q5bn0vc9/task_scheduler.sv:211]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[13][arrival_time] was removed.  [/tmp/sched_synth_PRI_q5bn0vc9/task_scheduler.sv:211]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[13][last_access_time] was removed.  [/tmp/sched_synth_PRI_q5bn0vc9/task_scheduler.sv:211]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[12][remaining_time] was removed.  [/tmp/sched_synth_PRI_q5bn0vc9/task_scheduler.sv:211]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[12][arrival_time] was removed.  [/tmp/sched_synth_PRI_q5bn0vc9/task_scheduler.sv:211]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[12][last_access_time] was removed.  [/tmp/sched_synth_PRI_q5bn0vc9/task_scheduler.sv:211]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[11][remaining_time] was removed.  [/tmp/sched_synth_PRI_q5bn0vc9/task_scheduler.sv:211]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[11][arrival_time] was removed.  [/tmp/sched_synth_PRI_q5bn0vc9/task_scheduler.sv:211]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[11][last_access_time] was removed.  [/tmp/sched_synth_PRI_q5bn0vc9/task_scheduler.sv:211]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[10][remaining_time] was removed.  [/tmp/sched_synth_PRI_q5bn0vc9/task_scheduler.sv:211]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[10][arrival_time] was removed.  [/tmp/sched_synth_PRI_q5bn0vc9/task_scheduler.sv:211]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[10][last_access_time] was removed.  [/tmp/sched_synth_PRI_q5bn0vc9/task_scheduler.sv:211]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[9][remaining_time] was removed.  [/tmp/sched_synth_PRI_q5bn0vc9/task_scheduler.sv:211]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[9][arrival_time] was removed.  [/tmp/sched_synth_PRI_q5bn0vc9/task_scheduler.sv:211]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[9][last_access_time] was removed.  [/tmp/sched_synth_PRI_q5bn0vc9/task_scheduler.sv:211]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[8][remaining_time] was removed.  [/tmp/sched_synth_PRI_q5bn0vc9/task_scheduler.sv:211]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[8][arrival_time] was removed.  [/tmp/sched_synth_PRI_q5bn0vc9/task_scheduler.sv:211]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[8][last_access_time] was removed.  [/tmp/sched_synth_PRI_q5bn0vc9/task_scheduler.sv:211]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[7][remaining_time] was removed.  [/tmp/sched_synth_PRI_q5bn0vc9/task_scheduler.sv:211]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[7][arrival_time] was removed.  [/tmp/sched_synth_PRI_q5bn0vc9/task_scheduler.sv:211]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[7][last_access_time] was removed.  [/tmp/sched_synth_PRI_q5bn0vc9/task_scheduler.sv:211]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[6][remaining_time] was removed.  [/tmp/sched_synth_PRI_q5bn0vc9/task_scheduler.sv:211]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[6][arrival_time] was removed.  [/tmp/sched_synth_PRI_q5bn0vc9/task_scheduler.sv:211]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[6][last_access_time] was removed.  [/tmp/sched_synth_PRI_q5bn0vc9/task_scheduler.sv:211]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[5][remaining_time] was removed.  [/tmp/sched_synth_PRI_q5bn0vc9/task_scheduler.sv:211]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[5][arrival_time] was removed.  [/tmp/sched_synth_PRI_q5bn0vc9/task_scheduler.sv:211]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[5][last_access_time] was removed.  [/tmp/sched_synth_PRI_q5bn0vc9/task_scheduler.sv:211]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[4][remaining_time] was removed.  [/tmp/sched_synth_PRI_q5bn0vc9/task_scheduler.sv:211]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[4][arrival_time] was removed.  [/tmp/sched_synth_PRI_q5bn0vc9/task_scheduler.sv:211]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[4][last_access_time] was removed.  [/tmp/sched_synth_PRI_q5bn0vc9/task_scheduler.sv:211]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[3][remaining_time] was removed.  [/tmp/sched_synth_PRI_q5bn0vc9/task_scheduler.sv:211]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[3][arrival_time] was removed.  [/tmp/sched_synth_PRI_q5bn0vc9/task_scheduler.sv:211]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[3][last_access_time] was removed.  [/tmp/sched_synth_PRI_q5bn0vc9/task_scheduler.sv:211]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[2][remaining_time] was removed.  [/tmp/sched_synth_PRI_q5bn0vc9/task_scheduler.sv:211]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[2][arrival_time] was removed.  [/tmp/sched_synth_PRI_q5bn0vc9/task_scheduler.sv:211]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[2][last_access_time] was removed.  [/tmp/sched_synth_PRI_q5bn0vc9/task_scheduler.sv:211]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[1][remaining_time] was removed.  [/tmp/sched_synth_PRI_q5bn0vc9/task_scheduler.sv:211]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[1][arrival_time] was removed.  [/tmp/sched_synth_PRI_q5bn0vc9/task_scheduler.sv:211]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[1][last_access_time] was removed.  [/tmp/sched_synth_PRI_q5bn0vc9/task_scheduler.sv:211]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[0][remaining_time] was removed.  [/tmp/sched_synth_PRI_q5bn0vc9/task_scheduler.sv:211]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[0][arrival_time] was removed.  [/tmp/sched_synth_PRI_q5bn0vc9/task_scheduler.sv:211]
+WARNING: [Synth 8-6014] Unused sequential element task_queue_reg[0][last_access_time] was removed.  [/tmp/sched_synth_PRI_q5bn0vc9/task_scheduler.sv:211]
+WARNING: [Synth 8-6014] Unused sequential element rem_idx_reg was removed.  [/tmp/sched_synth_PRI_q5bn0vc9/task_scheduler.sv:215]
+WARNING: [Synth 8-6014] Unused sequential element rr_ptr_reg was removed.  [/tmp/sched_synth_PRI_q5bn0vc9/task_scheduler.sv:272]
+WARNING: [Synth 8-6014] Unused sequential element quantum_left_reg was removed.  [/tmp/sched_synth_PRI_q5bn0vc9/task_scheduler.sv:273]
+---------------------------------------------------------------------------------
+Finished RTL Elaboration : Time (s): cpu = 00:00:09 ; elapsed = 00:00:09 . Memory (MB): peak = 2361.371 ; gain = 599.562 ; free physical = 6400 ; free virtual = 13342
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Handling Custom Attributes
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Handling Custom Attributes : Time (s): cpu = 00:00:09 ; elapsed = 00:00:10 . Memory (MB): peak = 2370.277 ; gain = 608.469 ; free physical = 6400 ; free virtual = 13342
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished RTL Optimization Phase 1 : Time (s): cpu = 00:00:09 ; elapsed = 00:00:10 . Memory (MB): peak = 2370.277 ; gain = 608.469 ; free physical = 6400 ; free virtual = 13342
+---------------------------------------------------------------------------------
+Netlist sorting complete. Time (s): cpu = 00:00:00.04 ; elapsed = 00:00:00.05 . Memory (MB): peak = 2370.277 ; gain = 0.000 ; free physical = 6400 ; free virtual = 13342
+INFO: [Project 1-570] Preparing netlist for logic optimization
+
+Processing XDC Constraints
+Initializing timing engine
+Parsing XDC File [/tmp/sched_synth_PRI_q5bn0vc9/c.xdc]
+Finished Parsing XDC File [/tmp/sched_synth_PRI_q5bn0vc9/c.xdc]
+Completed Processing XDC Constraints
+
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 2473.016 ; gain = 0.000 ; free physical = 6422 ; free virtual = 13364
+INFO: [Project 1-111] Unisim Transformation Summary:
+No Unisim elements were transformed.
+
+Constraint Validation Runtime : Time (s): cpu = 00:00:00.05 ; elapsed = 00:00:00.04 . Memory (MB): peak = 2473.051 ; gain = 0.000 ; free physical = 6422 ; free virtual = 13364
+---------------------------------------------------------------------------------
+Finished Constraint Validation : Time (s): cpu = 00:00:19 ; elapsed = 00:00:20 . Memory (MB): peak = 2473.051 ; gain = 711.242 ; free physical = 6447 ; free virtual = 13390
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Loading Part and Timing Information
+---------------------------------------------------------------------------------
+Loading part: xc7a100tcsg324-1
+---------------------------------------------------------------------------------
+Finished Loading Part and Timing Information : Time (s): cpu = 00:00:20 ; elapsed = 00:00:20 . Memory (MB): peak = 2481.020 ; gain = 719.211 ; free physical = 6447 ; free virtual = 13390
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Applying 'set_property' XDC Constraints
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished applying 'set_property' XDC Constraints : Time (s): cpu = 00:00:20 ; elapsed = 00:00:20 . Memory (MB): peak = 2481.020 ; gain = 719.211 ; free physical = 6447 ; free virtual = 13390
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished RTL Optimization Phase 2 : Time (s): cpu = 00:00:23 ; elapsed = 00:00:23 . Memory (MB): peak = 2481.020 ; gain = 719.211 ; free physical = 6449 ; free virtual = 13387
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start RTL Component Statistics 
+---------------------------------------------------------------------------------
+Detailed RTL Component Info : 
++---Adders : 
+	   2 Input    6 Bit       Adders := 1     
+	   2 Input    5 Bit       Adders := 1     
++---Registers : 
+	               32 Bit    Registers := 17    
+	               16 Bit    Registers := 17    
+	                8 Bit    Registers := 18    
+	                5 Bit    Registers := 1     
+	                4 Bit    Registers := 17    
+	                1 Bit    Registers := 17    
++---Muxes : 
+	   2 Input   32 Bit        Muxes := 32    
+	   2 Input   21 Bit        Muxes := 1     
+	   2 Input   16 Bit        Muxes := 32    
+	   2 Input    8 Bit        Muxes := 32    
+	   2 Input    4 Bit        Muxes := 48    
+	   2 Input    1 Bit        Muxes := 79    
+---------------------------------------------------------------------------------
+Finished RTL Component Statistics 
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Part Resource Summary
+---------------------------------------------------------------------------------
+Part Resources:
+DSPs: 240 (col length:80)
+BRAMs: 270 (col length: RAMB18 80 RAMB36 40)
+---------------------------------------------------------------------------------
+Finished Part Resource Summary
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Cross Boundary and Area Optimization
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Cross Boundary and Area Optimization : Time (s): cpu = 00:00:39 ; elapsed = 00:00:39 . Memory (MB): peak = 2517.152 ; gain = 755.344 ; free physical = 6358 ; free virtual = 13322
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Applying XDC Timing Constraints
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Applying XDC Timing Constraints : Time (s): cpu = 00:00:45 ; elapsed = 00:00:46 . Memory (MB): peak = 2535.152 ; gain = 773.344 ; free physical = 6299 ; free virtual = 13286
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Timing Optimization
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Timing Optimization : Time (s): cpu = 00:00:56 ; elapsed = 00:00:57 . Memory (MB): peak = 2690.262 ; gain = 928.453 ; free physical = 6152 ; free virtual = 13131
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Technology Mapping
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Technology Mapping : Time (s): cpu = 00:00:59 ; elapsed = 00:01:00 . Memory (MB): peak = 2690.262 ; gain = 928.453 ; free physical = 6142 ; free virtual = 13121
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start IO Insertion
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Flattening Before IO Insertion
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Flattening Before IO Insertion
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Final Netlist Cleanup
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Final Netlist Cleanup
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished IO Insertion : Time (s): cpu = 00:01:05 ; elapsed = 00:01:06 . Memory (MB): peak = 2762.074 ; gain = 1000.266 ; free physical = 6100 ; free virtual = 13064
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Renaming Generated Instances
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Renaming Generated Instances : Time (s): cpu = 00:01:05 ; elapsed = 00:01:06 . Memory (MB): peak = 2762.074 ; gain = 1000.266 ; free physical = 6100 ; free virtual = 13064
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Rebuilding User Hierarchy
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Rebuilding User Hierarchy : Time (s): cpu = 00:01:05 ; elapsed = 00:01:06 . Memory (MB): peak = 2762.074 ; gain = 1000.266 ; free physical = 6100 ; free virtual = 13064
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Renaming Generated Ports
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Renaming Generated Ports : Time (s): cpu = 00:01:05 ; elapsed = 00:01:06 . Memory (MB): peak = 2762.074 ; gain = 1000.266 ; free physical = 6100 ; free virtual = 13064
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Handling Custom Attributes
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Handling Custom Attributes : Time (s): cpu = 00:01:06 ; elapsed = 00:01:07 . Memory (MB): peak = 2762.074 ; gain = 1000.266 ; free physical = 6074 ; free virtual = 13063
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Renaming Generated Nets
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Renaming Generated Nets : Time (s): cpu = 00:01:06 ; elapsed = 00:01:07 . Memory (MB): peak = 2762.074 ; gain = 1000.266 ; free physical = 6074 ; free virtual = 13063
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Writing Synthesis Report
+---------------------------------------------------------------------------------
+
+Report BlackBoxes: 
++-+--------------+----------+
+| |BlackBox name |Instances |
++-+--------------+----------+
++-+--------------+----------+
+
+Report Cell Usage: 
++------+-------+------+
+|      |Cell   |Count |
++------+-------+------+
+|1     |CARRY4 |    45|
+|2     |LUT1   |   126|
+|3     |LUT2   |    16|
+|4     |LUT3   |   120|
+|5     |LUT4   |    37|
+|6     |LUT5   |   168|
+|7     |LUT6   |  1392|
+|8     |FDCE   |  1050|
++------+-------+------+
+---------------------------------------------------------------------------------
+Finished Writing Synthesis Report : Time (s): cpu = 00:01:06 ; elapsed = 00:01:07 . Memory (MB): peak = 2762.074 ; gain = 1000.266 ; free physical = 6074 ; free virtual = 13063
+---------------------------------------------------------------------------------
+Synthesis finished with 0 errors, 0 critical warnings and 0 warnings.
+Synthesis Optimization Runtime : Time (s): cpu = 00:01:03 ; elapsed = 00:01:05 . Memory (MB): peak = 2762.074 ; gain = 897.492 ; free physical = 6073 ; free virtual = 13063
+Synthesis Optimization Complete : Time (s): cpu = 00:01:06 ; elapsed = 00:01:07 . Memory (MB): peak = 2762.082 ; gain = 1000.266 ; free physical = 6073 ; free virtual = 13063
+INFO: [Project 1-571] Translating synthesized netlist
+Netlist sorting complete. Time (s): cpu = 00:00:04 ; elapsed = 00:00:00.03 . Memory (MB): peak = 2762.082 ; gain = 0.000 ; free physical = 6225 ; free virtual = 13214
+INFO: [Netlist 29-17] Analyzing 45 Unisim elements for replacement
+INFO: [Netlist 29-28] Unisim Transformation completed in 0 CPU seconds
+WARNING: [Netlist 29-101] Netlist 'task_scheduler' is not ideal for floorplanning, since the cellview 'task_scheduler' contains a large number of primitives.  Please consider enabling hierarchy in synthesis if you want to do floorplanning.
+INFO: [Project 1-570] Preparing netlist for logic optimization
+Parsing XDC File [/tmp/sched_synth_PRI_q5bn0vc9/c.xdc]
+Finished Parsing XDC File [/tmp/sched_synth_PRI_q5bn0vc9/c.xdc]
+INFO: [Opt 31-138] Pushed 0 inverter(s) to 0 load pin(s).
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 2786.086 ; gain = 0.000 ; free physical = 6231 ; free virtual = 13214
+INFO: [Project 1-111] Unisim Transformation Summary:
+No Unisim elements were transformed.
+
+Synth Design complete | Checksum: 82c86073
+INFO: [Common 17-83] Releasing license: Synthesis
+16 Infos, 53 Warnings, 0 Critical Warnings and 0 Errors encountered.
+synth_design completed successfully
+synth_design: Time (s): cpu = 00:01:18 ; elapsed = 00:01:15 . Memory (MB): peak = 2786.121 ; gain = 1173.430 ; free physical = 6234 ; free virtual = 13216
+INFO: [Common 17-2834] synth_design peak Physical Memory [PSS] (MB): overall = 2290.091; main = 2181.131; forked = 343.375
+INFO: [Common 17-2834] synth_design peak Virtual Memory [VSS] (MB): overall = 3684.480; main = 2786.090; forked = 994.215
+# opt_design
+Command: opt_design
+Attempting to get a license for feature 'Implementation' and/or device 'xc7a100t'
+INFO: [Common 17-349] Got license for feature 'Implementation' and/or device 'xc7a100t'
+Running DRC as a precondition to command opt_design
+
+Starting DRC Task
+INFO: [DRC 23-27] Running DRC with 8 threads
+WARNING: [DRC 23-814] Not all possible (connectivity based) DRCs may have been run because this design is seen as Out of Context.
+INFO: [Project 1-461] DRC finished with 0 Errors
+INFO: [Project 1-462] Please refer to the DRC report (report_drc) for more information.
+
+Time (s): cpu = 00:00:00.64 ; elapsed = 00:00:00.44 . Memory (MB): peak = 2786.121 ; gain = 0.000 ; free physical = 6238 ; free virtual = 13219
+
+Starting Cache Timing Information Task
+INFO: [Timing 38-35] Done setting XDC timing constraints.
+Ending Cache Timing Information Task | Checksum: 289d424c9
+
+Time (s): cpu = 00:00:07 ; elapsed = 00:00:07 . Memory (MB): peak = 2786.121 ; gain = 0.000 ; free physical = 6229 ; free virtual = 13205
+
+Starting Logic Optimization Task
+
+Phase 1 Initialization
+
+Phase 1.1 Core Generation And Design Setup
+Phase 1.1 Core Generation And Design Setup | Checksum: 289d424c9
+
+Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 2884.086 ; gain = 0.000 ; free physical = 6130 ; free virtual = 13105
+
+Phase 1.2 Setup Constraints And Sort Netlist
+Phase 1.2 Setup Constraints And Sort Netlist | Checksum: 289d424c9
+
+Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.01 . Memory (MB): peak = 2884.086 ; gain = 0.000 ; free physical = 6130 ; free virtual = 13105
+Phase 1 Initialization | Checksum: 289d424c9
+
+Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.01 . Memory (MB): peak = 2884.086 ; gain = 0.000 ; free physical = 6130 ; free virtual = 13105
+
+Phase 2 Timer Update And Timing Data Collection
+
+Phase 2.1 Detect if minReqCache needed
+Phase 2.1 Detect if minReqCache needed | Checksum: 289d424c9
+
+Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00.02 . Memory (MB): peak = 2884.086 ; gain = 0.000 ; free physical = 6130 ; free virtual = 13105
+
+Phase 2.2 Timer Update
+Phase 2.2 Timer Update | Checksum: 289d424c9
+
+Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00.02 . Memory (MB): peak = 2884.086 ; gain = 0.000 ; free physical = 6130 ; free virtual = 13105
+Phase 2 Timer Update And Timing Data Collection | Checksum: 289d424c9
+
+Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00.02 . Memory (MB): peak = 2884.086 ; gain = 0.000 ; free physical = 6130 ; free virtual = 13105
+
+Phase 3 Retarget
+INFO: [Opt 31-1851] Number of loadless carry chains removed were: 0
+INFO: [Opt 31-1834] Total Chains To Be Transformed Were: 0 AND Number of Transformed insts Created are: 0
+INFO: [Opt 31-1566] Pulled 2 inverters resulting in an inversion of 145 pins
+INFO: [Opt 31-138] Pushed 0 inverter(s) to 0 load pin(s).
+INFO: [Opt 31-49] Retargeted 0 cell(s).
+Phase 3 Retarget | Checksum: 2983facf2
+
+Time (s): cpu = 00:00:00.11 ; elapsed = 00:00:00.13 . Memory (MB): peak = 2884.086 ; gain = 0.000 ; free physical = 6131 ; free virtual = 13106
+Retarget | Checksum: 2983facf2
+INFO: [Opt 31-389] Phase Retarget created 0 cells and removed 124 cells
+
+Phase 4 Constant propagation
+INFO: [Opt 31-138] Pushed 0 inverter(s) to 0 load pin(s).
+Phase 4 Constant propagation | Checksum: 2983facf2
+
+Time (s): cpu = 00:00:00.13 ; elapsed = 00:00:00.15 . Memory (MB): peak = 2884.086 ; gain = 0.000 ; free physical = 6131 ; free virtual = 13106
+Constant propagation | Checksum: 2983facf2
+INFO: [Opt 31-389] Phase Constant propagation created 0 cells and removed 0 cells
+
+Phase 5 Sweep
+INFO: [Constraints 18-11670] Building netlist checker database with flags, 0x8
+Done building netlist checker database: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 2884.086 ; gain = 0.000 ; free physical = 6131 ; free virtual = 13106
+Phase 5 Sweep | Checksum: 2b788d335
+
+Time (s): cpu = 00:00:00.16 ; elapsed = 00:00:00.17 . Memory (MB): peak = 2884.086 ; gain = 0.000 ; free physical = 6131 ; free virtual = 13106
+Sweep | Checksum: 2b788d335
+INFO: [Opt 31-389] Phase Sweep created 0 cells and removed 0 cells
+
+Phase 6 BUFG optimization
+Phase 6 BUFG optimization | Checksum: 2b788d335
+
+Time (s): cpu = 00:00:00.17 ; elapsed = 00:00:00.19 . Memory (MB): peak = 2916.102 ; gain = 32.016 ; free physical = 6131 ; free virtual = 13106
+BUFG optimization | Checksum: 2b788d335
+INFO: [Opt 31-662] Phase BUFG optimization created 0 cells of which 0 are BUFGs and removed 0 cells.
+
+Phase 7 Shift Register Optimization
+INFO: [Opt 31-1064] SRL Remap converted 0 SRLs to 0 registers and converted 0 registers of register chains to 0 SRLs
+Phase 7 Shift Register Optimization | Checksum: 2b788d335
+
+Time (s): cpu = 00:00:00.17 ; elapsed = 00:00:00.19 . Memory (MB): peak = 2916.102 ; gain = 32.016 ; free physical = 6131 ; free virtual = 13106
+Shift Register Optimization | Checksum: 2b788d335
+INFO: [Opt 31-389] Phase Shift Register Optimization created 0 cells and removed 0 cells
+
+Phase 8 Post Processing Netlist
+Phase 8 Post Processing Netlist | Checksum: 2b788d335
+
+Time (s): cpu = 00:00:00.18 ; elapsed = 00:00:00.2 . Memory (MB): peak = 2916.102 ; gain = 32.016 ; free physical = 6131 ; free virtual = 13106
+Post Processing Netlist | Checksum: 2b788d335
+INFO: [Opt 31-389] Phase Post Processing Netlist created 0 cells and removed 0 cells
+
+Phase 9 Finalization
+
+Phase 9.1 Finalizing Design Cores and Updating Shapes
+Phase 9.1 Finalizing Design Cores and Updating Shapes | Checksum: 33c722e20
+
+Time (s): cpu = 00:00:00.21 ; elapsed = 00:00:00.23 . Memory (MB): peak = 2916.102 ; gain = 32.016 ; free physical = 6131 ; free virtual = 13106
+
+Phase 9.2 Verifying Netlist Connectivity
+
+Starting Connectivity Check Task
+
+Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00.01 . Memory (MB): peak = 2916.102 ; gain = 0.000 ; free physical = 6131 ; free virtual = 13106
+Phase 9.2 Verifying Netlist Connectivity | Checksum: 33c722e20
+
+Time (s): cpu = 00:00:00.22 ; elapsed = 00:00:00.24 . Memory (MB): peak = 2916.102 ; gain = 32.016 ; free physical = 6131 ; free virtual = 13106
+Phase 9 Finalization | Checksum: 33c722e20
+
+Time (s): cpu = 00:00:00.22 ; elapsed = 00:00:00.24 . Memory (MB): peak = 2916.102 ; gain = 32.016 ; free physical = 6131 ; free virtual = 13106
+Opt_design Change Summary
+=========================
+
+
+-------------------------------------------------------------------------------------------------------------------------
+|  Phase                        |  #Cells created  |  #Cells Removed  |  #Constrained objects preventing optimizations  |
+-------------------------------------------------------------------------------------------------------------------------
+|  Retarget                     |               0  |             124  |                                              0  |
+|  Constant propagation         |               0  |               0  |                                              0  |
+|  Sweep                        |               0  |               0  |                                              0  |
+|  BUFG optimization            |               0  |               0  |                                              0  |
+|  Shift Register Optimization  |               0  |               0  |                                              0  |
+|  Post Processing Netlist      |               0  |               0  |                                              0  |
+-------------------------------------------------------------------------------------------------------------------------
+
+
+Ending Logic Optimization Task | Checksum: 33c722e20
+
+Time (s): cpu = 00:00:00.22 ; elapsed = 00:00:00.24 . Memory (MB): peak = 2916.102 ; gain = 32.016 ; free physical = 6131 ; free virtual = 13106
+
+Starting Power Optimization Task
+INFO: [Pwropt 34-132] Skipping clock gating for clocks with a period < 2.00 ns.
+Ending Power Optimization Task | Checksum: 33c722e20
+
+Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00.01 . Memory (MB): peak = 2916.102 ; gain = 0.000 ; free physical = 6131 ; free virtual = 13106
+
+Starting Final Cleanup Task
+Ending Final Cleanup Task | Checksum: 33c722e20
+
+Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 2916.102 ; gain = 0.000 ; free physical = 6131 ; free virtual = 13106
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 2916.102 ; gain = 0.000 ; free physical = 6131 ; free virtual = 13106
+INFO: [Common 17-83] Releasing license: Implementation
+21 Infos, 1 Warnings, 0 Critical Warnings and 0 Errors encountered.
+opt_design completed successfully
+opt_design: Time (s): cpu = 00:00:11 ; elapsed = 00:00:11 . Memory (MB): peak = 2916.102 ; gain = 129.980 ; free physical = 6131 ; free virtual = 13106
+# report_utilization    -file util.rpt
+# report_power          -file power.rpt
+Command: report_power -file power.rpt
+INFO: [Timing 38-35] Done setting XDC timing constraints.
+Running Vector-less Activity Propagation...
+WARNING: [Timing 38-242] The property HD.CLK_SRC of clock port "clk" is not set. In out-of-context mode, this prevents timing estimation for clock delay/skew
+Resolution: Set the HD.CLK_SRC property of the out-of-context port to the location of the clock buffer instance in the top-level design
+
+Finished Running Vector-less Activity Propagation
+1 Infos, 1 Warnings, 0 Critical Warnings and 0 Errors encountered.
+report_power completed successfully
+# report_timing_summary -file timing.rpt
+INFO: [Timing 38-91] UpdateTimingParams: Speed grade: -1, Delay Type: min_max.
+INFO: [Timing 38-191] Multithreading enabled for timing update using a maximum of 4 CPUs
+# puts "SCHED_PROBE_OK"
+SCHED_PROBE_OK
+# exit 0
+INFO: [Common 17-206] Exiting Vivado at Tue Jul 28 00:34:13 2026...

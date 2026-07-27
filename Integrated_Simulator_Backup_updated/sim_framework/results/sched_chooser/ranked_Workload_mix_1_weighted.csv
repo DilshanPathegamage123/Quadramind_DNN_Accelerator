@@ -1,0 +1,15 @@
+rank,scheduler,dispatch_order,makespan_cycles,mean_turnaround_cycles,mean_wait_cycles,max_turnaround_cycles,max_wait_cycles,luts,ffs,power_dynamic_w,fmax_mhz_post_synth,mean_turnaround_us,throughput_tasks_per_s,energy_uJ,weighted,hw_status,timing_source,hw_source,note
+1,HRRN,0->2->1,58596,26322.7,6790.7,58596,15888,,,,,,,,3.0000,unavailable,model,measured (Vivado 2025.2 OOC),does not synthesise: real number expression not supported [rtl/schedulers/advanced_task_scheduler.sv:180]
+2,SJF,0->2->1,58596,26322.7,6790.7,58596,15888,1999,1050,0.018,20.3,1296.68,1039.3,51.957,3.0000,ok,model,measured (Vivado 2025.2 OOC),
+3,SRTF,0->2->1,58596,26322.7,6790.7,58596,15888,1854,490,0.018,21.1,1247.52,1080.3,49.987,3.0000,ok,model,measured (Vivado 2025.2 OOC),
+4,AIMT,0->1->2,58596,36757.3,17225.3,58596,47192,3417,6565,0.025,86.7,423.96,4438.9,16.896,4.9330,ok,model,measured (Vivado 2025.2 OOC),164 CRITICAL WARNING(s) in synthesis -- see AIMT_vivado.log
+5,BATCHDNN,0->1->2,58596,36757.3,17225.3,58596,47192,,,,,,,,4.9330,unavailable,model,measured (Vivado 2025.2 OOC),does not synthesise: loop condition does not converge after 2000 iterations [rtl/schedulers/batchdnn_scheduler.sv:370]
+6,BATCHDNN_PP,0->1->2,58596,36757.3,17225.3,58596,47192,,,,,,,,4.9330,unavailable,model,measured (Vivado 2025.2 OOC),does not synthesise: loop condition does not converge after 2000 iterations [rtl/schedulers/batchdnn_pp_scheduler.sv:564]
+7,EDF,0->1->2,58596,36757.3,17225.3,58596,47192,2374,1050,0.024,19.0,1934.60,972.8,74.016,4.9330,ok,model,measured (Vivado 2025.2 OOC),
+8,FIFO,0->1->2,58596,36757.3,17225.3,58596,47192,1501,1050,0.011,106.6,344.82,5457.7,6.046,4.9330,ok,model,measured (Vivado 2025.2 OOC),
+9,LRU,0->1->2,58596,36757.3,17225.3,58596,47192,3035,1594,0.027,19.2,1914.44,983.0,82.401,4.9330,ok,model,measured (Vivado 2025.2 OOC),
+10,MLFQ,0->1->2,58596,36757.3,17225.3,58596,47192,2295,1044,0.024,90.9,404.37,4653.9,15.471,4.9330,ok,model,measured (Vivado 2025.2 OOC),
+11,MLQ,0->1->2,58596,36757.3,17225.3,58596,47192,755,490,0.008,112.4,327.02,5754.7,4.171,4.9330,ok,model,measured (Vivado 2025.2 OOC),
+12,RR,0->1->2,58596,36757.3,17225.3,58596,47192,1594,1070,0.013,93.4,393.55,4781.9,8.156,4.9330,ok,model,measured (Vivado 2025.2 OOC),
+13,LIFO,2->1->0,58596,41370.7,21838.7,58596,54112,1516,1050,0.012,111.1,372.37,5688.1,6.329,5.7877,ok,model,measured (Vivado 2025.2 OOC),
+14,PRI,2->1->0,58596,41370.7,21838.7,58596,54112,1663,1050,0.020,41.7,992.10,2135.0,28.104,5.7877,ok,model,measured (Vivado 2025.2 OOC),

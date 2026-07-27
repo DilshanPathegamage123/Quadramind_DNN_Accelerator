@@ -1,0 +1,15 @@
+rank,scheduler,dispatch_order,makespan_cycles,mean_turnaround_cycles,mean_wait_cycles,max_turnaround_cycles,max_wait_cycles,luts,ffs,power_dynamic_w,fmax_mhz_post_synth,mean_turnaround_us,throughput_tasks_per_s,energy_uJ,weighted,hw_status,timing_source,hw_source,note
+1,MLQ,0->1->2,199612,110781.3,44244.0,199612,68200,755,490,0.008,112.4,985.60,1689.3,14.207,4.0711,ok,model,measured (Vivado 2025.2 OOC),
+2,LIFO,2->1->0,199612,155368.0,88830.7,199612,135080,1516,1050,0.012,111.1,1398.45,1669.7,21.560,6.4250,ok,model,measured (Vivado 2025.2 OOC),
+3,FIFO,0->1->2,199612,110781.3,44244.0,199612,68200,1501,1050,0.011,106.6,1039.22,1602.1,20.598,4.0711,ok,model,measured (Vivado 2025.2 OOC),
+4,RR,0->1->2,199612,110781.3,44244.0,199612,68200,1594,1070,0.013,93.4,1186.10,1403.7,27.783,4.0711,ok,model,measured (Vivado 2025.2 OOC),
+5,MLFQ,0->1->2,199612,110781.3,44244.0,199612,68200,2295,1044,0.024,90.9,1218.72,1366.2,52.703,4.0711,ok,model,measured (Vivado 2025.2 OOC),
+6,AIMT,0->1->2,199612,110781.3,44244.0,199612,68200,3417,6565,0.025,86.7,1277.75,1303.0,57.558,4.0711,ok,model,measured (Vivado 2025.2 OOC),164 CRITICAL WARNING(s) in synthesis -- see AIMT_vivado.log
+7,PRI,2->1->0,199612,155368.0,88830.7,199612,135080,1663,1050,0.020,41.7,3725.85,626.7,95.737,6.4250,ok,model,measured (Vivado 2025.2 OOC),
+8,SRTF,1->0->2,199612,90493.3,23956.0,199612,68200,1854,490,0.018,21.1,4288.78,317.1,170.285,3.0000,ok,model,measured (Vivado 2025.2 OOC),
+9,SJF,1->0->2,199612,90493.3,23956.0,199612,68200,1999,1050,0.018,20.3,4457.80,305.1,176.996,3.0000,ok,model,measured (Vivado 2025.2 OOC),
+10,LRU,0->1->2,199612,110781.3,44244.0,199612,68200,3035,1594,0.027,19.2,5769.86,288.6,280.704,4.0711,ok,model,measured (Vivado 2025.2 OOC),
+11,EDF,0->1->2,199612,110781.3,44244.0,199612,68200,2374,1050,0.024,19.0,5830.60,285.6,252.141,4.0711,ok,model,measured (Vivado 2025.2 OOC),
+excluded,HRRN,0->1->2,199612,110781.3,44244.0,199612,68200,,,,,,,,4.0711,unavailable,model,measured (Vivado 2025.2 OOC),does not synthesise: real number expression not supported [rtl/schedulers/advanced_task_scheduler.sv:180]
+excluded,BATCHDNN,0->1->2,199612,110781.3,44244.0,199612,68200,,,,,,,,4.0711,unavailable,model,measured (Vivado 2025.2 OOC),does not synthesise: loop condition does not converge after 2000 iterations [rtl/schedulers/batchdnn_scheduler.sv:370]
+excluded,BATCHDNN_PP,0->1->2,199612,110781.3,44244.0,199612,68200,,,,,,,,4.0711,unavailable,model,measured (Vivado 2025.2 OOC),does not synthesise: loop condition does not converge after 2000 iterations [rtl/schedulers/batchdnn_pp_scheduler.sv:564]

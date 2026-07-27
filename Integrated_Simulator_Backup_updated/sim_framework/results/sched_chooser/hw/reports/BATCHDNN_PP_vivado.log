@@ -1,0 +1,42 @@
+
+****** Vivado v2025.2 (64-bit)
+  **** SW Build 6299465 on Fri Nov 14 12:34:56 MST 2025
+  **** IP Build 6300035 on Fri Nov 14 10:48:45 MST 2025
+  **** SharedData Build 6298862 on Thu Nov 13 04:50:51 MST 2025
+  **** Start of session at: Tue Jul 28 01:02:30 2026
+    ** Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+    ** Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
+
+source run.tcl
+# create_project -part xc7a100tcsg324-1 -in_memory sched_probe
+create_project: Time (s): cpu = 00:00:19 ; elapsed = 00:00:06 . Memory (MB): peak = 1611.691 ; gain = 72.059 ; free physical = 7374 ; free virtual = 14362
+# read_verilog -sv batchdnn_pp_scheduler.sv
+# read_xdc c.xdc
+# synth_design -top batchdnn_pp_scheduler -part xc7a100tcsg324-1 -mode out_of_context 
+Command: synth_design -top batchdnn_pp_scheduler -part xc7a100tcsg324-1 -mode out_of_context
+Starting synth_design
+Attempting to get a license for feature 'Synthesis' and/or device 'xc7a100t'
+INFO: [Common 17-349] Got license for feature 'Synthesis' and/or device 'xc7a100t'
+INFO: [Device 21-403] Loading part xc7a100tcsg324-1
+INFO: [Synth 8-7079] Multithreading enabled for synth_design using a maximum of 7 processes.
+INFO: [Synth 8-7078] Launching helper process for spawning children vivado processes
+INFO: [Synth 8-7075] Helper process launched with PID 27340
+---------------------------------------------------------------------------------
+Starting RTL Elaboration : Time (s): cpu = 00:00:06 ; elapsed = 00:00:07 . Memory (MB): peak = 2241.996 ; gain = 480.188 ; free physical = 6434 ; free virtual = 13410
+---------------------------------------------------------------------------------
+Linter Recording Failure, recording already started!
+INFO: [Synth 8-6157] synthesizing module 'batchdnn_pp_scheduler' [/tmp/sched_synth_BATCHDNN_PP_n5mxtped/batchdnn_pp_scheduler.sv:41]
+---------------------------------------------------------------------------------
+Finished RTL Elaboration : Time (s): cpu = 00:00:48 ; elapsed = 00:00:50 . Memory (MB): peak = 5236.645 ; gain = 3474.836 ; free physical = 3524 ; free virtual = 10505
+---------------------------------------------------------------------------------
+RTL Elaboration failed
+INFO: [Common 17-83] Releasing license: Synthesis
+7 Infos, 0 Warnings, 0 Critical Warnings and 3 Errors encountered.
+synth_design failed
+synth_design: Time (s): cpu = 00:00:54 ; elapsed = 00:00:56 . Memory (MB): peak = 5236.652 ; gain = 3624.961 ; free physical = 3527 ; free virtual = 10509
+INFO: [Common 17-2834] synth_design peak Physical Memory [PSS] (MB): overall = 4865.208; main = 4512.435; forked = 353.979
+INFO: [Common 17-2834] synth_design peak Virtual Memory [VSS] (MB): overall = 6230.863; main = 5236.648; forked = 994.215
+INFO: [Common 17-206] Exiting Vivado at Tue Jul 28 01:03:36 2026...
+ERROR: [Synth 8-3380] loop condition does not converge after 2000 iterations [/tmp/sched_synth_BATCHDNN_PP_n5mxtped/batchdnn_pp_scheduler.sv:564]
+ERROR: [Synth 8-6156] failed synthesizing module 'batchdnn_pp_scheduler' [/tmp/sched_synth_BATCHDNN_PP_n5mxtped/batchdnn_pp_scheduler.sv:41]
+ERROR: [Common 17-69] Command failed: Synthesis failed - please see the console or run log file for details

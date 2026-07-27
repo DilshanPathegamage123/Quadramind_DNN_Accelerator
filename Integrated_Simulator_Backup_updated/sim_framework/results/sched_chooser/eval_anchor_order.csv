@@ -1,0 +1,6 @@
+scheduler,measured_order,model_order,match,measured_cycles,source
+FIFO,T0->T1->T2,T0->T1->T2,True,13412,measured (RTL) vs model
+LIFO,T2->T1->T0,T2->T1->T0,True,13412,measured (RTL) vs model
+AIMT,T0->T1->T2,T0->T1->T2,True,13413,measured (RTL) vs model
+BATCHDNN,T0->T1->T2,T0->T1->T2,True,13413,measured (RTL) vs model
+BATCHDNN_PP,T0->T1->T2,T0->T1->T2,True,13413,measured (RTL) vs model
