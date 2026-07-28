@@ -42,8 +42,34 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 RTL = ROOT / "rtl" / "schedulers"
 
-VIVADO = "/home/2025.2/Vivado/bin/vivado"
 PART = "xc7a100tcsg324-1"
+
+# Vivado's location is NOT hardcoded: the install has already moved once
+# (/home/2025.2 -> /vivado/2025.2), which silently stranded this table.
+# Resolution order: $VIVADO env var, then PATH, then known install roots.
+_VIVADO_CANDIDATES = (
+    "/vivado/2025.2/Vivado/bin/vivado",
+    "/home/2025.2/Vivado/bin/vivado",
+    "/tools/Xilinx/Vivado/2025.2/bin/vivado",
+    "/opt/Xilinx/Vivado/2025.2/bin/vivado",
+)
+
+
+def find_vivado() -> str | None:
+    import os
+    env = os.environ.get("VIVADO")
+    if env and Path(env).exists():
+        return env
+    which = shutil.which("vivado")
+    if which:
+        return which
+    for c in _VIVADO_CANDIDATES:
+        if Path(c).exists():
+            return c
+    return None
+
+
+VIVADO = find_vivado()
 
 # scheduler -> (source file, top module, {generic: value})
 # Order mirrors SimConfig.SCHEDULER_NAMES (select codes 0..13).
@@ -259,8 +285,12 @@ def main() -> None:
     ap.add_argument("--out", default=None, help="output CSV path")
     args = ap.parse_args()
 
-    if not Path(VIVADO).exists():
-        raise SystemExit(f"Vivado not found at {VIVADO}")
+    if VIVADO is None:
+        raise SystemExit(
+            "Vivado not found. Set $VIVADO to the vivado binary, put it on "
+            "PATH, or install it at one of: "
+            + ", ".join(_VIVADO_CANDIDATES))
+    print(f"Using Vivado: {VIVADO}")
 
     names = list(TARGETS)
     if args.only:

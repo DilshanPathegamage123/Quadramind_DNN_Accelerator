@@ -30,16 +30,47 @@ own branch, Member 3's involvement, and a golden-check re-run.
 
 > **STATUS UPDATE — Findings 1 and 2 are addressed on branch
 > `fix/scheduler-synthesis`** (the separate branch the guardrail asked for).
-> The three unsynthesisable constructs have been rewritten; the rewrites are
+> The unsynthesisable constructs have been rewritten; the rewrites are
 > proven behaviour-preserving by `tb/unit/test_scheduler_synth_fix.py`
-> (13 tests) and elaborate cleanly under `slang`. **They are NOT yet
-> re-synthesised**: Vivado is no longer present at the `/home/2025.2` path
-> `scripts/synth_scheduler_hw.py` expects, so no measured area/power/Fmax
-> exists for HRRN, BATCH-DNN or BATCH-DNN++ yet. Per this framework's own
-> discipline, `results/sched_chooser/hw/scheduler_hw.csv` is therefore left
-> **unchanged**: those three still carry no hardware number and are still
-> excluded from hardware goals. Re-run `scripts/synth_scheduler_hw.py` on a
-> machine with Vivado to close them out. Findings 3 and 4 are untouched.
+> (13 tests) and elaborate cleanly under `slang`.
+>
+> **Re-synthesised with the real tool** (Vivado 2025.2 had moved to
+> `/vivado/2025.2`; the harness now discovers it instead of hardcoding a
+> path). The table is now **13/14 measured**, up from 11/14:
+>
+> | Scheduler | Result | LUT | FF | DSP | Fmax |
+> |---|---|---|---|---|---|
+> | HRRN | now synthesises | 2,941 | 1,002 | 60 | 6.5 MHz |
+> | BATCH-DNN | now synthesises | 4,657 | 6,529 | 10 | 10.7 MHz |
+> | BATCH-DNN++ | still unmeasured | — | — | — | — |
+>
+> Three caveats, none of them cosmetic:
+>
+> 1. **HRRN is buildable but slow.** Exact integer ratio comparison infers
+>    ~30 wide multipliers; it is the only scheduler consuming DSPs (60 of the
+>    part's 240) and its Fmax collapses to 6.5 MHz, ranking it LAST on
+>    `--goal turnaround_us`. This retires a real risk: HRRN wins 4 of 32
+>    mix x goal cases on cycle-only timing, so a cycle-only analysis would
+>    have recommended it.
+> 2. **BATCH-DNN's 200 CRITICAL WARNINGs are NOT fixed.** They are on
+>    `sched_table`'s `mem_access_done_flag` / `compute_done_flag`, driven by
+>    both the table-load block and the main FSM — the *same* pathology as
+>    Finding 3 (AI-MT, 164 warnings). Vivado keeps the constant driver and
+>    ignores the real one, so 4,657 LUT is an honest measurement of a netlist
+>    that does not faithfully implement the design. Fixing it needs an
+>    ownership restructure of `sched_table`, which is its own piece of work.
+> 3. **BATCH-DNN++ could not be measured on this machine.** Its RTL fixes are
+>    in place and it elaborates cleanly, but Vivado needs ~12 GB to synthesise
+>    it (measured by sampling: RAM peaked at 14.9/15 GB with swap fully
+>    exhausted before the OOM kill). Four attempts, four OOM kills. Its CSV
+>    row is marked `unavailable` with a STALE note rather than keeping the
+>    last successful numbers, because that run predates the multi-driven-reset
+>    fix and measured a netlist whose `current_batch` / `slice_remaining` were
+>    tied to GND. Re-run on a machine with more swap.
+>
+> **No golden-check re-run has happened** — Verilator is still unavailable, so
+> all three fixes rest on equivalence arguments plus Vivado DRC, not
+> simulation. Findings 3 and 4 are untouched.
 
 ## Finding 1 — BATCH-DNN and BATCH-DNN++ are not synthesisable
 

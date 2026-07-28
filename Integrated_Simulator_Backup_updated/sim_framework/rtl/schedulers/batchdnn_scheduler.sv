@@ -214,9 +214,12 @@ module batchdnn_scheduler #(
             sched_table[st_layer_idx].compute_done_flag    <= 1'b0;
             total_layers <= st_total_layers;
 
-            // initialise current_batch for this DNN if first layer
-            if (current_batch[st_dnn_id] == 0)
-                current_batch[st_dnn_id] <= st_initial_batch;
+            // NOTE: the first-layer initialisation of current_batch used to
+            // live here.  It has moved into the main scheduler block below,
+            // which also drives current_batch -- two always_ff blocks driving
+            // one signal is a multi-driven net, which Vivado rejects at DRC
+            // (MDRV-1) even though it elaborates and simulates.  Same fix as
+            // finding F7 for the MT queue pointers.
         end
     end
 
@@ -249,6 +252,22 @@ module batchdnn_scheduler #(
             // F7: MT queue ops applied once at block end
             automatic logic mt_pop;
             mt_pop = 1'b0;
+
+            // =========================================================
+            // current_batch ownership (moved here from the table-load
+            // block, which multi-drove it -- DRC MDRV-1).
+            //
+            // Deliberately placed FIRST in this block: if a table write
+            // and a merge/split land on the same edge, the merge/split
+            // assignments further down now take precedence.  That is the
+            // intended precedence -- this init only ever fires while
+            // current_batch is still 0, i.e. before the DNN has been
+            // dispatched, whereas merge/split is a live scheduling
+            // decision.  Previously the outcome of that collision was a
+            // race between two always_ff blocks, i.e. undefined.
+            // =========================================================
+            if (st_write_en && current_batch[st_dnn_id] == 0)
+                current_batch[st_dnn_id] <= st_initial_batch;
 
             // =========================================================
             // BLOCK A: Memory Access Scheduler (identical to AI-MT)

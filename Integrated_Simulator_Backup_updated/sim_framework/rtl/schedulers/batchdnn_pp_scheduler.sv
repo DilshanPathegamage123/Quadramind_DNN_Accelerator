@@ -302,10 +302,15 @@ module batchdnn_pp_scheduler #(
         if (!rst_n) begin
             for (int i = 0; i < MAX_LAYERS; i++) sched_table[i] <= '0;
             for (int d = 0; d < MAX_DNNS; d++) begin
+                // current_batch and slice_remaining are reset in the MAIN
+                // block, which owns them.  Resetting them here too would
+                // make this block a SECOND driver: Vivado then keeps the
+                // constant (GND) driver and silently IGNORES the real one
+                // ([Synth 8-6858]), leaving the register stuck at 0 in the
+                // netlist.  A signal must be driven by exactly one
+                // always_ff, reset included.
                 sb_sp[d]           <= '0;
-                current_batch[d]   <= '0;
                 prev_batch_reg[d]  <= '0;
-                slice_remaining[d] <= '0;
                 max_batch_cap[d]   <= '0;
                 ct_current_layer[d]<= '0;
             end
@@ -330,14 +335,16 @@ module batchdnn_pp_scheduler #(
             cap = compute_max_batch_cap(st_weight_fp, st_ifmap_fp, st_ofmap_fp);
             sched_table[st_layer_idx].max_batch <= cap;
 
+            // NOTE: the current_batch and slice_remaining initialisations
+            // that used to sit in this branch have moved into the main
+            // scheduler block below, which also drives both -- two always_ff
+            // blocks driving one signal is a multi-driven net and Vivado
+            // rejects it at DRC (MDRV-1).  Same fix as finding F7 for the MT
+            // queue pointers.  max_batch_cap stays here: it is driven only
+            // by this block, so it is not multi-driven.
             if (current_batch[st_dnn_id] == 0) begin
-                // First layer of this DNN: initialise
-                // N = min(cap, requested_batch)
-                current_batch[st_dnn_id]  <= (cap < st_requested_batch) ?
-                                              cap : st_requested_batch;
+                // First layer of this DNN
                 max_batch_cap[st_dnn_id]  <= cap;
-                // Batch slicing: how many full slices of N are needed?
-                slice_remaining[st_dnn_id] <= st_requested_batch;
             end else begin
                 // Update minimum cap if this layer is more constrained
                 if (cap < max_batch_cap[st_dnn_id])
@@ -370,12 +377,45 @@ module batchdnn_pp_scheduler #(
             mt_cq_head <= '0; mt_cq_tail <= '0; mt_cq_cnt <= '0;
             ct_cq_head <= '0; ct_cq_tail <= '0; ct_cq_cnt <= '0;
             sct_head   <= '0; sct_tail   <= '0; sct_cnt   <= '0;
+            // Reset for the two signals this block owns (moved out of the
+            // table-load block so each has exactly one driver -- see the
+            // note there).  Same reset values as before.
+            for (int d = 0; d < MAX_DNNS; d++) begin
+                current_batch[d]   <= '0;
+                slice_remaining[d] <= '0;
+            end
         end else begin
             // F7: MT enqueues (table load + expedites) applied once at the
             // end of this block so same-edge enqueues cannot be lost.
             automatic logic exp_enq;
             automatic logic [LAYER_ID_WIDTH-1:0] exp_layer;
             exp_enq = 1'b0; exp_layer = '0;
+
+            // =============================================================
+            // current_batch / slice_remaining ownership (moved here from the
+            // table-load block, which multi-drove them -- DRC MDRV-1).
+            //
+            // Deliberately placed FIRST in this block: if a table write and
+            // a merge/split land on the same edge, the assignments further
+            // down now take precedence.  That is the intended precedence --
+            // this init only fires while current_batch is still 0, i.e.
+            // before the DNN has been dispatched, whereas merge/split is a
+            // live scheduling decision.  Previously that collision was a
+            // race between two always_ff blocks, i.e. undefined.
+            //
+            // `cap` is recomputed from the same st_* inputs the load block
+            // uses, so the initialised value is unchanged.
+            // =============================================================
+            if (st_write_en && current_batch[st_dnn_id] == 0) begin
+                automatic logic [BATCH_WIDTH-1:0] init_cap;
+                init_cap = compute_max_batch_cap(st_weight_fp, st_ifmap_fp,
+                                                 st_ofmap_fp);
+                // N = min(cap, requested_batch)
+                current_batch[st_dnn_id]   <= (init_cap < st_requested_batch)
+                                              ? init_cap : st_requested_batch;
+                // Batch slicing: how many full slices of N are needed?
+                slice_remaining[st_dnn_id] <= st_requested_batch;
+            end
 
             // =============================================================
             // BLOCK A: Memory Access Scheduler with Distance Throttling
