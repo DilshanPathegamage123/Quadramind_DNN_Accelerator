@@ -1,0 +1,12 @@
+Configuration axis,Setting,Runs covering it (count)
+Stationary scheme,OS,22
+Stationary scheme,IS,2
+Stationary scheme,WS,5
+Memory layout,ROW_MAJOR,2
+Memory layout,COLUMN_MAJOR,2
+Memory layout,CHANNEL_MAJOR,25
+Casting scheme,MULTICAST,25
+Casting scheme,HYBRID,2
+Casting scheme,UNICAST,2
+Memory backend,STAMP,26
+Memory backend,PAGED,3

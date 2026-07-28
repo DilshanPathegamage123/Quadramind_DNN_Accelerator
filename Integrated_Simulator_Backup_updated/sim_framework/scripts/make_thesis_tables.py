@@ -54,8 +54,10 @@ OUT = ROOT / "results/thesis_notebook/tables"
 BUNDLE = ROOT / "results/thesis_notebook/data_bundle/golden_check/figures"
 
 # Output activations are dimensionless real numbers reconstructed from the
-# RTL's fixed-point words (Q with frac_x + frac_w fractional bits).
-UNITS = "activation units (dimensionless)"
+# RTL's fixed-point words (Q with frac_x + frac_w fractional bits).  Kept
+# short so column headers stay readable; the "dimensionless" nature is
+# explained in the notebook prose rather than repeated in every header.
+UNITS = "activation units"
 
 
 def _layer_dir(layer_rel: str) -> Path:
@@ -92,9 +94,18 @@ def _configs() -> list[tuple[str, dict, dict]]:
         layer = raw["layer"]
         if "models/" in layer:                    # stored as an absolute path
             layer = "models/" + layer.split("models/", 1)[1]
+        # These runs do not record dataflow/layout/casting.  The values below
+        # are read off the test that produced them, not guessed:
+        # tb/golden/test_scheme_divergence.py runs "the full OS tile sequence"
+        # (docstring, line 3) with LAYOUTS["CHANNEL_MAJOR"] (line 148) and the
+        # default MULTICAST casting.  Flagged in "Attribute source" so a
+        # reader can tell these apart from fields the run itself recorded.
         v.update({"layer": layer, "dataflow": "OS", "layout": "CHANNEL_MAJOR",
                   "memory": raw.get("scheme", "STAMP"), "casting": "MULTICAST",
-                  "array": "8x8"})
+                  "array": "8x8",
+                  "_attr_source": "from test source "
+                                  "(test_scheme_divergence.py: OS tile "
+                                  "sequence, CHANNEL_MAJOR)"})
         out.append((raw_path.stem, v, raw))
     return out
 
@@ -112,6 +123,53 @@ def _relu_by_layer(configs) -> dict[str, bool]:
         if "relu" in v:
             out[v["layer"]] = bool(v["relu"]) or out.get(v["layer"], False)
     return out
+
+
+# Canonical axis orders used across this project (config_chooser.DATAFLOWS
+# etc.), so tables read OS/IS/WS rather than alphabetical IS/OS/WS.
+AXIS_ORDER = {
+    "Stationary scheme": ["OS", "IS", "WS"],
+    "Memory layout": ["ROW_MAJOR", "COLUMN_MAJOR", "CHANNEL_MAJOR"],
+    "Casting scheme": ["MULTICAST", "HYBRID", "UNICAST"],
+    "Memory backend": ["STAMP", "PAGED"],
+}
+
+
+def _order_by_coverage(df: pd.DataFrame) -> pd.DataFrame:
+    """Sort so the configuration space is legible, not so errors cluster.
+
+    Sorting by error puts every identically-quantised run next to its twins,
+    which makes a systematic sweep look like repeated rows.  Ordering by the
+    axes themselves shows at a glance which combinations were covered.
+    """
+    out = df.copy()
+    keys = []
+    for col, order in AXIS_ORDER.items():
+        if col in out.columns:
+            kc = f"_sort_{col}"
+            out[kc] = pd.Categorical(out[col], categories=order, ordered=True)
+            keys.append(kc)
+    sort_cols = (["Workload / layer"] + keys
+                 + ["Array size (PEs)", "Memory banks (count)",
+                    "Configuration"])
+    sort_cols = [c for c in sort_cols if c in out.columns]
+    out = out.sort_values(sort_cols, kind="mergesort").reset_index(drop=True)
+    return out.drop(columns=[c for c in out.columns
+                             if c.startswith("_sort_")])
+
+
+def coverage_summary(df: pd.DataFrame) -> pd.DataFrame:
+    """How many runs cover each value of each configuration axis."""
+    rows = []
+    for col, order in AXIS_ORDER.items():
+        if col not in df.columns:
+            continue
+        counts = df[col].value_counts()
+        for value in order:
+            if value in counts.index:
+                rows.append({"Configuration axis": col, "Setting": value,
+                             "Runs covering it (count)": int(counts[value])})
+    return pd.DataFrame(rows)
 
 
 def build_correctness_detail() -> pd.DataFrame:
@@ -180,6 +238,10 @@ def build_correctness_detail() -> pd.DataFrame:
             "Casting scheme": v.get("casting", "MULTICAST"),
             "Memory backend": v["memory"],
             "Array size (PEs)": v["array"],
+            # Without this the bank sweep (2/4/8/16 banks) looks like four
+            # identical rows -- the runs differ only on this axis.
+            "Memory banks (count)": int(v.get("num_banks",
+                                              raw.get("num_banks_build", 4))),
             "Output elements compared (count)":
                 int(v.get("n_total", golden_cmp.size)),
             "Elements within tolerance (count)":
@@ -195,6 +257,7 @@ def build_correctness_detail() -> pd.DataFrame:
             "Safety margin (times below tolerance)": tol_abs / max_abs,
             "Result": "PASS" if max_abs <= tol_abs else "FAIL",
             "Data source": "measured (RTL) vs golden (TensorFlow)",
+            "Attribute source": v.get("_attr_source", "recorded in result file"),
         })
 
     if mismatches:
@@ -210,8 +273,7 @@ def build_correctness_detail() -> pd.DataFrame:
     df = pd.DataFrame(rows)
     if df.empty:
         return df
-    df = df.sort_values("Relative error (% of full scale)",
-                        ascending=False).reset_index(drop=True)
+    df = _order_by_coverage(df)
 
     # A validation run that FAILED would be a real finding, not a table
     # formatting problem -- surface it loudly rather than let it blend in.
@@ -285,10 +347,17 @@ def main() -> None:
             print(f"    {layer}: {n} distinct error value(s) across all "
                   f"stationary/layout/casting configs")
 
+    cov = coverage_summary(detail[detail["Run type"] == "validation"])
+    print("\n  Axis coverage (validation runs):")
+    for _, r in cov.iterrows():
+        print(f"    {r['Configuration axis']:<20} {r['Setting']:<15} "
+              f"{r['Runs covering it (count)']}")
+
     for target in (OUT, BUNDLE):
         target.mkdir(parents=True, exist_ok=True)
         detail.to_csv(target / "correctness_detail.csv", index=False)
         perf.to_csv(target / "config_axes_performance.csv", index=False)
+        cov.to_csv(target / "axis_coverage.csv", index=False)
         try:
             shown = target.relative_to(ROOT)
         except ValueError:
