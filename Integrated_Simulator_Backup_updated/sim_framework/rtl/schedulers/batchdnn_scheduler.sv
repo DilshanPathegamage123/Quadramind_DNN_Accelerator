@@ -367,12 +367,26 @@ module batchdnn_scheduler #(
                     fits         = 1'b1;
 
                     // Check all layers between resumed and current fit (box 16b-16d)
-                    for (int l = resume_layer; l <= next_layer; l++) begin
-                        needed = (sched_table[l].ifmap_fp +
-                                  sched_table[l].ofmap_fp) *
-                                 (top_entry.batch_size + req_batch) +
-                                  sched_table[l].weight_fp;
-                        if (needed > avail_mem_reg) fits = 1'b0;
+                    //
+                    // The loop is bounded STATICALLY at MAX_LAYERS and the
+                    // [resume_layer, next_layer] window is selected inside it.
+                    // Starting at `resume_layer` -- a runtime value off the
+                    // sub-batch stack -- gives the synthesiser no static trip
+                    // count, so Vivado aborts with [Synth 8-3380] "loop
+                    // condition does not converge after 2000 iterations".
+                    // Same iterations, same order, same result; additionally
+                    // it can no longer index sched_table past MAX_LAYERS-1,
+                    // which the old form could when next_layer >= MAX_LAYERS
+                    // (LAYER_ID_WIDTH = 8 addresses more layers than the
+                    // MAX_LAYERS = 32 table holds).
+                    for (int l = 0; l < MAX_LAYERS; l++) begin
+                        if (l >= int'(resume_layer) && l <= int'(next_layer)) begin
+                            needed = (sched_table[l].ifmap_fp +
+                                      sched_table[l].ofmap_fp) *
+                                     (top_entry.batch_size + req_batch) +
+                                      sched_table[l].weight_fp;
+                            if (needed > avail_mem_reg) fits = 1'b0;
+                        end
                     end
 
                     if (fits) begin

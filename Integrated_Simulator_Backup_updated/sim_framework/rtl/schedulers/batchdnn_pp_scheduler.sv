@@ -561,12 +561,21 @@ module batchdnn_pp_scheduler #(
                     top  = sb_stack[did][sb_sp[did]-1];
                     fits = 1'b1;
 
-                    for (int l = top.layer_idx; l <= next_layer && l < MAX_LAYERS; l++) begin
-                        needed = (sched_table[l].ifmap_fp +
-                                  sched_table[l].ofmap_fp) *
-                                 (top.batch_size + req_batch) +
-                                  sched_table[l].weight_fp;
-                        if (needed > avail_mem_reg) fits = 1'b0;
+                    // Statically bounded at MAX_LAYERS, window selected inside.
+                    // The pre-existing `l < MAX_LAYERS` guard was not enough:
+                    // the loop START was still the runtime value
+                    // top.layer_idx, so Vivado had no static trip count and
+                    // aborted with [Synth 8-3380] "loop condition does not
+                    // converge after 2000 iterations".  Same iterations, same
+                    // order, same result.
+                    for (int l = 0; l < MAX_LAYERS; l++) begin
+                        if (l >= int'(top.layer_idx) && l <= int'(next_layer)) begin
+                            needed = (sched_table[l].ifmap_fp +
+                                      sched_table[l].ofmap_fp) *
+                                     (top.batch_size + req_batch) +
+                                      sched_table[l].weight_fp;
+                            if (needed > avail_mem_reg) fits = 1'b0;
+                        end
                     end
 
                     if (fits) begin

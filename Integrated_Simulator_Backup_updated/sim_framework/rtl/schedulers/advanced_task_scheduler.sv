@@ -171,15 +171,50 @@ module advanced_task_scheduler #(
         current_task_id <= task_queue[shortest_idx].id;
     endtask
     
+    // HRRN compares response ratios (wait + burst) / burst.  Evaluating that
+    // as a division in `real` is simulation-only -- `real` has no hardware
+    // mapping and Vivado rejects it outright ([Synth 8-27] real number
+    // expression not supported).  The comparison is therefore done by cross-
+    // multiplication in integer arithmetic, which is exact and synthesisable:
+    //
+    //     num_i / den_i > num_b / den_b   <=>   num_i * den_b > num_b * den_i
+    //
+    // (valid because both denominators are burst_time values already guarded
+    // to be > 0).  This is not an approximation of the old code: at the
+    // declared field widths the two forms provably cannot order any pair
+    // differently -- BURST_TIME_WIDTH + DEADLINE_WIDTH = 48 < 52, so float64
+    // still separated every distinct ratio.  See the derivation in
+    // tb/unit/test_scheduler_synth_fix.py.  The old code was numerically
+    // fine; it was purely unsynthesisable.
+    localparam int HRRN_NUM_W  = ((DEADLINE_WIDTH > BURST_TIME_WIDTH)
+                                  ? DEADLINE_WIDTH : BURST_TIME_WIDTH) + 1;
+    localparam int HRRN_PROD_W = HRRN_NUM_W + BURST_TIME_WIDTH;
+
     task automatic schedule_hrrn();
-        int highest_idx = 0;
-        real max_ratio = 0.0;
-        real current_ratio;
+        int   highest_idx = 0;
+        logic found       = 1'b0;
+        logic [HRRN_NUM_W-1:0]       best_num, cand_num;
+        logic [BURST_TIME_WIDTH-1:0] best_den, cand_den;
+        logic [HRRN_PROD_W-1:0]      lhs, rhs;
+        best_num = '0;
+        best_den = '0;
         for (int i = 0; i < MAX_TASKS; i++) begin
             if (i < num_tasks && task_queue[i].burst_time > 0) begin
-                current_ratio = real'(task_queue[i].wait_time + task_queue[i].burst_time) / real'(task_queue[i].burst_time);
-                if (current_ratio > max_ratio) begin
-                    max_ratio = current_ratio;
+                // Widths are made explicit so the sum cannot wrap at
+                // DEADLINE_WIDTH and the products cannot wrap at HRRN_NUM_W.
+                cand_num = HRRN_NUM_W'(task_queue[i].wait_time)
+                         + HRRN_NUM_W'(task_queue[i].burst_time);
+                cand_den = task_queue[i].burst_time;
+                // ratio_i vs current best, by cross-multiplication
+                lhs      = HRRN_PROD_W'(cand_num) * HRRN_PROD_W'(best_den);
+                rhs      = HRRN_PROD_W'(best_num) * HRRN_PROD_W'(cand_den);
+                // `!found` reproduces the old `max_ratio = 0.0` seed: every
+                // valid ratio is >= 1, so the first eligible task always won.
+                // Strict `>` keeps the original first-index-wins tie-break.
+                if (!found || lhs > rhs) begin
+                    found       = 1'b1;
+                    best_num    = cand_num;
+                    best_den    = cand_den;
                     highest_idx = i;
                 end
             end

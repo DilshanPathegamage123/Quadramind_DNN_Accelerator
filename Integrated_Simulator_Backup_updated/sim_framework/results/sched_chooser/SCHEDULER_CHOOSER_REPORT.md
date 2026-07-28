@@ -24,9 +24,22 @@ substitute.
 
 These four came out of building this framework but are **properties of the
 project's RTL and assumptions**, not of the chooser. They are recorded here
-so the team sees them; none of them is fixed on this branch, per the agreed
-guardrail that RTL changes need their own branch, Member 3's involvement,
-and a golden-check re-run.
+so the team sees them; none of them is fixed on this branch (`feature/
+scheduler-chooser`), per the agreed guardrail that RTL changes need their
+own branch, Member 3's involvement, and a golden-check re-run.
+
+> **STATUS UPDATE — Findings 1 and 2 are addressed on branch
+> `fix/scheduler-synthesis`** (the separate branch the guardrail asked for).
+> The three unsynthesisable constructs have been rewritten; the rewrites are
+> proven behaviour-preserving by `tb/unit/test_scheduler_synth_fix.py`
+> (13 tests) and elaborate cleanly under `slang`. **They are NOT yet
+> re-synthesised**: Vivado is no longer present at the `/home/2025.2` path
+> `scripts/synth_scheduler_hw.py` expects, so no measured area/power/Fmax
+> exists for HRRN, BATCH-DNN or BATCH-DNN++ yet. Per this framework's own
+> discipline, `results/sched_chooser/hw/scheduler_hw.csv` is therefore left
+> **unchanged**: those three still carry no hardware number and are still
+> excluded from hardware goals. Re-run `scripts/synth_scheduler_hw.py` on a
+> machine with Vivado to close them out. Findings 3 and 4 are untouched.
 
 ## Finding 1 — BATCH-DNN and BATCH-DNN++ are not synthesisable
 
@@ -61,10 +74,17 @@ schedulers. They simulate correctly — the golden runs at
 behaviour. But as written it cannot be built, and the chooser therefore
 reports no area, power or Fmax for either.
 
-**Suggested fix (not applied):** bound the loop statically and compare
-inside it, e.g. `for (int l = 0; l < MAX_LAYERS; l++) if (l >= resume_layer
-&& l <= next_layer) ...`. This changes synthesis results, so it needs its
-own branch and a golden-check re-run.
+**Suggested fix — APPLIED on `fix/scheduler-synthesis`:** bound the loop
+statically and compare inside it, `for (int l = 0; l < MAX_LAYERS; l++) if
+(l >= resume_layer && l <= next_layer) ...`, in both
+`batchdnn_scheduler.sv` and `batchdnn_pp_scheduler.sv`. (BatchDNN++'s
+pre-existing `l < MAX_LAYERS` guard was not sufficient — the *start* value
+was the runtime `top.layer_idx`.) Iteration set and order are unchanged;
+`tb/unit/test_scheduler_synth_fix.py` checks this exhaustively over all
+32 x 32 in-range layer windows. The static bound additionally removes an
+out-of-bounds `sched_table` read the old form allowed, since
+`LAYER_ID_WIDTH = 8` expresses layer ids up to 255 while the table holds
+`MAX_LAYERS = 32`. Still needs a golden-check re-run and re-synthesis.
 
 ## Finding 2 — HRRN is not synthesisable (floating-point in RTL)
 
@@ -88,9 +108,24 @@ mix × goal cases on the timing metrics, so a cycle-only analysis would
 recommend a scheduler that cannot be built. The CLI now prints an explicit
 warning and names the best synthesisable alternative whenever this happens.
 
-**Suggested fix (not applied):** compare ratios by cross-multiplication in
-integer arithmetic — `(wait_i + burst_i) * burst_j > (wait_j + burst_j) *
-burst_i` — which is exact and synthesisable.
+**Suggested fix — APPLIED on `fix/scheduler-synthesis`:** ratios are now
+compared by cross-multiplication in integer arithmetic — `(wait_i +
+burst_i) * burst_j > (wait_j + burst_j) * burst_i` — which is exact and
+synthesisable. The running best is carried as a `(num, den)` pair, a
+`found` flag reproduces the old `max_ratio = 0.0` seed, and strict `>`
+preserves the original first-index-wins tie-break. Two `localparam`s size
+the intermediates so neither the sum nor the products can wrap.
+
+Worth flagging for whoever re-synthesises: exact ratio comparison needs
+**two wide multipliers per queue slot** (~30 at `MAX_TASKS = 16`), of
+33x16 bits. HRRN's measured area is therefore likely to come back
+substantially above the other schedulers', and it may be the first to
+consume DSP blocks (every scheduler currently reports `dsps = 0`). That is
+a real cost of exact HRRN, not an artefact of the rewrite — the previous
+`real` version simply never had a hardware cost to measure. If it proves
+too expensive, the honest alternatives are a narrower saturating
+`wait_time` or a multi-cycle comparison FSM, but both change behaviour and
+so need Member 3 and a golden-check re-run.
 
 ## Finding 3 — AI-MT has multi-driven registers; the netlist ignores the real driver
 

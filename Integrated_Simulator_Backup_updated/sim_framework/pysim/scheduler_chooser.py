@@ -207,6 +207,11 @@ def _sel_srtf(q, st):          # advanced: min remaining_time
 
 
 def _sel_hrrn(q, st):          # advanced: max (wait + burst) / burst
+    # The RTL now compares these ratios by integer cross-multiplication
+    # instead of `real` division (that was the unsynthesisable construct).
+    # Float here is still a faithful transcription: at the declared widths
+    # the two orderings provably cannot differ -- see
+    # tb/unit/test_scheduler_synth_fix.py.
     wait = st["wait_time"]
     best, best_r = 0, -1.0
     for i, t in enumerate(q):
