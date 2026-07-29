@@ -39,9 +39,11 @@ the per-layout traffic deltas are model values, not measured ones.
 """
 from __future__ import annotations
 
+import json
 import math
 import time
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Dict, List, Optional
 
 from pysim.sim_config import LayerConfig
@@ -50,7 +52,101 @@ from pysim.software_ref import estimate_cycles
 DATAFLOWS = ["OS", "WS", "IS"]
 LAYOUTS = ["ROW_MAJOR", "COLUMN_MAJOR", "CHANNEL_MAJOR"]
 CASTINGS = ["MULTICAST", "UNICAST", "HYBRID"]
-GOALS = ["offchip", "latency", "energy", "weighted"]
+GOALS = ["offchip", "cycles", "latency", "energy", "weighted"]
+
+# ---------------------------------------------------------------------------
+# Cycle model (v2) -- predicts absolute cycles, not just a rank
+# ---------------------------------------------------------------------------
+# Measured decomposition of whole-layer runtime, calibrated by
+# scripts/calibrate_cycle_model.py against every recorded STAMP run:
+#
+#     cycles = 3 * (AXI AR requests) + 2 * (AXI beats) + compute_base
+#
+# Both coefficients come back as EXACT integers with zero residual over all
+# 19 measured runs, so they are treated as protocol costs (address
+# handshake, data delivery) rather than tuning constants.  compute_base is
+# the runtime not hidden behind memory traffic; it is constant for a given
+# (layer shape, dataflow, array) and therefore CANCELS when memory layouts
+# or casting schemes are compared against each other -- those rankings do
+# not depend on it.
+_CALIB_PATH = Path(__file__).resolve().parent / "cycle_model_calibration.json"
+
+_DEFAULT_CALIB = {"cycles_per_ar_request": 3.0, "cycles_per_beat": 2.0,
+                  "compute_base": {}, "compute_base_per_mac": {}}
+
+
+def _load_calibration() -> Dict:
+    if _CALIB_PATH.exists():
+        try:
+            return json.loads(_CALIB_PATH.read_text())
+        except (ValueError, OSError):
+            pass
+    return dict(_DEFAULT_CALIB)
+
+
+_CALIB = _load_calibration()
+
+# Beats delivered per AXI burst.  Casting is workload-independent in the
+# measured data (HYBRID 1.251/1.252, UNICAST 1.132/1.132 across both anchor
+# layers).  Layout is not: ROW_MAJOR coalesces well only when the layer has
+# a single input channel, so it is split on that.  CHANNEL_MAJOR carries a
+# 34% spread across the measured runs and is the least certain entry.
+_BPB_CASTING = {"HYBRID": 1.251, "UNICAST": 1.132}
+_BPB_LAYOUT = {"COLUMN_MAJOR": 1.037, "CHANNEL_MAJOR": 11.826,
+               "ROW_MAJOR_1CH": 10.286, "ROW_MAJOR_NCH": 1.023}
+
+
+def _shape_key(layer: LayerConfig) -> str:
+    return "x".join(str(v) for v in (
+        layer.weight_k, layer.weight_c, layer.weight_kh, layer.weight_kw,
+        layer.output_height, layer.output_width))
+
+
+def _is_dense(layer: LayerConfig) -> bool:
+    return (layer.weight_kh == 1 and layer.weight_kw == 1
+            and layer.output_height == 1 and layer.output_width == 1)
+
+
+def beats_per_burst(layer: LayerConfig, layout: str, casting: str) -> float:
+    """How many beats the controller coalesces into one AXI burst."""
+    if casting in _BPB_CASTING:
+        return _BPB_CASTING[casting]
+    if layout == "ROW_MAJOR":
+        return _BPB_LAYOUT["ROW_MAJOR_1CH" if layer.weight_c == 1
+                           else "ROW_MAJOR_NCH"]
+    return _BPB_LAYOUT.get(layout, 1.0)
+
+
+def ar_requests(layer: LayerConfig, layout: str, casting: str,
+                beats: float) -> float:
+    """Read-address handshakes needed to move `beats` beats."""
+    bpb = beats_per_burst(layer, layout, casting)
+    return math.ceil(beats / bpb) if bpb > 0 else beats
+
+
+def compute_base(layer: LayerConfig, dataflow: str, array_h: int,
+                 array_w: int) -> tuple[float, bool]:
+    """Runtime not hidden behind memory traffic.
+
+    Returns (cycles, measured).  `measured` is True when a recorded RTL run
+    exists for this exact layer shape, dataflow and array -- then the value
+    is the measured one, not an estimate.  Otherwise it falls back to a
+    per-MAC rate calibrated separately for conv and dense layers, which
+    behave an order of magnitude apart.
+    """
+    key = f"{_shape_key(layer)}|{dataflow}|{array_h}x{array_w}"
+    exact = _CALIB.get("compute_base", {}).get(key)
+    if exact is not None:
+        return float(exact), True
+
+    macs = (layer.weight_k * layer.weight_c * layer.weight_kh
+            * layer.weight_kw * layer.output_height * layer.output_width)
+    kind = "dense" if _is_dense(layer) else "conv"
+    rates = _CALIB.get("compute_base_per_mac", {})
+    entry = (rates.get(f"{dataflow}|{kind}") or rates.get(f"{dataflow}|conv")
+             or rates.get("OS|conv"))
+    rate = entry["base_per_mac"] if isinstance(entry, dict) else 0.0
+    return macs * rate, False
 
 _LAYOUT_ABBR = {"ROW_MAJOR": "RM", "COLUMN_MAJOR": "CM", "CHANNEL_MAJOR": "ChM"}
 
@@ -162,10 +258,14 @@ class ConfigScore:
     casting: str
     offchip_elements: float      # primary ranking metric (model)
     offchip_bytes: float
-    latency_rank: float          # RANK score, not a cycle prediction
+    latency_rank: float          # legacy RANK score, kept for compatibility
     energy_pJ: float
     macs: float
     prefetch_beats: float        # casting-affected, structural (RTL-anchored)
+    predicted_cycles: float = 0.0        # absolute cycle prediction
+    ar_requests: float = 0.0             # AXI read-address handshakes
+    compute_base_cycles: float = 0.0     # runtime not hidden behind traffic
+    base_measured: bool = False          # True when every layer's base is measured
     weighted: float = float("nan")
 
     @property
@@ -194,6 +294,9 @@ def score_config(layers: List[LayerConfig], array_h: int, array_w: int,
     latency = 0.0
     macs = 0.0
     beats_total = 0.0
+    ar_total = 0.0
+    base_total = 0.0
+    all_bases_measured = True
     for layer in layers:
         pf = prefetch_traffic(layer, array_h, array_w, casting, dataflow)
         wt, it = pf["weight_elems"], pf["input_elems"]
@@ -213,16 +316,31 @@ def score_config(layers: List[LayerConfig], array_h: int, array_w: int,
         macs += (layer.weight_k * layer.weight_c * layer.weight_kh
                  * layer.weight_kw * layer.output_height * layer.output_width)
         beats_total += pf["beats"]
+
+        # Cycle model: traffic cost from the beats this configuration moves
+        # and the bursts needed to carry them, plus the compute that is not
+        # hidden behind that traffic.
+        ar_total += ar_requests(layer, layout, casting, pf["beats"])
+        base_cyc, measured = compute_base(layer, dataflow, array_h, array_w)
+        base_total += base_cyc
+        all_bases_measured &= measured
     offchip_bytes = offchip * (dw // 8)
     energy = (offchip_bytes * DRAM_PJ_PER_BYTE
               + macs * COMPUTE_PJ_PER_MAC * (dw / 8.0))
+    cycles = (_CALIB["cycles_per_ar_request"] * ar_total
+              + _CALIB["cycles_per_beat"] * beats_total + base_total)
     return ConfigScore(dataflow, layout, casting, offchip, offchip_bytes,
-                       latency, energy, macs, beats_total)
+                       latency, energy, macs, beats_total,
+                       predicted_cycles=cycles, ar_requests=ar_total,
+                       compute_base_cycles=base_total,
+                       base_measured=all_bases_measured)
 
 
 def goal_value(score: ConfigScore, goal: str) -> float:
     """The metric a given goal ranks on."""
-    return {"offchip": score.offchip_elements, "latency": score.latency_rank,
+    return {"offchip": score.offchip_elements,
+            "cycles": score.predicted_cycles,
+            "latency": score.latency_rank,
             "energy": score.energy_pJ, "weighted": score.weighted}[goal]
 
 
@@ -266,7 +384,7 @@ def rank_configs(layers: List[LayerConfig], array_h: int, array_w: int,
                       + w["energy"] * s.energy_pJ / mins["energy"])
 
     return sorted(scores, key=lambda s: (goal_value(s, goal),
-                                         s.latency_rank, s.energy_pJ))
+                                         s.predicted_cycles, s.energy_pJ))
 
 
 def warm_up() -> float:

@@ -47,7 +47,8 @@ RAW = ROOT / "results/golden_check/raw"
 ARRAY_H, ARRAY_W = 8, 8
 MEM_BYTES = 256 * 1024
 
-_METRIC = {"offchip": "offchip_elements", "latency": "latency_rank",
+_METRIC = {"offchip": "offchip_elements", "cycles": "predicted_cycles",
+           "latency": "latency_rank",
            "energy": "energy_pJ", "weighted": "weighted"}
 
 

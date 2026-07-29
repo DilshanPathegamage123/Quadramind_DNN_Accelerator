@@ -122,29 +122,32 @@ def main() -> None:
           f"process); scored 27 combinations analytically in {secs*1e3:.1f} ms "
           f"(no RTL run).\n")
     print(f"RECOMMENDED: {best.dataflow} + {best.layout} + {best.casting}")
-    print(f"  off-chip elements : {best.offchip_elements:,.0f}  (model)")
-    print(f"  latency rank score: {best.latency_rank:,.0f}  "
-          f"(rank only -- not a cycle prediction)")
-    print(f"  energy            : {best.energy_pJ/1e6:,.2f} uJ  (model)")
+    print(f"  predicted cycles  : {best.predicted_cycles:,.0f}")
+    print(f"  off-chip elements : {best.offchip_elements:,.0f}")
+    print(f"  off-chip beats    : {best.prefetch_beats:,.0f}")
+    print(f"  read bursts       : {best.ar_requests:,.0f}")
+    print(f"  energy            : {best.energy_pJ/1e6:,.2f} uJ")
 
     tied = ties_at_best(ranked, args.goal)
     if len(tied) > 1:
         print(f"\n  NOTE: {len(tied)} configurations tie exactly at "
               f"{goal_value(best, args.goal):,.0f} on --goal {args.goal}: "
               + ", ".join(s.label for s in tied))
-        print("  Tie broken by latency rank, then energy "
-              f"(latency ranks: "
-              + ", ".join(f"{s.label} {s.latency_rank:,.0f}" for s in tied)
+        print("  Tie broken by predicted cycles, then energy "
+              f"(cycles: "
+              + ", ".join(f"{s.label} {s.predicted_cycles:,.0f}" for s in tied)
               + ").")
     print()
 
-    hdr = (f"{'#':>3} {'config':<14} {'offchip elems':>14} "
-           f"{'latency rank':>13} {'energy (uJ)':>12} {'weighted':>9}")
+    hdr = (f"{'#':>3} {'config':<14} {'cycles':>13} {'offchip elems':>14} "
+           f"{'beats':>11} {'read bursts':>12} {'energy (uJ)':>12} "
+           f"{'weighted':>9}")
     print(hdr)
     print("-" * len(hdr))
     for i, s in enumerate(ranked, 1):
-        print(f"{i:>3} {s.label:<14} {s.offchip_elements:>14,.0f} "
-              f"{s.latency_rank:>13,.0f} {s.energy_pJ/1e6:>12,.2f} "
+        print(f"{i:>3} {s.label:<14} {s.predicted_cycles:>13,.0f} "
+              f"{s.offchip_elements:>14,.0f} {s.prefetch_beats:>11,.0f} "
+              f"{s.ar_requests:>12,.0f} {s.energy_pJ/1e6:>12,.2f} "
               f"{s.weighted:>9.3f}")
 
     csv_path = Path(args.csv).expanduser().resolve() if args.csv else (
@@ -153,14 +156,21 @@ def main() -> None:
     with open(csv_path, "w", newline="") as f:
         wtr = csv.writer(f)
         wtr.writerow(["rank", "dataflow", "mem_layout", "casting",
-                      "offchip_elements", "offchip_bytes", "latency_rank",
-                      "energy_pJ", "prefetch_beats", "weighted", "source"])
+                      "predicted_cycles", "compute_base_cycles",
+                      "ar_requests", "offchip_elements", "offchip_bytes",
+                      "prefetch_beats", "latency_rank", "energy_pJ",
+                      "weighted", "compute_base_source", "source"])
         for i, s in enumerate(ranked, 1):
             wtr.writerow([i, s.dataflow, s.layout, s.casting,
+                          f"{s.predicted_cycles:.0f}",
+                          f"{s.compute_base_cycles:.0f}",
+                          f"{s.ar_requests:.0f}",
                           f"{s.offchip_elements:.0f}",
                           f"{s.offchip_bytes:.0f}",
+                          f"{s.prefetch_beats:.0f}",
                           f"{s.latency_rank:.0f}", f"{s.energy_pJ:.0f}",
-                          f"{s.prefetch_beats:.0f}", f"{s.weighted:.4f}",
+                          f"{s.weighted:.4f}",
+                          "measured" if s.base_measured else "estimated",
                           "model"])
     try:
         shown = csv_path.relative_to(ROOT)
