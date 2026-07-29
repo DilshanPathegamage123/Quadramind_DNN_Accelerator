@@ -371,16 +371,22 @@ def rank_configs(layers: List[LayerConfig], array_h: int, array_w: int,
 
     # weighted: normalise each metric by its best (min) so best == 1.0,
     # then take the weighted sum.
-    w = {"offchip": 1.0, "latency": 1.0, "energy": 1.0}
+    # The weighted goal blends the CYCLE PREDICTION, not the legacy rank
+    # score -- otherwise the headline metric and the blended one disagree.
+    # "latency" is accepted as an alias for "cycles" so existing callers
+    # keep working.
+    w = {"offchip": 1.0, "cycles": 1.0, "energy": 1.0}
     if weights:
         w.update(weights)
+        if "latency" in weights:
+            w["cycles"] = weights["latency"]
     mins = {k: min(getattr(s, a) for s in scores)
             for k, a in [("offchip", "offchip_elements"),
-                         ("latency", "latency_rank"),
+                         ("cycles", "predicted_cycles"),
                          ("energy", "energy_pJ")]}
     for s in scores:
         s.weighted = (w["offchip"] * s.offchip_elements / mins["offchip"]
-                      + w["latency"] * s.latency_rank / mins["latency"]
+                      + w["cycles"] * s.predicted_cycles / mins["cycles"]
                       + w["energy"] * s.energy_pJ / mins["energy"])
 
     return sorted(scores, key=lambda s: (goal_value(s, goal),

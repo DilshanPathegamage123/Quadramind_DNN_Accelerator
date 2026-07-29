@@ -84,7 +84,7 @@ def parse_weights(s: str) -> dict:
     out = {}
     for part in s.split(","):
         k, _, v = part.partition("=")
-        if k.strip() not in ("offchip", "latency", "energy"):
+        if k.strip() not in ("offchip", "cycles", "latency", "energy"):
             raise SystemExit(f"unknown weight key {k!r}")
         out[k.strip()] = float(v)
     return out
@@ -101,7 +101,7 @@ def main() -> None:
                     help="on-chip memory provision (default 256KB)")
     ap.add_argument("--goal", default="offchip", choices=GOALS)
     ap.add_argument("--weights", default=None,
-                    help="weighted-goal weights: offchip=1,latency=1,energy=1")
+                    help="weighted-goal weights: offchip=1,cycles=1,energy=1")
     ap.add_argument("--data-width", type=int, default=16)
     ap.add_argument("--csv", default=None,
                     help="output CSV path (default results/chooser/)")
