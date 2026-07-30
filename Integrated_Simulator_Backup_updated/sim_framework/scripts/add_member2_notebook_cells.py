@@ -60,7 +60,7 @@ of RTL simulation, not by a memory model:
 |---|-------|----------------|
 | B1 | Bank arbitration is **exactly predictable** from a closed form derived from the RTL | 16/16 configurations, zero error |
 | B2 | Banking changes **on-chip stalls only** — it does not change off-chip traffic | 4 bank counts, 3 invariant counters |
-| B3 | STAMP (static tagless) and PAGED (dynamic page table) trade off against each other — **neither dominates** | 18 measured metric rows, 2 workloads |
+| B3 | STAMP (static tagless) and PAGED (dynamic page table) trade off against each other — **neither dominates** | 12 like-for-like measured rows, 2 workloads |
 | B4 | Measured hardware cost of each scheme and of banking itself | Vivado synthesis |
 
 Both schemes produce **numerically identical results**, which is what makes
@@ -318,6 +318,12 @@ source_tag('STAMP vs PAGED on identical hardware, layer and bank count',
            'measured')
 
 def _fmt(v):
+    # Scheme-only rows carry text such as 'n/a -- no lookup path', so this
+    # has to pass non-numeric cells through untouched.
+    try:
+        v = float(v)
+    except (TypeError, ValueError):
+        return v
     return f'{v:,.6f}'.rstrip('0').rstrip('.') if v % 1 else f'{v:,.0f}'
 
 _show = m2_cmp.copy()
@@ -342,9 +348,10 @@ where STAMP wins.** Presenting only one row would be cherry-picking.
   where PAGED loses 240, a 98.3% reduction; on `mnist_cnn` it is 202 against
   488, a 58.6% reduction. A statically-planned access order collides with
   itself far less than a dynamically-resolved one.
-* **(d) Runtime lookup misses** — **STAMP records exactly zero, in both
-  workloads.** This is not a tuning result that happened to come out well; it
-  is structural, and it is the central claim of the scheme.
+* **(d) Page-table misses** — PAGED misses 294 and 102 times. **This panel
+  shows PAGED only, deliberately.** STAMP has no bar because it has no page
+  table and no lookup, so a "miss" is not a thing that can happen to it —
+  see the note below the chart.
 """),
 
 code(r"""
@@ -352,6 +359,7 @@ fig, axes = plt.subplots(2, 2, figsize=(13, 9))
 wls = ['tiny_cnn L0', 'mnist_cnn L0']
 x = np.arange(len(wls)); width = 0.36
 
+# Panels (a)-(c) are like-for-like: the same counter on both schemes.
 panels = [
     ('Off-chip traffic', 'AXI beats', 'Off-chip traffic (AXI beats)',
      '(a) PAGED moves less data off-chip', False),
@@ -359,14 +367,12 @@ panels = [
      "(b) STAMP pays to program its schedule", True),
     ('Bank-conflict stalls', 'port-cycles', 'Bank-conflict stalls (port-cycles)',
      '(c) STAMP stalls far less on-chip', False),
-    ('Runtime lookup misses', 'events', 'Runtime lookup misses (events)',
-     '(d) STAMP cannot miss, by construction', False),
 ]
 
 for ax, (metric, unit, ylabel, title, logy) in zip(axes.flat, panels):
     sel = m2_cmp[(m2_cmp['Metric'] == metric) & (m2_cmp['Unit'] == unit)]
-    s = [sel[sel['Workload / layer'] == w]['STAMP (static tagless)'].iloc[0] for w in wls]
-    p = [sel[sel['Workload / layer'] == w]['PAGED (dynamic page table)'].iloc[0] for w in wls]
+    s = [float(sel[sel['Workload / layer'] == w]['STAMP (static tagless)'].iloc[0]) for w in wls]
+    p = [float(sel[sel['Workload / layer'] == w]['PAGED (dynamic page table)'].iloc[0]) for w in wls]
     b1 = ax.bar(x - width/2, s, width, color=MEASURED, label='STAMP (static tagless)')
     b2 = ax.bar(x + width/2, p, width, color='#c9903a', label='PAGED (dynamic page table)')
     if logy:
@@ -382,16 +388,61 @@ for ax, (metric, unit, ylabel, title, logy) in zip(axes.flat, panels):
     ax.set_ylabel(ylabel)
     ax.set_title(title, fontsize=11)
     ax.legend(fontsize=8)
-    if metric == 'Runtime lookup misses':
-        ax.set_ylim(top=max(p) * 1.25)
-        ax.annotate('zero — structural guarantee', (0 - width/2, 0),
-                    textcoords='offset points', xytext=(-4, 26), fontsize=9,
-                    color=MEASURED, fontweight='bold', rotation=90)
+
+# Panel (d) is PAGED-only ON PURPOSE.  The underlying RTL port
+# `stats_moves_or_misses` carries the stamp controller's MOVE count on one
+# scheme and the page table's MISS count on the other -- two different
+# quantities.  Drawing them as paired bars would invent a comparison that
+# the hardware does not support.
+ax = axes.flat[3]
+miss = m2_cmp[m2_cmp['Metric'] == 'Page-table misses']
+pm = [float(miss[miss['Workload / layer'] == w]['PAGED (dynamic page table)'].iloc[0])
+      for w in wls]
+bars = ax.bar(x + width/2, pm, width, color='#c9903a',
+              label='PAGED (dynamic page table)')
+for bar, v in zip(bars, pm):
+    ax.annotate(f'{v:,.0f}', (bar.get_x() + bar.get_width()/2, bar.get_height()),
+                textcoords='offset points', xytext=(0, 3), ha='center', fontsize=9)
+ax.set_xticks(x); ax.set_xticklabels(wls)
+ax.set_ylim(top=max(pm) * 1.45)
+ax.set_ylabel('Page-table misses (events)')
+ax.set_title('(d) Misses apply to PAGED only', fontsize=11)
+ax.legend(fontsize=8, loc='upper right')
+# Placed in the gap between the two bars so it never sits on top of data.
+ax.text(0.50, 0.52,
+        'STAMP has no bar here:\nno page table, so no\nlookup that can miss.\n'
+        'Undefined, not zero.',
+        transform=ax.transAxes, fontsize=8.5, color=MEASURED,
+        fontweight='bold', va='center', ha='center',
+        bbox=dict(boxstyle='round,pad=0.45', facecolor='white',
+                  edgecolor=MEASURED, alpha=0.95))
 
 fig.suptitle('STAMP vs PAGED — same hardware, same layer, same bank count, '
              'identical numerical output', fontsize=12.5)
 fig.tight_layout()
 plt.show()
+"""),
+
+md(r"""
+**A caveat that matters, stated before anyone asks.** In the RTL, one output
+port (`stats_moves_or_misses` in `mem_backend_wrap.sv`) is multiplexed onto
+two *different* counters depending on which scheme is built:
+
+| Scheme | What that port actually counts |
+|---|---|
+| STAMP | `stats_moves` — data-relocation operations in the compiled schedule |
+| PAGED | `stats_page_misses` — page-table lookup misses |
+
+They are not the same measurement, so they are **not plotted against each
+other** above, and neither is scored in the tally below.
+
+STAMP's freedom from misses is still a real property — but it is an
+**architectural** one, not something this counter demonstrates. STAMP is
+tagless: there is no tag-compare path anywhere in
+`stamp_based_memory_controller.sv`, so there is no lookup that *can* miss.
+That is the correct way to state the claim. Saying "STAMP measured zero
+misses" would be wrong, because zero is what its *move* counter happened to
+read on these two layers.
 """),
 
 md(r"""
@@ -421,19 +472,37 @@ md(r"""
 ### The honest scorecard
 
 Summing up B3 as it should be presented — with the losses shown, not just
-the wins:
+the wins.
+
+Two kinds of row are **excluded** from the tally, and it matters that they
+are:
+
+* the off-chip figure expressed in **bytes**, because that is the beat
+  counter multiplied by the bus width — counting it again would let a unit
+  conversion masquerade as a second independent win;
+* the **move / miss** counters, because as explained above they measure
+  different things on the two schemes.
+
+Counting rows is a blunt instrument anyway — it weighs a 98% stall reduction
+the same as a 5% compute difference. Read the tally as a map of *where* each
+scheme wins, not as a verdict on which is better.
 """),
 
 code(r"""
-_wins = m2_cmp[m2_cmp['Better scheme'].isin(['STAMP', 'PAGED'])]
-score = (_wins.groupby(['Metric', 'Better scheme']).size()
+_scored = m2_cmp[(m2_cmp['Better scheme'].isin(['STAMP', 'PAGED']))
+                 & (m2_cmp['Counts in scorecard'] == 'yes')]
+score = (_scored.groupby(['Metric', 'Better scheme']).size()
          .unstack(fill_value=0).reindex(columns=['STAMP', 'PAGED'],
                                         fill_value=0))
 score.columns = ['Rows where STAMP wins', 'Rows where PAGED wins']
 source_tag('Which scheme wins which metric (2 workloads, so 2 rows per metric)',
            'measured')
-print(f"Overall: STAMP better on {(_wins['Better scheme']=='STAMP').sum()} "
-      f"metric rows, PAGED better on {(_wins['Better scheme']=='PAGED').sum()}.")
+print(f"Scored on {len(_scored)} independent, like-for-like rows: "
+      f"STAMP better on {(_scored['Better scheme']=='STAMP').sum()}, "
+      f"PAGED better on {(_scored['Better scheme']=='PAGED').sum()}.")
+_excl = m2_cmp[m2_cmp['Counts in scorecard'] != 'yes']
+for _reason, _n in _excl['Counts in scorecard'].value_counts().items():
+    print(f"  excluded {_n} row(s): {_reason}")
 print('Numerical output: identical for both schemes on both workloads.\n')
 score
 """),
@@ -443,16 +512,19 @@ md(r"""
 support that. The defensible claim is:
 
 > STAMP trades **more off-chip traffic and a one-off programming cost** for
-> **near-elimination of on-chip stalls and a structural guarantee of zero
-> runtime misses**, at identical numerical accuracy. PAGED is the better
-> choice when off-chip bandwidth is the bottleneck; STAMP is the better
-> choice when on-chip stall behaviour must be predictable — and it is the
-> only one of the two whose worst case can be *bounded in advance*, because
-> it has no runtime lookup that can fail.
+> **near-elimination of on-chip stalls**, at identical numerical accuracy.
+> PAGED is the better choice when off-chip bandwidth is the bottleneck;
+> STAMP is the better choice when on-chip stall behaviour must be
+> predictable — and it is the only one of the two whose worst case can be
+> *bounded in advance*, because being tagless it has no runtime lookup that
+> can fail.
 
-That last clause is the real contribution. A dynamic scheme's worst case
-depends on the access stream and can only be measured; a static tagless
-scheme's is fixed at compile time.
+That last clause is the real contribution, and note what kind of claim it
+is: it rests on the **absence of a tag-compare path in the RTL**, not on a
+counter reading zero. A dynamic scheme's worst case depends on the access
+stream and can only be measured; a static tagless scheme's is fixed at
+compile time. That is an argument from structure, which is stronger than any
+number in this notebook — it holds for workloads nobody has run yet.
 """),
 
 md(r"""
@@ -577,8 +649,8 @@ md(r"""
 | Contribution | What was built | What the measurement shows |
 |---|---|---|
 | **Multi-bank scratchpad with real arbitration** | Interleaved banking, priority arbitration and conflict counters in SystemVerilog | Bank conflicts follow an **exact closed form**, verified on 16/16 configurations. Flat-buffer simulators report zero stalls where the hardware loses up to 3 of 4 read ports. |
-| **Stamp-based static tagless scheme** (novel) | Compiler-assisted delta-op schedule; no tags, no runtime lookup | **Zero runtime misses in both workloads, by construction.** 59–98% fewer bank-conflict stalls than the dynamic baseline. |
-| **Page-table dynamic scheme** (baseline) | TLB-style translation with miss handling | Moves 7.5–18% less off-chip traffic; needs almost no setup. Its miss count is workload-dependent and can only be measured, not bounded. |
+| **Stamp-based static tagless scheme** (novel) | Compiler-assisted delta-op schedule; no tags, no runtime lookup | 59–98% fewer bank-conflict stalls than the dynamic baseline. **No lookup exists that can miss** — a structural property of being tagless, not a measured count. |
+| **Page-table dynamic scheme** (baseline) | TLB-style translation with miss handling | Moves 7.5–18% less off-chip traffic; needs almost no setup. Misses 294 and 102 times on the two layers — workload-dependent, measurable but not boundable in advance. |
 | **Like-for-like comparison framework** | Both schemes behind one interface, same golden check | Identical numerical output confirms interchangeability; the differences are pure cost, measured on traffic, stalls, and silicon. |
 
 **The scientific claim, stated carefully:**

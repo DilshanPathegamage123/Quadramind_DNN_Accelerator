@@ -171,26 +171,49 @@ def build_bank_scaling() -> pd.DataFrame:
 # 3. STAMP vs PAGED, same hardware and same layer
 # ---------------------------------------------------------------------------
 
-# (row label, unit, extractor, which direction is better)
+# (row label, unit, extractor, better direction, counts in the scorecard)
+#
+# `independent` exists because two rows below are NOT separate evidence:
+# the byte figure is the beat counter times the bus width.  Counting it as
+# its own win would inflate one scheme's score with a unit conversion.
 _METRICS = [
     ("Off-chip traffic", "AXI beats",
-     lambda d: d["axi_beats"], "lower"),
+     lambda d: d["axi_beats"], "lower", True),
     ("Off-chip traffic", "bytes",
-     lambda d: d["axi_beats"] * BYTES_PER_BEAT, "lower"),
+     lambda d: d["axi_beats"] * BYTES_PER_BEAT, "lower", False),
     ("Off-chip requests", "AXI read bursts",
-     lambda d: d["axi_ar_requests"], "lower"),
+     lambda d: d["axi_ar_requests"], "lower", True),
     ("Compute time", "cycles",
-     lambda d: d["totals"]["compute_cycles"], "lower"),
+     lambda d: d["totals"]["compute_cycles"], "lower", True),
     ("Control/setup overhead", "cycles",
-     lambda d: d["totals"]["program_cycles"], "lower"),
+     lambda d: d["totals"]["program_cycles"], "lower", True),
     ("Bank conflicts", "events",
-     lambda d: d["stats_bank_conflicts"], "lower"),
+     lambda d: d["stats_bank_conflicts"], "lower", True),
     ("Bank-conflict stalls", "port-cycles",
-     lambda d: d["stats_bank_conflict_stall_cycles"], "lower"),
-    ("Runtime lookup misses", "events",
-     lambda d: d["stats_moves_or_misses"], "lower"),
+     lambda d: d["stats_bank_conflict_stall_cycles"], "lower", True),
     ("Numerical error vs golden", "% of full scale",
-     lambda d: round(d["verdict"]["max_rel_err_pct"], 6), "equal"),
+     lambda d: round(d["verdict"]["max_rel_err_pct"], 6), "equal", False),
+]
+
+# Counters that exist for ONE scheme only.
+#
+# rtl/memory/mem_backend_wrap.sv multiplexes a single output port,
+# `stats_moves_or_misses`, onto two unrelated quantities: the stamp
+# controller's MOVE-operation count, and the page table's MISS count.  They
+# are not the same measurement and must not be plotted against each other --
+# STAMP's zero means "the compiled schedule contained no move operations",
+# not "no misses occurred".
+#
+# STAMP's freedom from misses is real but it is an ARCHITECTURAL property
+# (it is tagless, so there is no lookup that can miss), evidenced by the
+# absence of any tag-compare path in the RTL -- not by this counter.
+_SCHEME_ONLY = [
+    ("Data-move operations", "events", "STAMP",
+     lambda d: d["stats_moves_or_misses"],
+     "stamp_based_memory_controller stats_moves"),
+    ("Page-table misses", "events", "PAGED",
+     lambda d: d["stats_moves_or_misses"],
+     "page_table stats_page_misses"),
 ]
 
 _WORKLOADS = [("tiny_cnn", "tiny_cnn L0"), ("mnist_cnn", "mnist_cnn L0")]
@@ -201,7 +224,7 @@ def build_scheme_comparison() -> pd.DataFrame:
     for key, label in _WORKLOADS:
         s = _load(f"divergence_{key}_layer_00_STAMP_b4.json")
         p = _load(f"divergence_{key}_layer_00_PAGED_b4.json")
-        for metric, unit, fn, better in _METRICS:
+        for metric, unit, fn, better, independent in _METRICS:
             sv, pv = fn(s), fn(p)
             if better == "equal":
                 delta, verdict = "", ("identical" if sv == pv
@@ -224,7 +247,29 @@ def build_scheme_comparison() -> pd.DataFrame:
                 "PAGED (dynamic page table)": pv,
                 "STAMP vs PAGED (%)": delta,
                 "Better scheme": verdict,
+                "Like-for-like": "yes",
+                "Counts in scorecard": "yes" if independent else
+                                       "no -- unit conversion of the row above",
                 "Source": "measured (RTL counters)",
+            })
+
+        # Scheme-only counters: reported side by side but never scored
+        # against each other, because they measure different things.
+        for metric, unit, scheme, fn, provenance in _SCHEME_ONLY:
+            v = fn(s if scheme == "STAMP" else p)
+            rows.append({
+                "Workload / layer": label,
+                "Metric": metric,
+                "Unit": unit,
+                "STAMP (static tagless)":
+                    v if scheme == "STAMP" else "n/a -- no page table",
+                "PAGED (dynamic page table)":
+                    v if scheme == "PAGED" else "n/a -- no lookup path",
+                "STAMP vs PAGED (%)": "",
+                "Better scheme": f"{scheme}-only counter",
+                "Like-for-like": "no -- different counter per scheme",
+                "Counts in scorecard": "no -- not comparable",
+                "Source": f"measured (RTL counter: {provenance})",
             })
     return pd.DataFrame(rows)
 
@@ -279,9 +324,14 @@ def main() -> None:
     cmp_ = tables["scheme_comparison.csv"]
     print(f"\nScheme comparison: {len(cmp_)} measured metric rows "
           f"over {cmp_['Workload / layer'].nunique()} workloads")
-    wins = cmp_[cmp_["Better scheme"].isin(["STAMP", "PAGED"])]
-    print(f"  STAMP better on {(wins['Better scheme']=='STAMP').sum()} rows, "
-          f"PAGED better on {(wins['Better scheme']=='PAGED').sum()} rows")
+    wins = cmp_[(cmp_["Better scheme"].isin(["STAMP", "PAGED"]))
+                & (cmp_["Counts in scorecard"] == "yes")]
+    print(f"  scored on {len(wins)} independent, like-for-like rows: "
+          f"STAMP better on {(wins['Better scheme']=='STAMP').sum()}, "
+          f"PAGED better on {(wins['Better scheme']=='PAGED').sum()}")
+    excluded = cmp_[cmp_["Counts in scorecard"] != "yes"]
+    for reason, n in excluded["Counts in scorecard"].value_counts().items():
+        print(f"  excluded {n} row(s): {reason}")
 
     hw = build_hw_cost()
     if hw is None:
