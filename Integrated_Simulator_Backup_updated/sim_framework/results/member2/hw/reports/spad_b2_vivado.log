@@ -1,0 +1,74 @@
+
+****** Vivado v2025.2 (64-bit)
+  **** SW Build 6299465 on Fri Nov 14 12:34:56 MST 2025
+  **** IP Build 6300035 on Fri Nov 14 10:48:45 MST 2025
+  **** SharedData Build 6298862 on Thu Nov 13 04:50:51 MST 2025
+  **** Start of session at: Thu Jul 30 11:33:44 2026
+    ** Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+    ** Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
+
+source run.tcl
+# create_project -part xc7a100tcsg324-1 -in_memory mem_probe
+create_project: Time (s): cpu = 00:00:20 ; elapsed = 00:00:06 . Memory (MB): peak = 1611.270 ; gain = 101.059 ; free physical = 4150 ; free virtual = 13433
+# read_verilog -sv scratchpad_ram.sv axi_read_adapter.sv stamp_based_memory_controller.sv stamp_memory_backend.sv paged_memory_backend.sv
+# read_verilog paged_table.v
+# read_xdc c.xdc
+# synth_design -top scratchpad_ram -part xc7a100tcsg324-1 -mode out_of_context -generic {NUM_BANKS=2}
+Command: synth_design -top scratchpad_ram -part xc7a100tcsg324-1 -mode out_of_context -generic NUM_BANKS=2
+Starting synth_design
+Attempting to get a license for feature 'Synthesis' and/or device 'xc7a100t'
+INFO: [Common 17-349] Got license for feature 'Synthesis' and/or device 'xc7a100t'
+INFO: [Device 21-403] Loading part xc7a100tcsg324-1
+INFO: [Synth 8-7079] Multithreading enabled for synth_design using a maximum of 7 processes.
+INFO: [Synth 8-7078] Launching helper process for spawning children vivado processes
+INFO: [Synth 8-7075] Helper process launched with PID 7728
+---------------------------------------------------------------------------------
+Starting RTL Elaboration : Time (s): cpu = 00:00:06 ; elapsed = 00:00:06 . Memory (MB): peak = 2243.199 ; gain = 481.875 ; free physical = 3200 ; free virtual = 12442
+---------------------------------------------------------------------------------
+INFO: [Synth 8-6157] synthesizing module 'scratchpad_ram' [/tmp/mem_synth_spad_b2_bwzx_ttn/scratchpad_ram.sv:27]
+	Parameter NUM_BANKS bound to: 32'sb00000000000000000000000000000010 
+INFO: [Synth 8-6155] done synthesizing module 'scratchpad_ram' (0#1) [/tmp/mem_synth_spad_b2_bwzx_ttn/scratchpad_ram.sv:27]
+WARNING: [Synth 8-11357] Potential Runtime issue for 3D-RAM or RAM from Record/Structs for RAM  mem_reg with 131072 registers
+---------------------------------------------------------------------------------
+Finished RTL Elaboration : Time (s): cpu = 00:02:38 ; elapsed = 00:02:47 . Memory (MB): peak = 4786.809 ; gain = 3025.484 ; free physical = 745 ; free virtual = 10119
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Handling Custom Attributes
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Handling Custom Attributes : Time (s): cpu = 00:02:48 ; elapsed = 00:02:57 . Memory (MB): peak = 4786.809 ; gain = 3025.484 ; free physical = 738 ; free virtual = 10069
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished RTL Optimization Phase 1 : Time (s): cpu = 00:02:48 ; elapsed = 00:02:57 . Memory (MB): peak = 4786.809 ; gain = 3025.484 ; free physical = 738 ; free virtual = 10069
+---------------------------------------------------------------------------------
+Netlist sorting complete. Time (s): cpu = 00:00:13 ; elapsed = 00:00:13 . Memory (MB): peak = 4903.371 ; gain = 0.000 ; free physical = 685 ; free virtual = 10010
+INFO: [Project 1-570] Preparing netlist for logic optimization
+
+Processing XDC Constraints
+Initializing timing engine
+Parsing XDC File [/tmp/mem_synth_spad_b2_bwzx_ttn/c.xdc]
+Finished Parsing XDC File [/tmp/mem_synth_spad_b2_bwzx_ttn/c.xdc]
+Completed Processing XDC Constraints
+
+Netlist sorting complete. Time (s): cpu = 00:00:00.14 ; elapsed = 00:00:00.14 . Memory (MB): peak = 5667.836 ; gain = 0.000 ; free physical = 231 ; free virtual = 9276
+INFO: [Project 1-111] Unisim Transformation Summary:
+No Unisim elements were transformed.
+
+write_xdc: Time (s): cpu = 00:00:07 ; elapsed = 00:00:16 . Memory (MB): peak = 5679.758 ; gain = 0.000 ; free physical = 191 ; free virtual = 8557
+Constraint Validation Runtime : Time (s): cpu = 00:00:07 ; elapsed = 00:00:17 . Memory (MB): peak = 5679.758 ; gain = 0.000 ; free physical = 182 ; free virtual = 8484
+---------------------------------------------------------------------------------
+Finished Constraint Validation : Time (s): cpu = 00:05:49 ; elapsed = 00:07:04 . Memory (MB): peak = 5683.844 ; gain = 3922.520 ; free physical = 686 ; free virtual = 3652
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Loading Part and Timing Information
+---------------------------------------------------------------------------------
+Loading part: xc7a100tcsg324-1
+---------------------------------------------------------------------------------
+Finished Loading Part and Timing Information : Time (s): cpu = 00:05:49 ; elapsed = 00:07:04 . Memory (MB): peak = 5691.848 ; gain = 3930.523 ; free physical = 686 ; free virtual = 3652
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Applying 'set_property' XDC Constraints
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished applying 'set_property' XDC Constraints : Time (s): cpu = 00:05:50 ; elapsed = 00:07:04 . Memory (MB): peak = 5691.848 ; gain = 3930.523 ; free physical = 685 ; free virtual = 3655
+---------------------------------------------------------------------------------
