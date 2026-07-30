@@ -14,6 +14,7 @@ access to this machine's filesystem).
 | `chooser/` | `results/chooser/*.csv` | The analytical configuration-chooser's ranked tables and its 4-part evaluation (decision accuracy, optimality gap, speed, anchor check vs. measured RTL). **Model**, cross-checked against `golden_check/raw/`. |
 | `reports/` | `results/golden_check/*.md`, `results/chooser/CHOOSER_REPORT.md` | The full written reports these tables were drawn from, with every claim's measured-vs-model labels and honesty caveats intact. |
 | `edge_cloud_sample/` | `results/edge/exp1_.../data.csv`, `results/edge/exp7_.../*.csv` | A **small sample only** — NOT the full edge/cloud suite — included purely to illustrate what that suite is. See the notebook's dedicated section: none of it is RTL-measured; `exp7`'s `rtl_actual` column and FPGA utilisation numbers are computed from fixed assumed multipliers and a hand-authored formula, not from any hardware run. |
+| `member2/` | `results/member2/*.csv`, built by `scripts/make_member2_tables.py` from `golden_check/raw/` | Part B (on-chip memory management). `bank_conflict_law.csv` — **measured** conflict counters beside a closed form *derived from* `rtl/memory/scratchpad_ram.sv`; nothing in it is fitted. `bank_scaling.csv`, `scheme_comparison.csv` — **measured (RTL)** hardware counters only. `hw_cost.csv` — **measured (Vivado 2025.2 OOC synthesis)**, present only if `scripts/synth_memory_hw.py` has been run; a target that fails to synthesise is recorded as unavailable with the tool's own reason, never estimated. |
 
 ## Source of truth
 

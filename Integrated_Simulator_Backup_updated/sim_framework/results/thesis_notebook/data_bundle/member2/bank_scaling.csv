@@ -1,0 +1,5 @@
+Number of banks (count),Bank conflicts (events),Stall (port-cycles),Compute (cycles),Off-chip traffic (AXI beats),Off-chip requests (AXI bursts),Scratchpad reads replayed (count),Max relative error vs golden (%),Source
+2,438,876,6316,2246,157,888,0.013185,measured (RTL counters)
+4,2,4,6316,2246,157,1760,0.013185,measured (RTL counters)
+8,2,4,6316,2246,157,1760,0.013185,measured (RTL counters)
+16,0,0,6316,2246,157,1764,0.013185,measured (RTL counters)

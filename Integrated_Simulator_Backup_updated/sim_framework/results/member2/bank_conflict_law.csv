@@ -1,0 +1,21 @@
+Number of banks (count),Access pattern,Distinct banks touched (count),"Reads served, measured (count)","Reads served, predicted (count)","Stalled port-cycles, measured (cycles)","Stalled port-cycles, predicted (cycles)",Model applies,Prediction exact,Source
+1,All ports -> same address,,796,,0,,"n/a -- flat mode, no arbitration",,measured (RTL counters) + closed form from rtl/memory/scratchpad_ram.sv
+1,"Ports -> addresses 0,1,2,3",,796,,0,,"n/a -- flat mode, no arbitration",,measured (RTL counters) + closed form from rtl/memory/scratchpad_ram.sv
+1,"Ports -> addresses 0,4,8,12 (stride 4)",,796,,0,,"n/a -- flat mode, no arbitration",,measured (RTL counters) + closed form from rtl/memory/scratchpad_ram.sv
+1,"Ports -> addresses 0,8,16,24 (stride 8)",,796,,0,,"n/a -- flat mode, no arbitration",,measured (RTL counters) + closed form from rtl/memory/scratchpad_ram.sv
+2,All ports -> same address,1.0,199,199.0,600,600.0,yes,yes,measured (RTL counters) + closed form from rtl/memory/scratchpad_ram.sv
+2,"Ports -> addresses 0,1,2,3",2.0,398,398.0,400,400.0,yes,yes,measured (RTL counters) + closed form from rtl/memory/scratchpad_ram.sv
+2,"Ports -> addresses 0,4,8,12 (stride 4)",1.0,199,199.0,600,600.0,yes,yes,measured (RTL counters) + closed form from rtl/memory/scratchpad_ram.sv
+2,"Ports -> addresses 0,8,16,24 (stride 8)",1.0,199,199.0,600,600.0,yes,yes,measured (RTL counters) + closed form from rtl/memory/scratchpad_ram.sv
+4,All ports -> same address,1.0,199,199.0,600,600.0,yes,yes,measured (RTL counters) + closed form from rtl/memory/scratchpad_ram.sv
+4,"Ports -> addresses 0,1,2,3",4.0,796,796.0,0,0.0,yes,yes,measured (RTL counters) + closed form from rtl/memory/scratchpad_ram.sv
+4,"Ports -> addresses 0,4,8,12 (stride 4)",1.0,199,199.0,600,600.0,yes,yes,measured (RTL counters) + closed form from rtl/memory/scratchpad_ram.sv
+4,"Ports -> addresses 0,8,16,24 (stride 8)",1.0,199,199.0,600,600.0,yes,yes,measured (RTL counters) + closed form from rtl/memory/scratchpad_ram.sv
+8,All ports -> same address,1.0,199,199.0,600,600.0,yes,yes,measured (RTL counters) + closed form from rtl/memory/scratchpad_ram.sv
+8,"Ports -> addresses 0,1,2,3",4.0,796,796.0,0,0.0,yes,yes,measured (RTL counters) + closed form from rtl/memory/scratchpad_ram.sv
+8,"Ports -> addresses 0,4,8,12 (stride 4)",2.0,398,398.0,400,400.0,yes,yes,measured (RTL counters) + closed form from rtl/memory/scratchpad_ram.sv
+8,"Ports -> addresses 0,8,16,24 (stride 8)",1.0,199,199.0,600,600.0,yes,yes,measured (RTL counters) + closed form from rtl/memory/scratchpad_ram.sv
+16,All ports -> same address,1.0,199,199.0,600,600.0,yes,yes,measured (RTL counters) + closed form from rtl/memory/scratchpad_ram.sv
+16,"Ports -> addresses 0,1,2,3",4.0,796,796.0,0,0.0,yes,yes,measured (RTL counters) + closed form from rtl/memory/scratchpad_ram.sv
+16,"Ports -> addresses 0,4,8,12 (stride 4)",4.0,796,796.0,0,0.0,yes,yes,measured (RTL counters) + closed form from rtl/memory/scratchpad_ram.sv
+16,"Ports -> addresses 0,8,16,24 (stride 8)",2.0,398,398.0,400,400.0,yes,yes,measured (RTL counters) + closed form from rtl/memory/scratchpad_ram.sv
