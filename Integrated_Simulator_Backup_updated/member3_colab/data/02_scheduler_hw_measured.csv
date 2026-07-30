@@ -1,0 +1,15 @@
+scheduler,status,luts,ffs,f7_muxes,dsps,brams,constraint_ns,wns_ns,fmax_mhz_post_synth,power_total_w,power_dynamic_w,power_static_w,power_confidence,crit_warnings,part,source,note
+FIFO,ok,1501,1050,122,0,0,10.000,0.621,106.6,0.094,0.011,0.084,Medium,0,xc7a100tcsg324-1,measured (Vivado 2025.2 OOC synthesis),
+LIFO,ok,1516,1050,120,0,0,10.000,0.999,111.1,0.096,0.012,0.084,Medium,0,xc7a100tcsg324-1,measured (Vivado 2025.2 OOC synthesis),
+SJF,ok,1999,1050,122,0,0,10.000,-39.305,20.3,0.102,0.018,0.084,Medium,0,xc7a100tcsg324-1,measured (Vivado 2025.2 OOC synthesis),
+RR,ok,1594,1070,120,0,0,10.000,-0.704,93.4,0.096,0.013,0.084,Medium,0,xc7a100tcsg324-1,measured (Vivado 2025.2 OOC synthesis),
+PRI,ok,1663,1050,0,0,0,10.000,-13.972,41.7,0.104,0.02,0.084,Medium,0,xc7a100tcsg324-1,measured (Vivado 2025.2 OOC synthesis),
+EDF,ok,2374,1050,122,0,0,10.000,-42.683,19.0,0.108,0.024,0.084,Medium,0,xc7a100tcsg324-1,measured (Vivado 2025.2 OOC synthesis),
+LRU,ok,3035,1594,122,0,0,10.000,-42.190,19.2,0.111,0.027,0.084,Medium,0,xc7a100tcsg324-1,measured (Vivado 2025.2 OOC synthesis),
+SRTF,ok,1854,490,56,0,0,10.000,-37.416,21.1,0.102,0.018,0.084,Medium,0,xc7a100tcsg324-1,measured (Vivado 2025.2 OOC synthesis),
+HRRN,ok,2941,1002,0,60,0,10.000,-144.083,6.5,0.21,0.126,0.084,Medium,0,xc7a100tcsg324-1,measured (Vivado 2025.2 OOC synthesis),
+MLQ,ok,755,490,0,0,0,10.000,1.100,112.4,0.091,0.008,0.084,Medium,0,xc7a100tcsg324-1,measured (Vivado 2025.2 OOC synthesis),
+MLFQ,ok,2295,1044,0,0,0,10.000,-0.996,90.9,0.108,0.024,0.084,Medium,0,xc7a100tcsg324-1,measured (Vivado 2025.2 OOC synthesis),
+AIMT,ok,3417,6565,1304,0,0,10.000,-1.540,86.7,0.108,0.025,0.084,Medium,164,xc7a100tcsg324-1,measured (Vivado 2025.2 OOC synthesis),164 CRITICAL WARNING(s) in synthesis -- see AIMT_vivado.log
+BATCHDNN,ok,4657,6529,1316,10,0,10.000,-83.771,10.7,0.163,0.079,0.084,Medium,200,xc7a100tcsg324-1,measured (Vivado 2025.2 OOC synthesis),200 CRITICAL WARNING(s) in synthesis -- see BATCHDNN_vivado.log
+BATCHDNN_PP,unavailable,,,,,,10.000,,,,,,,200,xc7a100tcsg324-1,measured (Vivado 2025.2 OOC synthesis),"STALE: last successful synthesis (2026-07-28 17:31) predates the multi-driven-reset fix; that netlist had current_batch/slice_remaining tied to GND, so its numbers do not describe the current RTL. Re-synthesis OOM-killed 4x on this machine: sampled peak was 14.9/15GB RAM with swap fully exhausted, i.e. Vivado needs ~12GB for this module. Re-run scripts/synth_scheduler_hw.py --only BATCHDNN_PP on a host with more swap."

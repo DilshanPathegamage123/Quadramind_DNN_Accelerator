@@ -1,0 +1,15 @@
+select_code,scheduler,label,family,rtl_module,rtl_lines,wrapper,preemptive_in_rtl,synthesis_status,has_golden_rtl_run,provenance
+0,FIFO,FIFO,Classical,rtl/schedulers/task_scheduler.sv,342,multi_scheduler_wrapper.sv,False,ok,True,RTL source + measured (Vivado) status
+1,LIFO,LIFO,Classical,rtl/schedulers/task_scheduler.sv,342,multi_scheduler_wrapper.sv,False,ok,True,RTL source + measured (Vivado) status
+2,SJF,SJF,Classical,rtl/schedulers/task_scheduler.sv,342,multi_scheduler_wrapper.sv,False,ok,False,RTL source + measured (Vivado) status
+3,RR,Round-Robin,Classical,rtl/schedulers/task_scheduler.sv,342,multi_scheduler_wrapper.sv,True,ok,False,RTL source + measured (Vivado) status
+4,PRI,Priority,Classical,rtl/schedulers/task_scheduler.sv,342,multi_scheduler_wrapper.sv,False,ok,False,RTL source + measured (Vivado) status
+5,EDF,EDF,Classical,rtl/schedulers/task_scheduler.sv,342,multi_scheduler_wrapper.sv,False,ok,False,RTL source + measured (Vivado) status
+6,LRU,LRU,Classical,rtl/schedulers/task_scheduler.sv,342,multi_scheduler_wrapper.sv,True,ok,False,RTL source + measured (Vivado) status
+7,SRTF,SRTF,Classical,rtl/schedulers/advanced_task_scheduler.sv,283,multi_scheduler_wrapper.sv,True,ok,False,RTL source + measured (Vivado) status
+8,HRRN,HRRN,Classical,rtl/schedulers/advanced_task_scheduler.sv,283,multi_scheduler_wrapper.sv,False,ok,False,RTL source + measured (Vivado) status
+9,MLQ,MLQ,Classical,rtl/schedulers/advanced_task_scheduler.sv,283,multi_scheduler_wrapper.sv,False,ok,False,RTL source + measured (Vivado) status
+10,MLFQ,MLFQ,Classical,rtl/schedulers/advanced_task_scheduler.sv,283,multi_scheduler_wrapper.sv,True,ok,False,RTL source + measured (Vivado) status
+11,AIMT,AI-MT,DNN-aware,rtl/schedulers/aimt_scheduler.sv,359,dnn_scheduler_wrapper.sv,False,ok,True,RTL source + measured (Vivado) status
+12,BATCHDNN,BATCH-DNN,DNN-aware,rtl/schedulers/batchdnn_scheduler.sv,506,dnn_scheduler_wrapper.sv,False,ok,True,RTL source + measured (Vivado) status
+13,BATCHDNN_PP,BATCH-DNN++,DNN-aware,rtl/schedulers/batchdnn_pp_scheduler.sv,726,dnn_scheduler_wrapper.sv,False,unavailable,True,RTL source + measured (Vivado) status

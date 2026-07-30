@@ -1,0 +1,16 @@
+file,provenance,description
+01_scheduler_inventory.csv,RTL source + Vivado status,"The 14 schedulers the RTL implements, their select code, family and wrapper."
+02_scheduler_hw_measured.csv,measured (Vivado 2025.2 OOC),LUT / FF / DSP / BRAM / power / WNS / Fmax on xc7a100tcsg324-1.
+03_ranked_all_mixes_goals.csv,model + measured + derived,Chooser ranking of all 14 schedulers for 4 workload mixes x 8 goals.
+04_eval_decision_accuracy.csv,model / measured,"Chooser pick vs independent exhaustive re-scoring, per mix x goal."
+05_eval_sensitivity.csv,model / measured,Which scheduler is recommended for each mix x goal.
+06_eval_anchor_order.csv,measured (RTL) vs model,Model dispatch order vs the recorded RTL golden runs.
+07_eval_anchor_flatness.csv,measured (RTL) vs model,Makespan spread in hardware vs in the model.
+08_eval_speed.csv,measured,"Chooser query latency, warm and cold, vs Vivado synthesis cost."
+09_golden_rtl_runs.csv,measured (RTL),"Per-task cycles, dispatch cycles and accuracy from the golden runs."
+10_workload_mixes.csv,workload definition + model,The 4 multi-DNN workload mixes and their per-task cost.
+11_exp5_factor_model.csv,ASSUMED constant-factor table (not measured),"Older experiment-5 output, exported only as the contrast case."
+11b_scheduler_factor_table.csv,ASSUMED constants read from source,"The SCHEDULER_MODEL factor table itself, which the chooser does not use."
+12_static_vs_dynamic.csv,analytical model x assumed factors,Older static-vs-dynamic scheduling comparison.
+13_findings.csv,measured (Vivado tool output),"The four findings the framework produced, with status."
+14_fmax_vs_clock_assumption.csv,measured vs source constant,Finding 4 quantified: measured Fmax against the assumed 1.0 GHz.

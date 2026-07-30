@@ -1,0 +1,16 @@
+scheduler,task_id,layer,task_cycles_measured,dispatch_cycle_measured,max_err_pct_full_scale,task_passed,dispatch_order_measured,total_cycles_measured,all_pass,array,source
+FIFO,0,models/tiny_cnn/layer_00,971,2,0.0095,True,T0->T1->T2,13412,True,8x8,measured (RTL) -- results/golden_check/raw
+FIFO,1,models/mnist_cnn/layer_00,354,975,0.0042,True,T0->T1->T2,13412,True,8x8,measured (RTL) -- results/golden_check/raw
+FIFO,2,models/tiny_cnn/layer_01,11781,1331,0.0168,True,T0->T1->T2,13412,True,8x8,measured (RTL) -- results/golden_check/raw
+LIFO,0,models/tiny_cnn/layer_00,969,12143,0.0095,True,T2->T1->T0,13412,True,8x8,measured (RTL) -- results/golden_check/raw
+LIFO,1,models/mnist_cnn/layer_00,354,11787,0.0042,True,T2->T1->T0,13412,True,8x8,measured (RTL) -- results/golden_check/raw
+LIFO,2,models/tiny_cnn/layer_01,11783,2,0.0168,True,T2->T1->T0,13412,True,8x8,measured (RTL) -- results/golden_check/raw
+AIMT,0,models/tiny_cnn/layer_00,971,3,0.0095,True,T0->T1->T2,13413,True,8x8,measured (RTL) -- results/golden_check/raw
+AIMT,1,models/mnist_cnn/layer_00,355,975,0.0042,True,T0->T1->T2,13413,True,8x8,measured (RTL) -- results/golden_check/raw
+AIMT,2,models/tiny_cnn/layer_01,11782,1331,0.0168,True,T0->T1->T2,13413,True,8x8,measured (RTL) -- results/golden_check/raw
+BATCHDNN,0,models/tiny_cnn/layer_00,971,3,0.0095,True,T0->T1->T2,13413,True,8x8,measured (RTL) -- results/golden_check/raw
+BATCHDNN,1,models/mnist_cnn/layer_00,355,975,0.0042,True,T0->T1->T2,13413,True,8x8,measured (RTL) -- results/golden_check/raw
+BATCHDNN,2,models/tiny_cnn/layer_01,11782,1331,0.0168,True,T0->T1->T2,13413,True,8x8,measured (RTL) -- results/golden_check/raw
+BATCHDNN_PP,0,models/tiny_cnn/layer_00,971,3,0.0095,True,T0->T1->T2,13413,True,8x8,measured (RTL) -- results/golden_check/raw
+BATCHDNN_PP,1,models/mnist_cnn/layer_00,355,975,0.0042,True,T0->T1->T2,13413,True,8x8,measured (RTL) -- results/golden_check/raw
+BATCHDNN_PP,2,models/tiny_cnn/layer_01,11782,1331,0.0168,True,T0->T1->T2,13413,True,8x8,measured (RTL) -- results/golden_check/raw

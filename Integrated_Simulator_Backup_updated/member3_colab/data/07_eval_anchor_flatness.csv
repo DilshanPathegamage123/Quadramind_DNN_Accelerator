@@ -1,0 +1,4 @@
+quantity,min,max,spread_pct,source
+"measured total cycles (5 schedulers, RTL)",13412,13413,0.0075,measured (RTL)
+model makespan (14 schedulers),477,477,0.0000,model
+flatness check (model spread <= measured),,,PASS,derived
