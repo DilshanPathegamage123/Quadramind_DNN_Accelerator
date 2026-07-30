@@ -550,8 +550,23 @@ if m2_hw is not None and (m2_hw['Synthesis status'] == 'ok').any():
         ax.text(0.5, 0.5, 'no scheme targets synthesised',
                 ha='center', va='center'); ax.grid(False)
 
+    # A target that failed to synthesise is absent from the bars above.
+    # Say so on the figure -- a silently missing bar reads as "not measured
+    # and not worth mentioning", which would misrepresent the comparison.
+    missing = m2_hw[m2_hw['Synthesis status'] != 'ok']
+    if not missing.empty:
+        fig.text(0.5, -0.03,
+                 'Not shown (did not synthesise): '
+                 + ', '.join(missing['What was synthesised']),
+                 ha='center', fontsize=9, color=GAP, style='italic')
+
     fig.tight_layout()
     plt.show()
+
+    if not missing.empty:
+        print('Unavailable targets and the reason Vivado gave:')
+        for _, r in missing.iterrows():
+            print(f"  {r['What was synthesised']}: {r['Note']}")
 else:
     print('Skipping hardware-cost chart -- no synthesis results in this bundle.')
 """),
