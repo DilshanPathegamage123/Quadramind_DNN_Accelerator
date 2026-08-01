@@ -1,0 +1,1224 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
+---------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2025.2 (lin64) Build 6299465 Fri Nov 14 12:34:56 MST 2025
+| Date         : Tue Jul 28 17:11:12 2026
+| Host         : malinga-Modern-15-B13M running 64-bit Ubuntu 24.04.3 LTS
+| Command      : report_timing_summary -file timing.rpt
+| Design       : batchdnn_scheduler
+| Device       : 7a100t-csg324
+| Speed File   : -1  PRODUCTION 1.23 2018-06-13
+| Design State : Optimized
+---------------------------------------------------------------------------------------------------------------------------------------------
+
+Timing Summary Report
+
+------------------------------------------------------------------------------------------------
+| Timer Settings
+| --------------
+------------------------------------------------------------------------------------------------
+
+  Enable Multi Corner Analysis               :  Yes
+  Enable Pessimism Removal                   :  Yes
+  Pessimism Removal Resolution               :  Nearest Common Node
+  Enable Input Delay Default Clock           :  No
+  Enable Preset / Clear Arcs                 :  No
+  Disable Flight Delays                      :  No
+  Ignore I/O Paths                           :  No
+  Timing Early Launch at Borrowing Latches   :  No
+  Borrow Time for Max Delay Exceptions       :  Yes
+  Merge Timing Exceptions                    :  Yes
+  Inter-SLR Compensation                     :  Conservative
+
+  Corner  Analyze    Analyze    
+  Name    Max Paths  Min Paths  
+  ------  ---------  ---------  
+  Slow    Yes        Yes        
+  Fast    Yes        Yes        
+
+
+------------------------------------------------------------------------------------------------
+| Report Methodology
+| ------------------
+------------------------------------------------------------------------------------------------
+
+No report available as report_methodology has not been run prior. Run report_methodology on the current design for the summary of methodology violations.
+
+
+
+check_timing report
+
+Table of Contents
+-----------------
+1. checking no_clock (0)
+2. checking constant_clock (0)
+3. checking pulse_width_clock (0)
+4. checking unconstrained_internal_endpoints (0)
+5. checking no_input_delay (184)
+6. checking no_output_delay (99)
+7. checking multiple_clock (0)
+8. checking generated_clocks (0)
+9. checking loops (0)
+10. checking partial_input_delay (0)
+11. checking partial_output_delay (0)
+12. checking latch_loops (0)
+
+1. checking no_clock (0)
+------------------------
+ There are 0 register/latch pins with no clock.
+
+
+2. checking constant_clock (0)
+------------------------------
+ There are 0 register/latch pins with constant_clock.
+
+
+3. checking pulse_width_clock (0)
+---------------------------------
+ There are 0 register/latch pins which need pulse_width check
+
+
+4. checking unconstrained_internal_endpoints (0)
+------------------------------------------------
+ There are 0 pins that are not constrained for maximum delay.
+
+ There are 0 pins that are not constrained for maximum delay due to constant clock.
+
+
+5. checking no_input_delay (184)
+--------------------------------
+ There are 184 input ports with no input delay specified. (HIGH)
+
+ There are 0 input ports with no input delay but user has a false path constraint.
+
+
+6. checking no_output_delay (99)
+--------------------------------
+ There are 99 ports with no output delay specified. (HIGH)
+
+ There are 0 ports with no output delay but user has a false path constraint
+
+ There are 0 ports with no output delay but with a timing clock defined on it or propagating through it
+
+
+7. checking multiple_clock (0)
+------------------------------
+ There are 0 register/latch pins with multiple clocks.
+
+
+8. checking generated_clocks (0)
+--------------------------------
+ There are 0 generated clocks that are not connected to a clock source.
+
+
+9. checking loops (0)
+---------------------
+ There are 0 combinational loops in the design.
+
+
+10. checking partial_input_delay (0)
+------------------------------------
+ There are 0 input ports with partial input delay specified.
+
+
+11. checking partial_output_delay (0)
+-------------------------------------
+ There are 0 ports with partial output delay specified.
+
+
+12. checking latch_loops (0)
+----------------------------
+ There are 0 combinational latch loops in the design through latch input
+
+
+
+------------------------------------------------------------------------------------------------
+| Design Timing Summary
+| ---------------------
+------------------------------------------------------------------------------------------------
+
+    WNS(ns)      TNS(ns)  TNS Failing Endpoints  TNS Total Endpoints      WHS(ns)      THS(ns)  THS Failing Endpoints  THS Total Endpoints     WPWS(ns)     TPWS(ns)  TPWS Failing Endpoints  TPWS Total Endpoints  
+    -------      -------  ---------------------  -------------------      -------      -------  ---------------------  -------------------     --------     --------  ----------------------  --------------------  
+    -83.771   -16044.821                    288                 1760        0.191        0.000                      0                 1760        4.500        0.000                       0                  6529  
+
+
+Timing constraints are not met.
+
+
+------------------------------------------------------------------------------------------------
+| Clock Summary
+| -------------
+------------------------------------------------------------------------------------------------
+
+Clock  Waveform(ns)       Period(ns)      Frequency(MHz)
+-----  ------------       ----------      --------------
+clk    {0.000 5.000}      10.000          100.000         
+
+
+------------------------------------------------------------------------------------------------
+| Intra Clock Table
+| -----------------
+------------------------------------------------------------------------------------------------
+
+Clock             WNS(ns)      TNS(ns)  TNS Failing Endpoints  TNS Total Endpoints      WHS(ns)      THS(ns)  THS Failing Endpoints  THS Total Endpoints     WPWS(ns)     TPWS(ns)  TPWS Failing Endpoints  TPWS Total Endpoints  
+-----             -------      -------  ---------------------  -------------------      -------      -------  ---------------------  -------------------     --------     --------  ----------------------  --------------------  
+clk               -83.771   -16044.821                    288                 1760        0.191        0.000                      0                 1760        4.500        0.000                       0                  6529  
+
+
+------------------------------------------------------------------------------------------------
+| Inter Clock Table
+| -----------------
+------------------------------------------------------------------------------------------------
+
+From Clock    To Clock          WNS(ns)      TNS(ns)  TNS Failing Endpoints  TNS Total Endpoints      WHS(ns)      THS(ns)  THS Failing Endpoints  THS Total Endpoints  
+----------    --------          -------      -------  ---------------------  -------------------      -------      -------  ---------------------  -------------------  
+
+
+------------------------------------------------------------------------------------------------
+| Other Path Groups Table
+| -----------------------
+------------------------------------------------------------------------------------------------
+
+Path Group    From Clock    To Clock          WNS(ns)      TNS(ns)  TNS Failing Endpoints  TNS Total Endpoints      WHS(ns)      THS(ns)  THS Failing Endpoints  THS Total Endpoints  
+----------    ----------    --------          -------      -------  ---------------------  -------------------      -------      -------  ---------------------  -------------------  
+
+
+------------------------------------------------------------------------------------------------
+| Timing Details
+| --------------
+------------------------------------------------------------------------------------------------
+
+
+---------------------------------------------------------------------------------------------------
+From Clock:  clk
+  To Clock:  clk
+
+Setup :          288  Failing Endpoints,  Worst Slack      -83.771ns,  Total Violation   -16044.822ns
+Hold  :            0  Failing Endpoints,  Worst Slack        0.191ns,  Total Violation        0.000ns
+PW    :            0  Failing Endpoints,  Worst Slack        4.500ns,  Total Violation        0.000ns
+---------------------------------------------------------------------------------------------------
+
+
+Max Delay Paths
+--------------------------------------------------------------------------------------
+Slack (VIOLATED) :        -83.771ns  (required time - arrival time)
+  Source:                 sct_q_reg[23][0]/C
+                            (rising edge-triggered cell FDRE clocked by clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            avail_mem_reg_reg[31]/D
+                            (rising edge-triggered cell FDCE clocked by clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (clk rise@10.000ns - clk rise@0.000ns)
+  Data Path Delay:        93.731ns  (logic 67.835ns (72.372%)  route 25.896ns (27.628%))
+  Logic Levels:           308  (CARRY4=293 DSP48E1=2 LUT2=4 LUT3=1 LUT6=6 MUXF7=2)
+  Clock Path Skew:        -0.049ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    0.924ns = ( 10.924 - 10.000 ) 
+    Source Clock Delay      (SCD):    0.973ns
+    Clock Pessimism Removal (CPR):    0.000ns
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock clk rise edge)        0.000     0.000 r  
+                                                      0.000     0.000 r  clk (IN)
+                         net (fo=6532, unset)         0.973     0.973    clk
+                         FDRE                                         r  sct_q_reg[23][0]/C
+  -------------------------------------------------------------------    -------------------
+                         FDRE (Prop_fdre_C_Q)         0.478     1.451 r  sct_q_reg[23][0]/Q
+                         net (fo=1, unplaced)         0.965     2.416    sct_q_reg[23][0]
+                         LUT6 (Prop_lut6_I0_O)        0.295     2.711 r  ct_active_layer[0]_i_9/O
+                         net (fo=1, unplaced)         0.000     2.711    ct_active_layer[0]_i_9_n_0
+                         MUXF7 (Prop_muxf7_I1_O)      0.247     2.958 r  ct_active_layer_reg[0]_i_3/O
+                         net (fo=3, unplaced)         0.753     3.711    ct_active_layer_reg[0]_i_3_n_0
+                         LUT6 (Prop_lut6_I1_O)        0.298     4.009 r  avail_mem_reg1_i_268/O
+                         net (fo=128, unplaced)       0.555     4.564    avail_mem_reg1_i_268_n_0
+                         LUT6 (Prop_lut6_I4_O)        0.124     4.688 r  avail_mem_reg1_i_236/O
+                         net (fo=1, unplaced)         0.000     4.688    avail_mem_reg1_i_236_n_0
+                         MUXF7 (Prop_muxf7_I1_O)      0.247     4.935 r  avail_mem_reg1_i_96/O
+                         net (fo=2, unplaced)         0.746     5.681    avail_mem_reg1_i_96_n_0
+                         LUT6 (Prop_lut6_I1_O)        0.298     5.979 r  avail_mem_reg1_i_25/O
+                         net (fo=33, unplaced)        0.521     6.500    sched_table[0]
+                         LUT2 (Prop_lut2_I0_O)        0.124     6.624 r  ct_active_batch[7]_i_1094/O
+                         net (fo=1, unplaced)         0.000     6.624    ct_active_batch[7]_i_1094_n_0
+                         CARRY4 (Prop_carry4_S[0]_CO[3])
+                                                      0.513     7.137 r  ct_active_batch_reg[7]_i_1024/CO[3]
+                         net (fo=1, unplaced)         0.000     7.137    ct_active_batch_reg[7]_i_1024_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117     7.254 r  ct_active_batch_reg[7]_i_1019/CO[3]
+                         net (fo=1, unplaced)         0.000     7.254    ct_active_batch_reg[7]_i_1019_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117     7.371 r  ct_active_batch_reg[7]_i_1014/CO[3]
+                         net (fo=1, unplaced)         0.000     7.371    ct_active_batch_reg[7]_i_1014_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117     7.488 r  ct_active_batch_reg[7]_i_1009/CO[3]
+                         net (fo=1, unplaced)         0.000     7.488    ct_active_batch_reg[7]_i_1009_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117     7.605 r  ct_active_batch_reg[7]_i_1004/CO[3]
+                         net (fo=1, unplaced)         0.000     7.605    ct_active_batch_reg[7]_i_1004_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117     7.722 r  ct_active_batch_reg[7]_i_999/CO[3]
+                         net (fo=1, unplaced)         0.000     7.722    ct_active_batch_reg[7]_i_999_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117     7.839 r  ct_active_batch_reg[7]_i_994/CO[3]
+                         net (fo=1, unplaced)         0.000     7.839    ct_active_batch_reg[7]_i_994_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117     7.956 r  ct_active_batch_reg[7]_i_991/CO[3]
+                         net (fo=1, unplaced)         0.000     7.956    ct_active_batch_reg[7]_i_991_n_0
+                         CARRY4 (Prop_carry4_CI_CO[0])
+                                                      0.281     8.237 r  ct_active_batch_reg[7]_i_990/CO[0]
+                         net (fo=35, unplaced)        0.384     8.621    ct_active_batch_reg[7]_i_990_n_3
+                         LUT3 (Prop_lut3_I0_O)        0.367     8.988 r  ct_active_batch[7]_i_1031/O
+                         net (fo=1, unplaced)         0.000     8.988    ct_active_batch[7]_i_1031_n_0
+                         CARRY4 (Prop_carry4_S[1]_CO[3])
+                                                      0.533     9.521 r  ct_active_batch_reg[7]_i_982/CO[3]
+                         net (fo=1, unplaced)         0.000     9.521    ct_active_batch_reg[7]_i_982_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117     9.638 r  ct_active_batch_reg[7]_i_977/CO[3]
+                         net (fo=1, unplaced)         0.000     9.638    ct_active_batch_reg[7]_i_977_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117     9.755 r  ct_active_batch_reg[7]_i_972/CO[3]
+                         net (fo=1, unplaced)         0.000     9.755    ct_active_batch_reg[7]_i_972_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117     9.872 r  ct_active_batch_reg[7]_i_967/CO[3]
+                         net (fo=1, unplaced)         0.000     9.872    ct_active_batch_reg[7]_i_967_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117     9.989 r  ct_active_batch_reg[7]_i_962/CO[3]
+                         net (fo=1, unplaced)         0.000     9.989    ct_active_batch_reg[7]_i_962_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    10.106 r  ct_active_batch_reg[7]_i_957/CO[3]
+                         net (fo=1, unplaced)         0.000    10.106    ct_active_batch_reg[7]_i_957_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    10.223 r  ct_active_batch_reg[7]_i_952/CO[3]
+                         net (fo=1, unplaced)         0.000    10.223    ct_active_batch_reg[7]_i_952_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    10.340 r  ct_active_batch_reg[7]_i_949/CO[3]
+                         net (fo=1, unplaced)         0.000    10.340    ct_active_batch_reg[7]_i_949_n_0
+                         CARRY4 (Prop_carry4_CI_CO[1])
+                                                      0.179    10.519 r  ct_active_batch_reg[7]_i_948/CO[1]
+                         net (fo=35, unplaced)        0.598    11.117    ct_active_batch_reg[7]_i_948_n_2
+                         CARRY4 (Prop_carry4_CYINIT_CO[3])
+                                                      0.803    11.920 r  ct_active_batch_reg[7]_i_940/CO[3]
+                         net (fo=1, unplaced)         0.000    11.920    ct_active_batch_reg[7]_i_940_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    12.037 r  ct_active_batch_reg[7]_i_935/CO[3]
+                         net (fo=1, unplaced)         0.000    12.037    ct_active_batch_reg[7]_i_935_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    12.154 r  ct_active_batch_reg[7]_i_930/CO[3]
+                         net (fo=1, unplaced)         0.000    12.154    ct_active_batch_reg[7]_i_930_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    12.271 r  ct_active_batch_reg[7]_i_925/CO[3]
+                         net (fo=1, unplaced)         0.000    12.271    ct_active_batch_reg[7]_i_925_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    12.388 r  ct_active_batch_reg[7]_i_920/CO[3]
+                         net (fo=1, unplaced)         0.000    12.388    ct_active_batch_reg[7]_i_920_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    12.505 r  ct_active_batch_reg[7]_i_915/CO[3]
+                         net (fo=1, unplaced)         0.000    12.505    ct_active_batch_reg[7]_i_915_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    12.622 r  ct_active_batch_reg[7]_i_910/CO[3]
+                         net (fo=1, unplaced)         0.000    12.622    ct_active_batch_reg[7]_i_910_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    12.739 r  ct_active_batch_reg[7]_i_907/CO[3]
+                         net (fo=1, unplaced)         0.000    12.739    ct_active_batch_reg[7]_i_907_n_0
+                         CARRY4 (Prop_carry4_CI_CO[1])
+                                                      0.179    12.918 r  ct_active_batch_reg[7]_i_906/CO[1]
+                         net (fo=35, unplaced)        0.598    13.516    ct_active_batch_reg[7]_i_906_n_2
+                         CARRY4 (Prop_carry4_CYINIT_CO[3])
+                                                      0.803    14.319 r  ct_active_batch_reg[7]_i_898/CO[3]
+                         net (fo=1, unplaced)         0.000    14.319    ct_active_batch_reg[7]_i_898_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    14.436 r  ct_active_batch_reg[7]_i_893/CO[3]
+                         net (fo=1, unplaced)         0.000    14.436    ct_active_batch_reg[7]_i_893_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    14.553 r  ct_active_batch_reg[7]_i_888/CO[3]
+                         net (fo=1, unplaced)         0.000    14.553    ct_active_batch_reg[7]_i_888_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    14.670 r  ct_active_batch_reg[7]_i_883/CO[3]
+                         net (fo=1, unplaced)         0.000    14.670    ct_active_batch_reg[7]_i_883_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    14.787 r  ct_active_batch_reg[7]_i_878/CO[3]
+                         net (fo=1, unplaced)         0.000    14.787    ct_active_batch_reg[7]_i_878_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    14.904 r  ct_active_batch_reg[7]_i_873/CO[3]
+                         net (fo=1, unplaced)         0.000    14.904    ct_active_batch_reg[7]_i_873_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    15.021 r  ct_active_batch_reg[7]_i_868/CO[3]
+                         net (fo=1, unplaced)         0.000    15.021    ct_active_batch_reg[7]_i_868_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    15.138 r  ct_active_batch_reg[7]_i_865/CO[3]
+                         net (fo=1, unplaced)         0.000    15.138    ct_active_batch_reg[7]_i_865_n_0
+                         CARRY4 (Prop_carry4_CI_CO[1])
+                                                      0.179    15.317 r  ct_active_batch_reg[7]_i_864/CO[1]
+                         net (fo=35, unplaced)        0.598    15.915    ct_active_batch_reg[7]_i_864_n_2
+                         CARRY4 (Prop_carry4_CYINIT_CO[3])
+                                                      0.803    16.718 r  ct_active_batch_reg[7]_i_856/CO[3]
+                         net (fo=1, unplaced)         0.000    16.718    ct_active_batch_reg[7]_i_856_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    16.835 r  ct_active_batch_reg[7]_i_851/CO[3]
+                         net (fo=1, unplaced)         0.000    16.835    ct_active_batch_reg[7]_i_851_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    16.952 r  ct_active_batch_reg[7]_i_846/CO[3]
+                         net (fo=1, unplaced)         0.000    16.952    ct_active_batch_reg[7]_i_846_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    17.069 r  ct_active_batch_reg[7]_i_841/CO[3]
+                         net (fo=1, unplaced)         0.000    17.069    ct_active_batch_reg[7]_i_841_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    17.186 r  ct_active_batch_reg[7]_i_836/CO[3]
+                         net (fo=1, unplaced)         0.000    17.186    ct_active_batch_reg[7]_i_836_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    17.303 r  ct_active_batch_reg[7]_i_831/CO[3]
+                         net (fo=1, unplaced)         0.000    17.303    ct_active_batch_reg[7]_i_831_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    17.420 r  ct_active_batch_reg[7]_i_826/CO[3]
+                         net (fo=1, unplaced)         0.000    17.420    ct_active_batch_reg[7]_i_826_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    17.537 r  ct_active_batch_reg[7]_i_823/CO[3]
+                         net (fo=1, unplaced)         0.000    17.537    ct_active_batch_reg[7]_i_823_n_0
+                         CARRY4 (Prop_carry4_CI_CO[1])
+                                                      0.179    17.716 r  ct_active_batch_reg[7]_i_822/CO[1]
+                         net (fo=35, unplaced)        0.598    18.314    ct_active_batch_reg[7]_i_822_n_2
+                         CARRY4 (Prop_carry4_CYINIT_CO[3])
+                                                      0.803    19.117 r  ct_active_batch_reg[7]_i_814/CO[3]
+                         net (fo=1, unplaced)         0.000    19.117    ct_active_batch_reg[7]_i_814_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    19.234 r  ct_active_batch_reg[7]_i_809/CO[3]
+                         net (fo=1, unplaced)         0.000    19.234    ct_active_batch_reg[7]_i_809_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    19.351 r  ct_active_batch_reg[7]_i_804/CO[3]
+                         net (fo=1, unplaced)         0.000    19.351    ct_active_batch_reg[7]_i_804_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    19.468 r  ct_active_batch_reg[7]_i_799/CO[3]
+                         net (fo=1, unplaced)         0.000    19.468    ct_active_batch_reg[7]_i_799_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    19.585 r  ct_active_batch_reg[7]_i_794/CO[3]
+                         net (fo=1, unplaced)         0.000    19.585    ct_active_batch_reg[7]_i_794_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    19.702 r  ct_active_batch_reg[7]_i_789/CO[3]
+                         net (fo=1, unplaced)         0.000    19.702    ct_active_batch_reg[7]_i_789_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    19.819 r  ct_active_batch_reg[7]_i_784/CO[3]
+                         net (fo=1, unplaced)         0.000    19.819    ct_active_batch_reg[7]_i_784_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    19.936 r  ct_active_batch_reg[7]_i_781/CO[3]
+                         net (fo=1, unplaced)         0.000    19.936    ct_active_batch_reg[7]_i_781_n_0
+                         CARRY4 (Prop_carry4_CI_CO[1])
+                                                      0.179    20.115 r  ct_active_batch_reg[7]_i_780/CO[1]
+                         net (fo=35, unplaced)        0.598    20.713    ct_active_batch_reg[7]_i_780_n_2
+                         CARRY4 (Prop_carry4_CYINIT_CO[3])
+                                                      0.803    21.516 r  ct_active_batch_reg[7]_i_772/CO[3]
+                         net (fo=1, unplaced)         0.000    21.516    ct_active_batch_reg[7]_i_772_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    21.633 r  ct_active_batch_reg[7]_i_767/CO[3]
+                         net (fo=1, unplaced)         0.000    21.633    ct_active_batch_reg[7]_i_767_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    21.750 r  ct_active_batch_reg[7]_i_762/CO[3]
+                         net (fo=1, unplaced)         0.000    21.750    ct_active_batch_reg[7]_i_762_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    21.867 r  ct_active_batch_reg[7]_i_757/CO[3]
+                         net (fo=1, unplaced)         0.000    21.867    ct_active_batch_reg[7]_i_757_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    21.984 r  ct_active_batch_reg[7]_i_752/CO[3]
+                         net (fo=1, unplaced)         0.000    21.984    ct_active_batch_reg[7]_i_752_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    22.101 r  ct_active_batch_reg[7]_i_747/CO[3]
+                         net (fo=1, unplaced)         0.000    22.101    ct_active_batch_reg[7]_i_747_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    22.218 r  ct_active_batch_reg[7]_i_742/CO[3]
+                         net (fo=1, unplaced)         0.000    22.218    ct_active_batch_reg[7]_i_742_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    22.335 r  ct_active_batch_reg[7]_i_739/CO[3]
+                         net (fo=1, unplaced)         0.000    22.335    ct_active_batch_reg[7]_i_739_n_0
+                         CARRY4 (Prop_carry4_CI_CO[1])
+                                                      0.179    22.514 r  ct_active_batch_reg[7]_i_738/CO[1]
+                         net (fo=35, unplaced)        0.598    23.112    ct_active_batch_reg[7]_i_738_n_2
+                         CARRY4 (Prop_carry4_CYINIT_CO[3])
+                                                      0.803    23.915 r  ct_active_batch_reg[7]_i_730/CO[3]
+                         net (fo=1, unplaced)         0.000    23.915    ct_active_batch_reg[7]_i_730_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    24.032 r  ct_active_batch_reg[7]_i_725/CO[3]
+                         net (fo=1, unplaced)         0.000    24.032    ct_active_batch_reg[7]_i_725_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    24.149 r  ct_active_batch_reg[7]_i_720/CO[3]
+                         net (fo=1, unplaced)         0.000    24.149    ct_active_batch_reg[7]_i_720_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    24.266 r  ct_active_batch_reg[7]_i_715/CO[3]
+                         net (fo=1, unplaced)         0.000    24.266    ct_active_batch_reg[7]_i_715_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    24.383 r  ct_active_batch_reg[7]_i_710/CO[3]
+                         net (fo=1, unplaced)         0.000    24.383    ct_active_batch_reg[7]_i_710_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    24.500 r  ct_active_batch_reg[7]_i_705/CO[3]
+                         net (fo=1, unplaced)         0.000    24.500    ct_active_batch_reg[7]_i_705_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    24.617 r  ct_active_batch_reg[7]_i_700/CO[3]
+                         net (fo=1, unplaced)         0.000    24.617    ct_active_batch_reg[7]_i_700_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    24.734 r  ct_active_batch_reg[7]_i_697/CO[3]
+                         net (fo=1, unplaced)         0.000    24.734    ct_active_batch_reg[7]_i_697_n_0
+                         CARRY4 (Prop_carry4_CI_CO[1])
+                                                      0.179    24.913 r  ct_active_batch_reg[7]_i_696/CO[1]
+                         net (fo=35, unplaced)        0.598    25.511    ct_active_batch_reg[7]_i_696_n_2
+                         CARRY4 (Prop_carry4_CYINIT_CO[3])
+                                                      0.803    26.314 r  ct_active_batch_reg[7]_i_688/CO[3]
+                         net (fo=1, unplaced)         0.000    26.314    ct_active_batch_reg[7]_i_688_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    26.431 r  ct_active_batch_reg[7]_i_683/CO[3]
+                         net (fo=1, unplaced)         0.000    26.431    ct_active_batch_reg[7]_i_683_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    26.548 r  ct_active_batch_reg[7]_i_678/CO[3]
+                         net (fo=1, unplaced)         0.000    26.548    ct_active_batch_reg[7]_i_678_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    26.665 r  ct_active_batch_reg[7]_i_673/CO[3]
+                         net (fo=1, unplaced)         0.000    26.665    ct_active_batch_reg[7]_i_673_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    26.782 r  ct_active_batch_reg[7]_i_668/CO[3]
+                         net (fo=1, unplaced)         0.000    26.782    ct_active_batch_reg[7]_i_668_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    26.899 r  ct_active_batch_reg[7]_i_663/CO[3]
+                         net (fo=1, unplaced)         0.000    26.899    ct_active_batch_reg[7]_i_663_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    27.016 r  ct_active_batch_reg[7]_i_658/CO[3]
+                         net (fo=1, unplaced)         0.000    27.016    ct_active_batch_reg[7]_i_658_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    27.133 r  ct_active_batch_reg[7]_i_655/CO[3]
+                         net (fo=1, unplaced)         0.000    27.133    ct_active_batch_reg[7]_i_655_n_0
+                         CARRY4 (Prop_carry4_CI_CO[1])
+                                                      0.179    27.312 r  ct_active_batch_reg[7]_i_654/CO[1]
+                         net (fo=35, unplaced)        0.598    27.910    ct_active_batch_reg[7]_i_654_n_2
+                         CARRY4 (Prop_carry4_CYINIT_CO[3])
+                                                      0.803    28.713 r  ct_active_batch_reg[7]_i_646/CO[3]
+                         net (fo=1, unplaced)         0.000    28.713    ct_active_batch_reg[7]_i_646_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    28.830 r  ct_active_batch_reg[7]_i_641/CO[3]
+                         net (fo=1, unplaced)         0.000    28.830    ct_active_batch_reg[7]_i_641_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    28.947 r  ct_active_batch_reg[7]_i_636/CO[3]
+                         net (fo=1, unplaced)         0.000    28.947    ct_active_batch_reg[7]_i_636_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    29.064 r  ct_active_batch_reg[7]_i_631/CO[3]
+                         net (fo=1, unplaced)         0.000    29.064    ct_active_batch_reg[7]_i_631_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    29.181 r  ct_active_batch_reg[7]_i_626/CO[3]
+                         net (fo=1, unplaced)         0.000    29.181    ct_active_batch_reg[7]_i_626_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    29.298 r  ct_active_batch_reg[7]_i_621/CO[3]
+                         net (fo=1, unplaced)         0.000    29.298    ct_active_batch_reg[7]_i_621_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    29.415 r  ct_active_batch_reg[7]_i_616/CO[3]
+                         net (fo=1, unplaced)         0.000    29.415    ct_active_batch_reg[7]_i_616_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    29.532 r  ct_active_batch_reg[7]_i_613/CO[3]
+                         net (fo=1, unplaced)         0.000    29.532    ct_active_batch_reg[7]_i_613_n_0
+                         CARRY4 (Prop_carry4_CI_CO[1])
+                                                      0.179    29.711 r  ct_active_batch_reg[7]_i_612/CO[1]
+                         net (fo=35, unplaced)        0.598    30.309    ct_active_batch_reg[7]_i_612_n_2
+                         CARRY4 (Prop_carry4_CYINIT_CO[3])
+                                                      0.803    31.112 r  ct_active_batch_reg[7]_i_604/CO[3]
+                         net (fo=1, unplaced)         0.000    31.112    ct_active_batch_reg[7]_i_604_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    31.229 r  ct_active_batch_reg[7]_i_599/CO[3]
+                         net (fo=1, unplaced)         0.000    31.229    ct_active_batch_reg[7]_i_599_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    31.346 r  ct_active_batch_reg[7]_i_594/CO[3]
+                         net (fo=1, unplaced)         0.000    31.346    ct_active_batch_reg[7]_i_594_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    31.463 r  ct_active_batch_reg[7]_i_589/CO[3]
+                         net (fo=1, unplaced)         0.000    31.463    ct_active_batch_reg[7]_i_589_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    31.580 r  ct_active_batch_reg[7]_i_584/CO[3]
+                         net (fo=1, unplaced)         0.000    31.580    ct_active_batch_reg[7]_i_584_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    31.697 r  ct_active_batch_reg[7]_i_579/CO[3]
+                         net (fo=1, unplaced)         0.000    31.697    ct_active_batch_reg[7]_i_579_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    31.814 r  ct_active_batch_reg[7]_i_574/CO[3]
+                         net (fo=1, unplaced)         0.000    31.814    ct_active_batch_reg[7]_i_574_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    31.931 r  ct_active_batch_reg[7]_i_571/CO[3]
+                         net (fo=1, unplaced)         0.000    31.931    ct_active_batch_reg[7]_i_571_n_0
+                         CARRY4 (Prop_carry4_CI_CO[1])
+                                                      0.179    32.110 r  ct_active_batch_reg[7]_i_570/CO[1]
+                         net (fo=35, unplaced)        0.598    32.708    ct_active_batch_reg[7]_i_570_n_2
+                         CARRY4 (Prop_carry4_CYINIT_CO[3])
+                                                      0.803    33.511 r  ct_active_batch_reg[7]_i_562/CO[3]
+                         net (fo=1, unplaced)         0.000    33.511    ct_active_batch_reg[7]_i_562_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    33.628 r  ct_active_batch_reg[7]_i_557/CO[3]
+                         net (fo=1, unplaced)         0.000    33.628    ct_active_batch_reg[7]_i_557_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    33.745 r  ct_active_batch_reg[7]_i_552/CO[3]
+                         net (fo=1, unplaced)         0.000    33.745    ct_active_batch_reg[7]_i_552_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    33.862 r  ct_active_batch_reg[7]_i_547/CO[3]
+                         net (fo=1, unplaced)         0.000    33.862    ct_active_batch_reg[7]_i_547_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    33.979 r  ct_active_batch_reg[7]_i_542/CO[3]
+                         net (fo=1, unplaced)         0.000    33.979    ct_active_batch_reg[7]_i_542_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    34.096 r  ct_active_batch_reg[7]_i_537/CO[3]
+                         net (fo=1, unplaced)         0.000    34.096    ct_active_batch_reg[7]_i_537_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    34.213 r  ct_active_batch_reg[7]_i_532/CO[3]
+                         net (fo=1, unplaced)         0.000    34.213    ct_active_batch_reg[7]_i_532_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    34.330 r  ct_active_batch_reg[7]_i_529/CO[3]
+                         net (fo=1, unplaced)         0.000    34.330    ct_active_batch_reg[7]_i_529_n_0
+                         CARRY4 (Prop_carry4_CI_CO[1])
+                                                      0.179    34.509 r  ct_active_batch_reg[7]_i_528/CO[1]
+                         net (fo=35, unplaced)        0.598    35.107    ct_active_batch_reg[7]_i_528_n_2
+                         CARRY4 (Prop_carry4_CYINIT_CO[3])
+                                                      0.803    35.910 r  ct_active_batch_reg[7]_i_520/CO[3]
+                         net (fo=1, unplaced)         0.000    35.910    ct_active_batch_reg[7]_i_520_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    36.027 r  ct_active_batch_reg[7]_i_515/CO[3]
+                         net (fo=1, unplaced)         0.000    36.027    ct_active_batch_reg[7]_i_515_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    36.144 r  ct_active_batch_reg[7]_i_510/CO[3]
+                         net (fo=1, unplaced)         0.000    36.144    ct_active_batch_reg[7]_i_510_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    36.261 r  ct_active_batch_reg[7]_i_505/CO[3]
+                         net (fo=1, unplaced)         0.000    36.261    ct_active_batch_reg[7]_i_505_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    36.378 r  ct_active_batch_reg[7]_i_500/CO[3]
+                         net (fo=1, unplaced)         0.000    36.378    ct_active_batch_reg[7]_i_500_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    36.495 r  ct_active_batch_reg[7]_i_495/CO[3]
+                         net (fo=1, unplaced)         0.000    36.495    ct_active_batch_reg[7]_i_495_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    36.612 r  ct_active_batch_reg[7]_i_490/CO[3]
+                         net (fo=1, unplaced)         0.000    36.612    ct_active_batch_reg[7]_i_490_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    36.729 r  ct_active_batch_reg[7]_i_487/CO[3]
+                         net (fo=1, unplaced)         0.000    36.729    ct_active_batch_reg[7]_i_487_n_0
+                         CARRY4 (Prop_carry4_CI_CO[1])
+                                                      0.179    36.908 r  ct_active_batch_reg[7]_i_486/CO[1]
+                         net (fo=35, unplaced)        0.598    37.506    ct_active_batch_reg[7]_i_486_n_2
+                         CARRY4 (Prop_carry4_CYINIT_CO[3])
+                                                      0.803    38.309 r  ct_active_batch_reg[7]_i_478/CO[3]
+                         net (fo=1, unplaced)         0.000    38.309    ct_active_batch_reg[7]_i_478_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    38.426 r  ct_active_batch_reg[7]_i_473/CO[3]
+                         net (fo=1, unplaced)         0.000    38.426    ct_active_batch_reg[7]_i_473_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    38.543 r  ct_active_batch_reg[7]_i_468/CO[3]
+                         net (fo=1, unplaced)         0.000    38.543    ct_active_batch_reg[7]_i_468_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    38.660 r  ct_active_batch_reg[7]_i_463/CO[3]
+                         net (fo=1, unplaced)         0.000    38.660    ct_active_batch_reg[7]_i_463_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    38.777 r  ct_active_batch_reg[7]_i_458/CO[3]
+                         net (fo=1, unplaced)         0.000    38.777    ct_active_batch_reg[7]_i_458_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    38.894 r  ct_active_batch_reg[7]_i_453/CO[3]
+                         net (fo=1, unplaced)         0.000    38.894    ct_active_batch_reg[7]_i_453_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    39.011 r  ct_active_batch_reg[7]_i_448/CO[3]
+                         net (fo=1, unplaced)         0.000    39.011    ct_active_batch_reg[7]_i_448_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    39.128 r  ct_active_batch_reg[7]_i_445/CO[3]
+                         net (fo=1, unplaced)         0.000    39.128    ct_active_batch_reg[7]_i_445_n_0
+                         CARRY4 (Prop_carry4_CI_CO[1])
+                                                      0.179    39.307 r  ct_active_batch_reg[7]_i_444/CO[1]
+                         net (fo=35, unplaced)        0.598    39.905    ct_active_batch_reg[7]_i_444_n_2
+                         CARRY4 (Prop_carry4_CYINIT_CO[3])
+                                                      0.803    40.708 r  ct_active_batch_reg[7]_i_436/CO[3]
+                         net (fo=1, unplaced)         0.000    40.708    ct_active_batch_reg[7]_i_436_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    40.825 r  ct_active_batch_reg[7]_i_431/CO[3]
+                         net (fo=1, unplaced)         0.000    40.825    ct_active_batch_reg[7]_i_431_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    40.942 r  ct_active_batch_reg[7]_i_426/CO[3]
+                         net (fo=1, unplaced)         0.000    40.942    ct_active_batch_reg[7]_i_426_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    41.059 r  ct_active_batch_reg[7]_i_421/CO[3]
+                         net (fo=1, unplaced)         0.000    41.059    ct_active_batch_reg[7]_i_421_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    41.176 r  ct_active_batch_reg[7]_i_416/CO[3]
+                         net (fo=1, unplaced)         0.000    41.176    ct_active_batch_reg[7]_i_416_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    41.293 r  ct_active_batch_reg[7]_i_411/CO[3]
+                         net (fo=1, unplaced)         0.000    41.293    ct_active_batch_reg[7]_i_411_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    41.410 r  ct_active_batch_reg[7]_i_406/CO[3]
+                         net (fo=1, unplaced)         0.000    41.410    ct_active_batch_reg[7]_i_406_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    41.527 r  ct_active_batch_reg[7]_i_403/CO[3]
+                         net (fo=1, unplaced)         0.000    41.527    ct_active_batch_reg[7]_i_403_n_0
+                         CARRY4 (Prop_carry4_CI_CO[1])
+                                                      0.179    41.706 r  ct_active_batch_reg[7]_i_402/CO[1]
+                         net (fo=35, unplaced)        0.598    42.304    ct_active_batch_reg[7]_i_402_n_2
+                         CARRY4 (Prop_carry4_CYINIT_CO[3])
+                                                      0.803    43.107 r  ct_active_batch_reg[7]_i_394/CO[3]
+                         net (fo=1, unplaced)         0.000    43.107    ct_active_batch_reg[7]_i_394_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    43.224 r  ct_active_batch_reg[7]_i_389/CO[3]
+                         net (fo=1, unplaced)         0.000    43.224    ct_active_batch_reg[7]_i_389_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    43.341 r  ct_active_batch_reg[7]_i_384/CO[3]
+                         net (fo=1, unplaced)         0.000    43.341    ct_active_batch_reg[7]_i_384_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    43.458 r  ct_active_batch_reg[7]_i_379/CO[3]
+                         net (fo=1, unplaced)         0.000    43.458    ct_active_batch_reg[7]_i_379_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    43.575 r  ct_active_batch_reg[7]_i_374/CO[3]
+                         net (fo=1, unplaced)         0.000    43.575    ct_active_batch_reg[7]_i_374_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    43.692 r  ct_active_batch_reg[7]_i_369/CO[3]
+                         net (fo=1, unplaced)         0.000    43.692    ct_active_batch_reg[7]_i_369_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    43.809 r  ct_active_batch_reg[7]_i_364/CO[3]
+                         net (fo=1, unplaced)         0.000    43.809    ct_active_batch_reg[7]_i_364_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    43.926 r  ct_active_batch_reg[7]_i_361/CO[3]
+                         net (fo=1, unplaced)         0.000    43.926    ct_active_batch_reg[7]_i_361_n_0
+                         CARRY4 (Prop_carry4_CI_CO[1])
+                                                      0.179    44.105 r  ct_active_batch_reg[7]_i_360/CO[1]
+                         net (fo=35, unplaced)        0.598    44.703    ct_active_batch_reg[7]_i_360_n_2
+                         CARRY4 (Prop_carry4_CYINIT_CO[3])
+                                                      0.803    45.506 r  ct_active_batch_reg[7]_i_331/CO[3]
+                         net (fo=1, unplaced)         0.000    45.506    ct_active_batch_reg[7]_i_331_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    45.623 r  ct_active_batch_reg[7]_i_326/CO[3]
+                         net (fo=1, unplaced)         0.000    45.623    ct_active_batch_reg[7]_i_326_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    45.740 r  ct_active_batch_reg[7]_i_321/CO[3]
+                         net (fo=1, unplaced)         0.000    45.740    ct_active_batch_reg[7]_i_321_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    45.857 r  ct_active_batch_reg[7]_i_316/CO[3]
+                         net (fo=1, unplaced)         0.000    45.857    ct_active_batch_reg[7]_i_316_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    45.974 r  ct_active_batch_reg[7]_i_311/CO[3]
+                         net (fo=1, unplaced)         0.000    45.974    ct_active_batch_reg[7]_i_311_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    46.091 r  ct_active_batch_reg[7]_i_306/CO[3]
+                         net (fo=1, unplaced)         0.000    46.091    ct_active_batch_reg[7]_i_306_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    46.208 r  ct_active_batch_reg[7]_i_301/CO[3]
+                         net (fo=1, unplaced)         0.000    46.208    ct_active_batch_reg[7]_i_301_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    46.325 r  ct_active_batch_reg[7]_i_298/CO[3]
+                         net (fo=1, unplaced)         0.000    46.325    ct_active_batch_reg[7]_i_298_n_0
+                         CARRY4 (Prop_carry4_CI_CO[1])
+                                                      0.179    46.504 r  ct_active_batch_reg[7]_i_297/CO[1]
+                         net (fo=35, unplaced)        0.598    47.102    ct_active_batch_reg[7]_i_297_n_2
+                         CARRY4 (Prop_carry4_CYINIT_CO[3])
+                                                      0.803    47.905 r  ct_active_batch_reg[7]_i_292/CO[3]
+                         net (fo=1, unplaced)         0.000    47.905    ct_active_batch_reg[7]_i_292_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    48.022 r  ct_active_batch_reg[7]_i_256/CO[3]
+                         net (fo=1, unplaced)         0.000    48.022    ct_active_batch_reg[7]_i_256_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    48.139 r  ct_active_batch_reg[7]_i_251/CO[3]
+                         net (fo=1, unplaced)         0.000    48.139    ct_active_batch_reg[7]_i_251_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    48.256 r  ct_active_batch_reg[7]_i_246/CO[3]
+                         net (fo=1, unplaced)         0.000    48.256    ct_active_batch_reg[7]_i_246_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    48.373 r  ct_active_batch_reg[7]_i_241/CO[3]
+                         net (fo=1, unplaced)         0.000    48.373    ct_active_batch_reg[7]_i_241_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    48.490 r  ct_active_batch_reg[7]_i_236/CO[3]
+                         net (fo=1, unplaced)         0.000    48.490    ct_active_batch_reg[7]_i_236_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    48.607 r  ct_active_batch_reg[7]_i_231/CO[3]
+                         net (fo=1, unplaced)         0.000    48.607    ct_active_batch_reg[7]_i_231_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    48.724 r  ct_active_batch_reg[7]_i_228/CO[3]
+                         net (fo=1, unplaced)         0.000    48.724    ct_active_batch_reg[7]_i_228_n_0
+                         CARRY4 (Prop_carry4_CI_CO[1])
+                                                      0.179    48.903 r  ct_active_batch_reg[7]_i_227/CO[1]
+                         net (fo=35, unplaced)        0.598    49.501    ct_active_batch_reg[7]_i_227_n_2
+                         CARRY4 (Prop_carry4_CYINIT_CO[3])
+                                                      0.803    50.304 r  ct_active_batch_reg[7]_i_287/CO[3]
+                         net (fo=1, unplaced)         0.000    50.304    ct_active_batch_reg[7]_i_287_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    50.421 r  ct_active_batch_reg[7]_i_222/CO[3]
+                         net (fo=1, unplaced)         0.000    50.421    ct_active_batch_reg[7]_i_222_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    50.538 r  ct_active_batch_reg[7]_i_191/CO[3]
+                         net (fo=1, unplaced)         0.000    50.538    ct_active_batch_reg[7]_i_191_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    50.655 r  ct_active_batch_reg[7]_i_186/CO[3]
+                         net (fo=1, unplaced)         0.000    50.655    ct_active_batch_reg[7]_i_186_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    50.772 r  ct_active_batch_reg[7]_i_181/CO[3]
+                         net (fo=1, unplaced)         0.000    50.772    ct_active_batch_reg[7]_i_181_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    50.889 r  ct_active_batch_reg[7]_i_176/CO[3]
+                         net (fo=1, unplaced)         0.000    50.889    ct_active_batch_reg[7]_i_176_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    51.006 r  ct_active_batch_reg[7]_i_171/CO[3]
+                         net (fo=1, unplaced)         0.000    51.006    ct_active_batch_reg[7]_i_171_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    51.123 r  ct_active_batch_reg[7]_i_168/CO[3]
+                         net (fo=1, unplaced)         0.000    51.123    ct_active_batch_reg[7]_i_168_n_0
+                         CARRY4 (Prop_carry4_CI_CO[1])
+                                                      0.179    51.302 r  ct_active_batch_reg[7]_i_167/CO[1]
+                         net (fo=35, unplaced)        0.598    51.900    ct_active_batch_reg[7]_i_167_n_2
+                         CARRY4 (Prop_carry4_CYINIT_CO[3])
+                                                      0.803    52.703 r  ct_active_batch_reg[7]_i_282/CO[3]
+                         net (fo=1, unplaced)         0.000    52.703    ct_active_batch_reg[7]_i_282_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    52.820 r  ct_active_batch_reg[7]_i_217/CO[3]
+                         net (fo=1, unplaced)         0.000    52.820    ct_active_batch_reg[7]_i_217_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    52.937 r  ct_active_batch_reg[7]_i_162/CO[3]
+                         net (fo=1, unplaced)         0.000    52.937    ct_active_batch_reg[7]_i_162_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    53.054 r  ct_active_batch_reg[7]_i_136/CO[3]
+                         net (fo=1, unplaced)         0.000    53.054    ct_active_batch_reg[7]_i_136_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    53.171 r  ct_active_batch_reg[7]_i_131/CO[3]
+                         net (fo=1, unplaced)         0.000    53.171    ct_active_batch_reg[7]_i_131_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    53.288 r  ct_active_batch_reg[7]_i_126/CO[3]
+                         net (fo=1, unplaced)         0.000    53.288    ct_active_batch_reg[7]_i_126_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    53.405 r  ct_active_batch_reg[7]_i_121/CO[3]
+                         net (fo=1, unplaced)         0.000    53.405    ct_active_batch_reg[7]_i_121_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    53.522 r  ct_active_batch_reg[7]_i_118/CO[3]
+                         net (fo=1, unplaced)         0.000    53.522    ct_active_batch_reg[7]_i_118_n_0
+                         CARRY4 (Prop_carry4_CI_CO[1])
+                                                      0.179    53.701 r  ct_active_batch_reg[7]_i_117/CO[1]
+                         net (fo=35, unplaced)        0.598    54.299    ct_active_batch_reg[7]_i_117_n_2
+                         CARRY4 (Prop_carry4_CYINIT_CO[3])
+                                                      0.803    55.102 r  ct_active_batch_reg[7]_i_277/CO[3]
+                         net (fo=1, unplaced)         0.000    55.102    ct_active_batch_reg[7]_i_277_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    55.219 r  ct_active_batch_reg[7]_i_212/CO[3]
+                         net (fo=1, unplaced)         0.000    55.219    ct_active_batch_reg[7]_i_212_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    55.336 r  ct_active_batch_reg[7]_i_157/CO[3]
+                         net (fo=1, unplaced)         0.000    55.336    ct_active_batch_reg[7]_i_157_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    55.453 r  ct_active_batch_reg[7]_i_112/CO[3]
+                         net (fo=1, unplaced)         0.000    55.453    ct_active_batch_reg[7]_i_112_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    55.570 r  ct_active_batch_reg[7]_i_91/CO[3]
+                         net (fo=1, unplaced)         0.000    55.570    ct_active_batch_reg[7]_i_91_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    55.687 r  ct_active_batch_reg[7]_i_86/CO[3]
+                         net (fo=1, unplaced)         0.000    55.687    ct_active_batch_reg[7]_i_86_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    55.804 r  ct_active_batch_reg[7]_i_81/CO[3]
+                         net (fo=1, unplaced)         0.000    55.804    ct_active_batch_reg[7]_i_81_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    55.921 r  ct_active_batch_reg[7]_i_78/CO[3]
+                         net (fo=1, unplaced)         0.000    55.921    ct_active_batch_reg[7]_i_78_n_0
+                         CARRY4 (Prop_carry4_CI_CO[1])
+                                                      0.179    56.100 r  ct_active_batch_reg[7]_i_77/CO[1]
+                         net (fo=35, unplaced)        0.598    56.698    ct_active_batch_reg[7]_i_77_n_2
+                         CARRY4 (Prop_carry4_CYINIT_CO[3])
+                                                      0.803    57.501 r  ct_active_batch_reg[7]_i_272/CO[3]
+                         net (fo=1, unplaced)         0.000    57.501    ct_active_batch_reg[7]_i_272_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    57.618 r  ct_active_batch_reg[7]_i_207/CO[3]
+                         net (fo=1, unplaced)         0.000    57.618    ct_active_batch_reg[7]_i_207_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    57.735 r  ct_active_batch_reg[7]_i_152/CO[3]
+                         net (fo=1, unplaced)         0.000    57.735    ct_active_batch_reg[7]_i_152_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    57.852 r  ct_active_batch_reg[7]_i_107/CO[3]
+                         net (fo=1, unplaced)         0.000    57.852    ct_active_batch_reg[7]_i_107_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    57.969 r  ct_active_batch_reg[7]_i_72/CO[3]
+                         net (fo=1, unplaced)         0.000    57.969    ct_active_batch_reg[7]_i_72_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    58.086 r  ct_active_batch_reg[7]_i_56/CO[3]
+                         net (fo=1, unplaced)         0.000    58.086    ct_active_batch_reg[7]_i_56_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    58.203 r  ct_active_batch_reg[7]_i_51/CO[3]
+                         net (fo=1, unplaced)         0.000    58.203    ct_active_batch_reg[7]_i_51_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    58.320 r  ct_active_batch_reg[7]_i_48/CO[3]
+                         net (fo=1, unplaced)         0.000    58.320    ct_active_batch_reg[7]_i_48_n_0
+                         CARRY4 (Prop_carry4_CI_CO[1])
+                                                      0.179    58.499 r  ct_active_batch_reg[7]_i_47/CO[1]
+                         net (fo=35, unplaced)        0.598    59.097    ct_active_batch_reg[7]_i_47_n_2
+                         CARRY4 (Prop_carry4_CYINIT_CO[3])
+                                                      0.803    59.900 r  ct_active_batch_reg[7]_i_267/CO[3]
+                         net (fo=1, unplaced)         0.000    59.900    ct_active_batch_reg[7]_i_267_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    60.017 r  ct_active_batch_reg[7]_i_202/CO[3]
+                         net (fo=1, unplaced)         0.000    60.017    ct_active_batch_reg[7]_i_202_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    60.134 r  ct_active_batch_reg[7]_i_147/CO[3]
+                         net (fo=1, unplaced)         0.000    60.134    ct_active_batch_reg[7]_i_147_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    60.251 r  ct_active_batch_reg[7]_i_102/CO[3]
+                         net (fo=1, unplaced)         0.000    60.251    ct_active_batch_reg[7]_i_102_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    60.368 r  ct_active_batch_reg[7]_i_67/CO[3]
+                         net (fo=1, unplaced)         0.000    60.368    ct_active_batch_reg[7]_i_67_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    60.485 r  ct_active_batch_reg[7]_i_42/CO[3]
+                         net (fo=1, unplaced)         0.000    60.485    ct_active_batch_reg[7]_i_42_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    60.602 r  ct_active_batch_reg[7]_i_31/CO[3]
+                         net (fo=1, unplaced)         0.000    60.602    ct_active_batch_reg[7]_i_31_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    60.719 r  ct_active_batch_reg[7]_i_28/CO[3]
+                         net (fo=1, unplaced)         0.000    60.719    ct_active_batch_reg[7]_i_28_n_0
+                         CARRY4 (Prop_carry4_CI_CO[1])
+                                                      0.179    60.898 r  ct_active_batch_reg[7]_i_27/CO[1]
+                         net (fo=35, unplaced)        0.598    61.496    ct_active_batch_reg[7]_i_27_n_2
+                         CARRY4 (Prop_carry4_CYINIT_CO[3])
+                                                      0.803    62.299 r  ct_active_batch_reg[7]_i_262/CO[3]
+                         net (fo=1, unplaced)         0.000    62.299    ct_active_batch_reg[7]_i_262_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    62.416 r  ct_active_batch_reg[7]_i_197/CO[3]
+                         net (fo=1, unplaced)         0.000    62.416    ct_active_batch_reg[7]_i_197_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    62.533 r  ct_active_batch_reg[7]_i_142/CO[3]
+                         net (fo=1, unplaced)         0.000    62.533    ct_active_batch_reg[7]_i_142_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    62.650 r  ct_active_batch_reg[7]_i_97/CO[3]
+                         net (fo=1, unplaced)         0.000    62.650    ct_active_batch_reg[7]_i_97_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    62.767 r  ct_active_batch_reg[7]_i_62/CO[3]
+                         net (fo=1, unplaced)         0.000    62.767    ct_active_batch_reg[7]_i_62_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    62.884 r  ct_active_batch_reg[7]_i_37/CO[3]
+                         net (fo=1, unplaced)         0.000    62.884    ct_active_batch_reg[7]_i_37_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    63.001 r  ct_active_batch_reg[7]_i_22/CO[3]
+                         net (fo=1, unplaced)         0.000    63.001    ct_active_batch_reg[7]_i_22_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    63.118 r  ct_active_batch_reg[7]_i_10/CO[3]
+                         net (fo=1, unplaced)         0.000    63.118    ct_active_batch_reg[7]_i_10_n_0
+                         CARRY4 (Prop_carry4_CI_CO[1])
+                                                      0.179    63.297 r  ct_active_batch_reg[7]_i_9/CO[1]
+                         net (fo=35, unplaced)        0.598    63.895    ct_active_batch_reg[7]_i_9_n_2
+                         CARRY4 (Prop_carry4_CYINIT_CO[3])
+                                                      0.803    64.698 r  ct_active_batch_reg[7]_i_261/CO[3]
+                         net (fo=1, unplaced)         0.000    64.698    ct_active_batch_reg[7]_i_261_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    64.815 r  ct_active_batch_reg[7]_i_196/CO[3]
+                         net (fo=1, unplaced)         0.000    64.815    ct_active_batch_reg[7]_i_196_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    64.932 r  ct_active_batch_reg[7]_i_141/CO[3]
+                         net (fo=1, unplaced)         0.000    64.932    ct_active_batch_reg[7]_i_141_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    65.049 r  ct_active_batch_reg[7]_i_96/CO[3]
+                         net (fo=1, unplaced)         0.000    65.049    ct_active_batch_reg[7]_i_96_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    65.166 r  ct_active_batch_reg[7]_i_61/CO[3]
+                         net (fo=1, unplaced)         0.000    65.166    ct_active_batch_reg[7]_i_61_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    65.283 r  ct_active_batch_reg[7]_i_36/CO[3]
+                         net (fo=1, unplaced)         0.000    65.283    ct_active_batch_reg[7]_i_36_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    65.400 r  ct_active_batch_reg[7]_i_21/CO[3]
+                         net (fo=1, unplaced)         0.000    65.400    ct_active_batch_reg[7]_i_21_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    65.517 r  ct_active_batch_reg[7]_i_8/CO[3]
+                         net (fo=1, unplaced)         0.000    65.517    ct_active_batch_reg[7]_i_8_n_0
+                         CARRY4 (Prop_carry4_CI_CO[1])
+                                                      0.179    65.696 r  ct_active_batch_reg[7]_i_4/CO[1]
+                         net (fo=38, unplaced)        0.600    66.296    b2[7]
+                         CARRY4 (Prop_carry4_CYINIT_CO[3])
+                                                      0.803    67.099 r  ct_active_batch_reg[6]_i_36/CO[3]
+                         net (fo=1, unplaced)         0.000    67.099    ct_active_batch_reg[6]_i_36_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    67.216 r  ct_active_batch_reg[6]_i_31/CO[3]
+                         net (fo=1, unplaced)         0.000    67.216    ct_active_batch_reg[6]_i_31_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    67.333 r  ct_active_batch_reg[6]_i_26/CO[3]
+                         net (fo=1, unplaced)         0.000    67.333    ct_active_batch_reg[6]_i_26_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    67.450 r  ct_active_batch_reg[6]_i_21/CO[3]
+                         net (fo=1, unplaced)         0.000    67.450    ct_active_batch_reg[6]_i_21_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    67.567 r  ct_active_batch_reg[6]_i_16/CO[3]
+                         net (fo=1, unplaced)         0.000    67.567    ct_active_batch_reg[6]_i_16_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    67.684 r  ct_active_batch_reg[6]_i_11/CO[3]
+                         net (fo=1, unplaced)         0.000    67.684    ct_active_batch_reg[6]_i_11_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    67.801 r  ct_active_batch_reg[6]_i_6/CO[3]
+                         net (fo=1, unplaced)         0.000    67.801    ct_active_batch_reg[6]_i_6_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    67.918 r  ct_active_batch_reg[6]_i_3/CO[3]
+                         net (fo=1, unplaced)         0.000    67.918    ct_active_batch_reg[6]_i_3_n_0
+                         CARRY4 (Prop_carry4_CI_CO[1])
+                                                      0.179    68.097 r  ct_active_batch_reg[6]_i_2/CO[1]
+                         net (fo=38, unplaced)        0.600    68.697    b2[6]
+                         CARRY4 (Prop_carry4_CYINIT_CO[3])
+                                                      0.803    69.500 r  ct_active_batch_reg[5]_i_36/CO[3]
+                         net (fo=1, unplaced)         0.000    69.500    ct_active_batch_reg[5]_i_36_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    69.617 r  ct_active_batch_reg[5]_i_31/CO[3]
+                         net (fo=1, unplaced)         0.000    69.617    ct_active_batch_reg[5]_i_31_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    69.734 r  ct_active_batch_reg[5]_i_26/CO[3]
+                         net (fo=1, unplaced)         0.000    69.734    ct_active_batch_reg[5]_i_26_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    69.851 r  ct_active_batch_reg[5]_i_21/CO[3]
+                         net (fo=1, unplaced)         0.000    69.851    ct_active_batch_reg[5]_i_21_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    69.968 r  ct_active_batch_reg[5]_i_16/CO[3]
+                         net (fo=1, unplaced)         0.000    69.968    ct_active_batch_reg[5]_i_16_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    70.085 r  ct_active_batch_reg[5]_i_11/CO[3]
+                         net (fo=1, unplaced)         0.000    70.085    ct_active_batch_reg[5]_i_11_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    70.202 r  ct_active_batch_reg[5]_i_6/CO[3]
+                         net (fo=1, unplaced)         0.000    70.202    ct_active_batch_reg[5]_i_6_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    70.319 r  ct_active_batch_reg[5]_i_3/CO[3]
+                         net (fo=1, unplaced)         0.000    70.319    ct_active_batch_reg[5]_i_3_n_0
+                         CARRY4 (Prop_carry4_CI_CO[1])
+                                                      0.179    70.498 r  ct_active_batch_reg[5]_i_2/CO[1]
+                         net (fo=38, unplaced)        0.600    71.098    b2[5]
+                         CARRY4 (Prop_carry4_CYINIT_CO[3])
+                                                      0.803    71.901 r  ct_active_batch_reg[4]_i_36/CO[3]
+                         net (fo=1, unplaced)         0.000    71.901    ct_active_batch_reg[4]_i_36_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    72.018 r  ct_active_batch_reg[4]_i_31/CO[3]
+                         net (fo=1, unplaced)         0.000    72.018    ct_active_batch_reg[4]_i_31_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    72.135 r  ct_active_batch_reg[4]_i_26/CO[3]
+                         net (fo=1, unplaced)         0.000    72.135    ct_active_batch_reg[4]_i_26_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    72.252 r  ct_active_batch_reg[4]_i_21/CO[3]
+                         net (fo=1, unplaced)         0.000    72.252    ct_active_batch_reg[4]_i_21_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    72.369 r  ct_active_batch_reg[4]_i_16/CO[3]
+                         net (fo=1, unplaced)         0.000    72.369    ct_active_batch_reg[4]_i_16_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    72.486 r  ct_active_batch_reg[4]_i_11/CO[3]
+                         net (fo=1, unplaced)         0.000    72.486    ct_active_batch_reg[4]_i_11_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    72.603 r  ct_active_batch_reg[4]_i_6/CO[3]
+                         net (fo=1, unplaced)         0.000    72.603    ct_active_batch_reg[4]_i_6_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    72.720 r  ct_active_batch_reg[4]_i_3/CO[3]
+                         net (fo=1, unplaced)         0.000    72.720    ct_active_batch_reg[4]_i_3_n_0
+                         CARRY4 (Prop_carry4_CI_CO[1])
+                                                      0.179    72.899 r  ct_active_batch_reg[4]_i_2/CO[1]
+                         net (fo=38, unplaced)        0.600    73.499    b2[4]
+                         CARRY4 (Prop_carry4_CYINIT_CO[3])
+                                                      0.803    74.302 r  ct_active_batch_reg[3]_i_36/CO[3]
+                         net (fo=1, unplaced)         0.000    74.302    ct_active_batch_reg[3]_i_36_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    74.419 r  ct_active_batch_reg[3]_i_31/CO[3]
+                         net (fo=1, unplaced)         0.000    74.419    ct_active_batch_reg[3]_i_31_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    74.536 r  ct_active_batch_reg[3]_i_26/CO[3]
+                         net (fo=1, unplaced)         0.000    74.536    ct_active_batch_reg[3]_i_26_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    74.653 r  ct_active_batch_reg[3]_i_21/CO[3]
+                         net (fo=1, unplaced)         0.000    74.653    ct_active_batch_reg[3]_i_21_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    74.770 r  ct_active_batch_reg[3]_i_16/CO[3]
+                         net (fo=1, unplaced)         0.000    74.770    ct_active_batch_reg[3]_i_16_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    74.887 r  ct_active_batch_reg[3]_i_11/CO[3]
+                         net (fo=1, unplaced)         0.000    74.887    ct_active_batch_reg[3]_i_11_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    75.004 r  ct_active_batch_reg[3]_i_6/CO[3]
+                         net (fo=1, unplaced)         0.000    75.004    ct_active_batch_reg[3]_i_6_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    75.121 r  ct_active_batch_reg[3]_i_3/CO[3]
+                         net (fo=1, unplaced)         0.000    75.121    ct_active_batch_reg[3]_i_3_n_0
+                         CARRY4 (Prop_carry4_CI_CO[1])
+                                                      0.179    75.300 r  ct_active_batch_reg[3]_i_2/CO[1]
+                         net (fo=38, unplaced)        0.600    75.900    b2[3]
+                         CARRY4 (Prop_carry4_CYINIT_CO[3])
+                                                      0.803    76.703 r  ct_active_batch_reg[2]_i_36/CO[3]
+                         net (fo=1, unplaced)         0.000    76.703    ct_active_batch_reg[2]_i_36_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    76.820 r  ct_active_batch_reg[2]_i_31/CO[3]
+                         net (fo=1, unplaced)         0.000    76.820    ct_active_batch_reg[2]_i_31_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    76.937 r  ct_active_batch_reg[2]_i_26/CO[3]
+                         net (fo=1, unplaced)         0.000    76.937    ct_active_batch_reg[2]_i_26_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    77.054 r  ct_active_batch_reg[2]_i_21/CO[3]
+                         net (fo=1, unplaced)         0.000    77.054    ct_active_batch_reg[2]_i_21_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    77.171 r  ct_active_batch_reg[2]_i_16/CO[3]
+                         net (fo=1, unplaced)         0.000    77.171    ct_active_batch_reg[2]_i_16_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    77.288 r  ct_active_batch_reg[2]_i_11/CO[3]
+                         net (fo=1, unplaced)         0.000    77.288    ct_active_batch_reg[2]_i_11_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    77.405 r  ct_active_batch_reg[2]_i_6/CO[3]
+                         net (fo=1, unplaced)         0.000    77.405    ct_active_batch_reg[2]_i_6_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    77.522 r  ct_active_batch_reg[2]_i_3/CO[3]
+                         net (fo=1, unplaced)         0.000    77.522    ct_active_batch_reg[2]_i_3_n_0
+                         CARRY4 (Prop_carry4_CI_CO[1])
+                                                      0.179    77.701 r  ct_active_batch_reg[2]_i_2/CO[1]
+                         net (fo=38, unplaced)        0.600    78.301    b2[2]
+                         CARRY4 (Prop_carry4_CYINIT_CO[3])
+                                                      0.803    79.104 r  ct_active_batch_reg[1]_i_36/CO[3]
+                         net (fo=1, unplaced)         0.000    79.104    ct_active_batch_reg[1]_i_36_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    79.221 r  ct_active_batch_reg[1]_i_31/CO[3]
+                         net (fo=1, unplaced)         0.000    79.221    ct_active_batch_reg[1]_i_31_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    79.338 r  ct_active_batch_reg[1]_i_26/CO[3]
+                         net (fo=1, unplaced)         0.000    79.338    ct_active_batch_reg[1]_i_26_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    79.455 r  ct_active_batch_reg[1]_i_21/CO[3]
+                         net (fo=1, unplaced)         0.000    79.455    ct_active_batch_reg[1]_i_21_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    79.572 r  ct_active_batch_reg[1]_i_16/CO[3]
+                         net (fo=1, unplaced)         0.000    79.572    ct_active_batch_reg[1]_i_16_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    79.689 r  ct_active_batch_reg[1]_i_11/CO[3]
+                         net (fo=1, unplaced)         0.000    79.689    ct_active_batch_reg[1]_i_11_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    79.806 r  ct_active_batch_reg[1]_i_6/CO[3]
+                         net (fo=1, unplaced)         0.000    79.806    ct_active_batch_reg[1]_i_6_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    79.923 r  ct_active_batch_reg[1]_i_3/CO[3]
+                         net (fo=1, unplaced)         0.000    79.923    ct_active_batch_reg[1]_i_3_n_0
+                         CARRY4 (Prop_carry4_CI_CO[1])
+                                                      0.179    80.102 r  ct_active_batch_reg[1]_i_2/CO[1]
+                         net (fo=38, unplaced)        0.600    80.702    b2[1]
+                         CARRY4 (Prop_carry4_CYINIT_CO[3])
+                                                      0.803    81.505 r  ct_active_batch_reg[0]_i_35/CO[3]
+                         net (fo=1, unplaced)         0.000    81.505    ct_active_batch_reg[0]_i_35_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    81.622 r  ct_active_batch_reg[0]_i_30/CO[3]
+                         net (fo=1, unplaced)         0.000    81.622    ct_active_batch_reg[0]_i_30_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    81.739 r  ct_active_batch_reg[0]_i_25/CO[3]
+                         net (fo=1, unplaced)         0.000    81.739    ct_active_batch_reg[0]_i_25_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    81.856 r  ct_active_batch_reg[0]_i_20/CO[3]
+                         net (fo=1, unplaced)         0.000    81.856    ct_active_batch_reg[0]_i_20_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    81.973 r  ct_active_batch_reg[0]_i_15/CO[3]
+                         net (fo=1, unplaced)         0.000    81.973    ct_active_batch_reg[0]_i_15_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    82.090 r  ct_active_batch_reg[0]_i_10/CO[3]
+                         net (fo=1, unplaced)         0.000    82.090    ct_active_batch_reg[0]_i_10_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    82.207 r  ct_active_batch_reg[0]_i_5/CO[3]
+                         net (fo=1, unplaced)         0.000    82.207    ct_active_batch_reg[0]_i_5_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    82.324 r  ct_active_batch_reg[0]_i_3/CO[3]
+                         net (fo=1, unplaced)         0.000    82.324    ct_active_batch_reg[0]_i_3_n_0
+                         CARRY4 (Prop_carry4_CI_CO[0])
+                                                      0.281    82.605 r  ct_active_batch_reg[0]_i_2/CO[0]
+                         net (fo=3, unplaced)         0.329    82.934    b2[0]
+                         LUT2 (Prop_lut2_I0_O)        0.359    83.293 r  ct_active_batch[7]_i_16/O
+                         net (fo=1, unplaced)         0.000    83.293    ct_active_batch[7]_i_16_n_0
+                         CARRY4 (Prop_carry4_DI[0]_CO[3])
+                                                      0.576    83.869 f  ct_active_batch_reg[7]_i_5/CO[3]
+                         net (fo=8, unplaced)         0.786    84.655    ct_active_batch_reg[7]_i_5_n_0
+                         LUT2 (Prop_lut2_I1_O)        0.124    84.779 r  ct_active_batch[3]_i_1/O
+                         net (fo=3, unplaced)         0.467    85.246    ct_active_batch[3]_i_1_n_0
+                         LUT6 (Prop_lut6_I0_O)        0.124    85.370 r  avail_mem_reg1_i_5/O
+                         net (fo=6, unplaced)         0.803    86.173    avail_mem_reg1_i_5_n_0
+                         DSP48E1 (Prop_dsp48e1_B[3]_PCOUT[47])
+                                                      3.851    90.024 r  avail_mem_reg1/PCOUT[47]
+                         net (fo=1, unplaced)         0.000    90.024    avail_mem_reg1_n_106
+                         DSP48E1 (Prop_dsp48e1_PCIN[47]_P[0])
+                                                      1.518    91.542 r  avail_mem_reg1__0/P[0]
+                         net (fo=1, unplaced)         0.803    92.345    avail_mem_reg1__0_n_105
+                         LUT2 (Prop_lut2_I1_O)        0.124    92.469 r  avail_mem_reg[19]_i_15/O
+                         net (fo=1, unplaced)         0.000    92.469    avail_mem_reg[19]_i_15_n_0
+                         CARRY4 (Prop_carry4_S[1]_CO[3])
+                                                      0.533    93.002 r  avail_mem_reg_reg[19]_i_3/CO[3]
+                         net (fo=1, unplaced)         0.000    93.002    avail_mem_reg_reg[19]_i_3_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    93.119 r  avail_mem_reg_reg[23]_i_3/CO[3]
+                         net (fo=1, unplaced)         0.000    93.119    avail_mem_reg_reg[23]_i_3_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    93.236 r  avail_mem_reg_reg[27]_i_3/CO[3]
+                         net (fo=1, unplaced)         0.000    93.236    avail_mem_reg_reg[27]_i_3_n_0
+                         CARRY4 (Prop_carry4_CI_O[3])
+                                                      0.331    93.567 r  avail_mem_reg_reg[31]_i_5/O[3]
+                         net (fo=1, unplaced)         0.830    94.397    avail_mem_reg0[31]
+                         LUT6 (Prop_lut6_I3_O)        0.307    94.704 r  avail_mem_reg[31]_i_2/O
+                         net (fo=1, unplaced)         0.000    94.704    p_1_in[31]
+                         FDCE                                         r  avail_mem_reg_reg[31]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock clk rise edge)       10.000    10.000 r  
+                                                      0.000    10.000 r  clk (IN)
+                         net (fo=6532, unset)         0.924    10.924    clk
+                         FDCE                                         r  avail_mem_reg_reg[31]/C
+                         clock pessimism              0.000    10.924    
+                         clock uncertainty           -0.035    10.889    
+                         FDCE (Setup_fdce_C_D)        0.044    10.933    avail_mem_reg_reg[31]
+  -------------------------------------------------------------------
+                         required time                         10.933    
+                         arrival time                         -94.704    
+  -------------------------------------------------------------------
+                         slack                                -83.771    
+
+
+
+
+
+Min Delay Paths
+--------------------------------------------------------------------------------------
+Slack (MET) :             0.191ns  (arrival time - required time)
+  Source:                 cycles_to_fill_remaining_reg[10]/C
+                            (rising edge-triggered cell FDCE clocked by clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            cycles_to_fill_remaining_reg[11]/D
+                            (rising edge-triggered cell FDCE clocked by clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             clk
+  Path Type:              Hold (Min at Fast Process Corner)
+  Requirement:            0.000ns  (clk rise@0.000ns - clk rise@0.000ns)
+  Data Path Delay:        0.347ns  (logic 0.256ns (73.765%)  route 0.091ns (26.235%))
+  Logic Levels:           1  (CARRY4=1)
+  Clock Path Skew:        0.022ns (DCD - SCD - CPR)
+    Destination Clock Delay (DCD):    0.432ns
+    Source Clock Delay      (SCD):    0.410ns
+    Clock Pessimism Removal (CPR):    -0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock clk rise edge)        0.000     0.000 r  
+                                                      0.000     0.000 r  clk (IN)
+                         net (fo=6532, unset)         0.410     0.410    clk
+                         FDCE                                         r  cycles_to_fill_remaining_reg[10]/C
+  -------------------------------------------------------------------    -------------------
+                         FDCE (Prop_fdce_C_Q)         0.164     0.574 r  cycles_to_fill_remaining_reg[10]/Q
+                         net (fo=4, unplaced)         0.091     0.665    cycles_to_fill_remaining[10]
+                         CARRY4 (Prop_carry4_DI[2]_O[3])
+                                                      0.092     0.757 r  cycles_to_fill_remaining_reg[11]_i_1/O[3]
+                         net (fo=1, unplaced)         0.000     0.757    cycles_to_fill_remaining00_out[11]
+                         FDCE                                         r  cycles_to_fill_remaining_reg[11]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock clk rise edge)        0.000     0.000 r  
+                                                      0.000     0.000 r  clk (IN)
+                         net (fo=6532, unset)         0.432     0.432    clk
+                         FDCE                                         r  cycles_to_fill_remaining_reg[11]/C
+                         clock pessimism              0.000     0.432    
+                         FDCE (Hold_fdce_C_D)         0.134     0.566    cycles_to_fill_remaining_reg[11]
+  -------------------------------------------------------------------
+                         required time                         -0.566    
+                         arrival time                           0.757    
+  -------------------------------------------------------------------
+                         slack                                  0.191    
+
+
+
+
+
+Pulse Width Checks
+--------------------------------------------------------------------------------------
+Clock Name:         clk
+Waveform(ns):       { 0.000 5.000 }
+Period(ns):         10.000
+Sources:            { clk }
+
+Check Type        Corner  Lib Pin  Reference Pin  Required(ns)  Actual(ns)  Slack(ns)  Location  Pin
+Min Period        n/a     FDCE/C   n/a            1.000         10.000      9.000                avail_mem_reg_reg[0]/C
+Low Pulse Width   Slow    FDCE/C   n/a            0.500         5.000       4.500                avail_mem_reg_reg[0]/C
+High Pulse Width  Slow    FDCE/C   n/a            0.500         5.000       4.500                avail_mem_reg_reg[0]/C
+
+
+

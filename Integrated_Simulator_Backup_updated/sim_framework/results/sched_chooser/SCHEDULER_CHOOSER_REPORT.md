@@ -24,9 +24,53 @@ substitute.
 
 These four came out of building this framework but are **properties of the
 project's RTL and assumptions**, not of the chooser. They are recorded here
-so the team sees them; none of them is fixed on this branch, per the agreed
-guardrail that RTL changes need their own branch, Member 3's involvement,
-and a golden-check re-run.
+so the team sees them; none of them is fixed on this branch (`feature/
+scheduler-chooser`), per the agreed guardrail that RTL changes need their
+own branch, Member 3's involvement, and a golden-check re-run.
+
+> **STATUS UPDATE — Findings 1 and 2 are addressed on branch
+> `fix/scheduler-synthesis`** (the separate branch the guardrail asked for).
+> The unsynthesisable constructs have been rewritten; the rewrites are
+> proven behaviour-preserving by `tb/unit/test_scheduler_synth_fix.py`
+> (13 tests) and elaborate cleanly under `slang`.
+>
+> **Re-synthesised with the real tool** (Vivado 2025.2 had moved to
+> `/vivado/2025.2`; the harness now discovers it instead of hardcoding a
+> path). The table is now **13/14 measured**, up from 11/14:
+>
+> | Scheduler | Result | LUT | FF | DSP | Fmax |
+> |---|---|---|---|---|---|
+> | HRRN | now synthesises | 2,941 | 1,002 | 60 | 6.5 MHz |
+> | BATCH-DNN | now synthesises | 4,657 | 6,529 | 10 | 10.7 MHz |
+> | BATCH-DNN++ | still unmeasured | — | — | — | — |
+>
+> Three caveats, none of them cosmetic:
+>
+> 1. **HRRN is buildable but slow.** Exact integer ratio comparison infers
+>    ~30 wide multipliers; it is the only scheduler consuming DSPs (60 of the
+>    part's 240) and its Fmax collapses to 6.5 MHz, ranking it LAST on
+>    `--goal turnaround_us`. This retires a real risk: HRRN wins 4 of 32
+>    mix x goal cases on cycle-only timing, so a cycle-only analysis would
+>    have recommended it.
+> 2. **BATCH-DNN's 200 CRITICAL WARNINGs are NOT fixed.** They are on
+>    `sched_table`'s `mem_access_done_flag` / `compute_done_flag`, driven by
+>    both the table-load block and the main FSM — the *same* pathology as
+>    Finding 3 (AI-MT, 164 warnings). Vivado keeps the constant driver and
+>    ignores the real one, so 4,657 LUT is an honest measurement of a netlist
+>    that does not faithfully implement the design. Fixing it needs an
+>    ownership restructure of `sched_table`, which is its own piece of work.
+> 3. **BATCH-DNN++ could not be measured on this machine.** Its RTL fixes are
+>    in place and it elaborates cleanly, but Vivado needs ~12 GB to synthesise
+>    it (measured by sampling: RAM peaked at 14.9/15 GB with swap fully
+>    exhausted before the OOM kill). Four attempts, four OOM kills. Its CSV
+>    row is marked `unavailable` with a STALE note rather than keeping the
+>    last successful numbers, because that run predates the multi-driven-reset
+>    fix and measured a netlist whose `current_batch` / `slice_remaining` were
+>    tied to GND. Re-run on a machine with more swap.
+>
+> **No golden-check re-run has happened** — Verilator is still unavailable, so
+> all three fixes rest on equivalence arguments plus Vivado DRC, not
+> simulation. Findings 3 and 4 are untouched.
 
 ## Finding 1 — BATCH-DNN and BATCH-DNN++ are not synthesisable
 
@@ -61,10 +105,17 @@ schedulers. They simulate correctly — the golden runs at
 behaviour. But as written it cannot be built, and the chooser therefore
 reports no area, power or Fmax for either.
 
-**Suggested fix (not applied):** bound the loop statically and compare
-inside it, e.g. `for (int l = 0; l < MAX_LAYERS; l++) if (l >= resume_layer
-&& l <= next_layer) ...`. This changes synthesis results, so it needs its
-own branch and a golden-check re-run.
+**Suggested fix — APPLIED on `fix/scheduler-synthesis`:** bound the loop
+statically and compare inside it, `for (int l = 0; l < MAX_LAYERS; l++) if
+(l >= resume_layer && l <= next_layer) ...`, in both
+`batchdnn_scheduler.sv` and `batchdnn_pp_scheduler.sv`. (BatchDNN++'s
+pre-existing `l < MAX_LAYERS` guard was not sufficient — the *start* value
+was the runtime `top.layer_idx`.) Iteration set and order are unchanged;
+`tb/unit/test_scheduler_synth_fix.py` checks this exhaustively over all
+32 x 32 in-range layer windows. The static bound additionally removes an
+out-of-bounds `sched_table` read the old form allowed, since
+`LAYER_ID_WIDTH = 8` expresses layer ids up to 255 while the table holds
+`MAX_LAYERS = 32`. Still needs a golden-check re-run and re-synthesis.
 
 ## Finding 2 — HRRN is not synthesisable (floating-point in RTL)
 
@@ -88,9 +139,24 @@ mix × goal cases on the timing metrics, so a cycle-only analysis would
 recommend a scheduler that cannot be built. The CLI now prints an explicit
 warning and names the best synthesisable alternative whenever this happens.
 
-**Suggested fix (not applied):** compare ratios by cross-multiplication in
-integer arithmetic — `(wait_i + burst_i) * burst_j > (wait_j + burst_j) *
-burst_i` — which is exact and synthesisable.
+**Suggested fix — APPLIED on `fix/scheduler-synthesis`:** ratios are now
+compared by cross-multiplication in integer arithmetic — `(wait_i +
+burst_i) * burst_j > (wait_j + burst_j) * burst_i` — which is exact and
+synthesisable. The running best is carried as a `(num, den)` pair, a
+`found` flag reproduces the old `max_ratio = 0.0` seed, and strict `>`
+preserves the original first-index-wins tie-break. Two `localparam`s size
+the intermediates so neither the sum nor the products can wrap.
+
+Worth flagging for whoever re-synthesises: exact ratio comparison needs
+**two wide multipliers per queue slot** (~30 at `MAX_TASKS = 16`), of
+33x16 bits. HRRN's measured area is therefore likely to come back
+substantially above the other schedulers', and it may be the first to
+consume DSP blocks (every scheduler currently reports `dsps = 0`). That is
+a real cost of exact HRRN, not an artefact of the rewrite — the previous
+`real` version simply never had a hardware cost to measure. If it proves
+too expensive, the honest alternatives are a narrower saturating
+`wait_time` or a multi-cycle comparison FSM, but both change behaviour and
+so need Member 3 and a golden-check re-run.
 
 ## Finding 3 — AI-MT has multi-driven registers; the netlist ignores the real driver
 

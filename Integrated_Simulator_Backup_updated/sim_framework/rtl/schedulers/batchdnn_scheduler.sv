@@ -214,9 +214,12 @@ module batchdnn_scheduler #(
             sched_table[st_layer_idx].compute_done_flag    <= 1'b0;
             total_layers <= st_total_layers;
 
-            // initialise current_batch for this DNN if first layer
-            if (current_batch[st_dnn_id] == 0)
-                current_batch[st_dnn_id] <= st_initial_batch;
+            // NOTE: the first-layer initialisation of current_batch used to
+            // live here.  It has moved into the main scheduler block below,
+            // which also drives current_batch -- two always_ff blocks driving
+            // one signal is a multi-driven net, which Vivado rejects at DRC
+            // (MDRV-1) even though it elaborates and simulates.  Same fix as
+            // finding F7 for the MT queue pointers.
         end
     end
 
@@ -249,6 +252,22 @@ module batchdnn_scheduler #(
             // F7: MT queue ops applied once at block end
             automatic logic mt_pop;
             mt_pop = 1'b0;
+
+            // =========================================================
+            // current_batch ownership (moved here from the table-load
+            // block, which multi-drove it -- DRC MDRV-1).
+            //
+            // Deliberately placed FIRST in this block: if a table write
+            // and a merge/split land on the same edge, the merge/split
+            // assignments further down now take precedence.  That is the
+            // intended precedence -- this init only ever fires while
+            // current_batch is still 0, i.e. before the DNN has been
+            // dispatched, whereas merge/split is a live scheduling
+            // decision.  Previously the outcome of that collision was a
+            // race between two always_ff blocks, i.e. undefined.
+            // =========================================================
+            if (st_write_en && current_batch[st_dnn_id] == 0)
+                current_batch[st_dnn_id] <= st_initial_batch;
 
             // =========================================================
             // BLOCK A: Memory Access Scheduler (identical to AI-MT)
@@ -367,12 +386,26 @@ module batchdnn_scheduler #(
                     fits         = 1'b1;
 
                     // Check all layers between resumed and current fit (box 16b-16d)
-                    for (int l = resume_layer; l <= next_layer; l++) begin
-                        needed = (sched_table[l].ifmap_fp +
-                                  sched_table[l].ofmap_fp) *
-                                 (top_entry.batch_size + req_batch) +
-                                  sched_table[l].weight_fp;
-                        if (needed > avail_mem_reg) fits = 1'b0;
+                    //
+                    // The loop is bounded STATICALLY at MAX_LAYERS and the
+                    // [resume_layer, next_layer] window is selected inside it.
+                    // Starting at `resume_layer` -- a runtime value off the
+                    // sub-batch stack -- gives the synthesiser no static trip
+                    // count, so Vivado aborts with [Synth 8-3380] "loop
+                    // condition does not converge after 2000 iterations".
+                    // Same iterations, same order, same result; additionally
+                    // it can no longer index sched_table past MAX_LAYERS-1,
+                    // which the old form could when next_layer >= MAX_LAYERS
+                    // (LAYER_ID_WIDTH = 8 addresses more layers than the
+                    // MAX_LAYERS = 32 table holds).
+                    for (int l = 0; l < MAX_LAYERS; l++) begin
+                        if (l >= int'(resume_layer) && l <= int'(next_layer)) begin
+                            needed = (sched_table[l].ifmap_fp +
+                                      sched_table[l].ofmap_fp) *
+                                     (top_entry.batch_size + req_batch) +
+                                      sched_table[l].weight_fp;
+                            if (needed > avail_mem_reg) fits = 1'b0;
+                        end
                     end
 
                     if (fits) begin
