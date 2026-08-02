@@ -1,0 +1,1 @@
+{"passed": true, "cycles": 57, "stats": {"weight_reuse": 16.0, "input_reuse": 4.0, "weight_traffic": 144.0, "input_traffic": 144.0, "output_traffic": 64.0, "bytes_loaded": 1152, "num_banks": 4, "bank_conflict_cycles_est": 35, "bank_conflict_stall_ports_est": 44, "backend": "software_ref"}}

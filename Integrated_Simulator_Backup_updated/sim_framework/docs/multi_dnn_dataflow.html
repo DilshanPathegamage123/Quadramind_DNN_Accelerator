@@ -1,0 +1,698 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({ startOnLoad: true, securityLevel: 'loose' });
+</script>
+</head>
+<body>
+<title>Multi-DNN Data Flow</title>
+<style>
+  :root {
+    --ink:        #131a1e;
+    --ink-soft:   #364449;
+    --paper:      #f2f4f3;
+    --panel:      #ffffff;
+    --rule:       #d3dad9;
+    --slate:      #5d6b6f;
+    --data:       #16706a;
+    --ctrl:       #a8571b;
+    --sched:      #3f4d80;
+    --sheet:      #f7f9f8;
+    --sheet-rule: #d8dfde;
+    --sheet-ink:  #131a1e;
+
+    --mono: ui-monospace, "SF Mono", "Menlo", "DejaVu Sans Mono", "Consolas", monospace;
+    --serif: "Charter", "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+
+    --measure: 68ch;
+    --wide: 1180px;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ink:      #e4eae9;
+      --ink-soft: #a5b3b4;
+      --paper:    #10171a;
+      --panel:    #172024;
+      --rule:     #2b383d;
+      --slate:    #8ea0a2;
+      --data:     #4fbdae;
+      --ctrl:     #e0964f;
+      --sched:    #8f9dd6;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ink:      #e4eae9;
+    --ink-soft: #a5b3b4;
+    --paper:    #10171a;
+    --panel:    #172024;
+    --rule:     #2b383d;
+    --slate:    #8ea0a2;
+    --data:     #4fbdae;
+    --ctrl:     #e0964f;
+    --sched:    #8f9dd6;
+  }
+  :root[data-theme="light"] {
+    --ink:      #131a1e;
+    --ink-soft: #364449;
+    --paper:    #f2f4f3;
+    --panel:    #ffffff;
+    --rule:     #d3dad9;
+    --slate:    #5d6b6f;
+    --data:     #16706a;
+    --ctrl:     #a8571b;
+    --sched:    #3f4d80;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--serif);
+    font-size: 17px;
+    line-height: 1.62;
+    margin: 0;
+    padding: 0 24px 96px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    max-width: var(--wide);
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 56px;
+  }
+
+  .measure { max-width: var(--measure); }
+
+  /* ---------- masthead ---------- */
+  header.masthead {
+    border-bottom: 2px solid var(--ink);
+    padding: 56px 0 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 11.5px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--slate);
+  }
+  h1 {
+    font-family: var(--mono);
+    font-size: clamp(28px, 4.4vw, 46px);
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    line-height: 1.08;
+    margin: 0;
+    text-wrap: balance;
+  }
+  .standfirst {
+    font-size: 19px;
+    color: var(--ink-soft);
+    max-width: var(--measure);
+    margin: 0;
+  }
+
+  /* ---------- sections ---------- */
+  section {
+    display: grid;
+    grid-template-columns: 3.5rem minmax(0, 1fr);
+    gap: 0 20px;
+    align-items: start;
+  }
+  section > .num {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    color: var(--slate);
+    padding-top: 0.55em;
+    border-top: 1px solid var(--rule);
+  }
+  section > .body {
+    border-top: 1px solid var(--rule);
+    padding-top: 0.4em;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    min-width: 0;
+  }
+  @media (max-width: 700px) {
+    section { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+    section > .num { border-top: 1px solid var(--rule); padding-top: 0.6em; }
+    section > .body { border-top: none; padding-top: 0; }
+  }
+
+  h2 {
+    font-family: var(--mono);
+    font-size: 21px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    margin: 0;
+    text-wrap: balance;
+  }
+  h3 {
+    font-family: var(--mono);
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    margin: 0;
+    color: var(--ink);
+  }
+  p { margin: 0; max-width: var(--measure); }
+  ul, ol { margin: 0; padding-left: 1.25em; max-width: var(--measure); display: flex; flex-direction: column; gap: 8px; }
+  li::marker { color: var(--slate); }
+
+  code, .sig {
+    font-family: var(--mono);
+    font-size: 0.86em;
+    background: color-mix(in srgb, var(--slate) 12%, transparent);
+    padding: 0.1em 0.34em;
+    border-radius: 2px;
+  }
+  a { color: var(--data); text-underline-offset: 3px; }
+  a:focus-visible, summary:focus-visible { outline: 2px solid var(--ctrl); outline-offset: 3px; }
+
+  /* ---------- schematic sheets: always light, both themes ---------- */
+  .sheet {
+    background: var(--sheet);
+    border: 1px solid var(--sheet-rule);
+    border-radius: 3px;
+    padding: 22px 18px 16px;
+    overflow-x: auto;
+    color: var(--sheet-ink);
+  }
+  .sheet .mermaid { min-width: 520px; }
+  .sheet-cap {
+    font-family: var(--mono);
+    font-size: 11.5px;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--slate);
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px solid var(--rule);
+    max-width: none;
+  }
+
+  /* ---------- plane legend ---------- */
+  .planes {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: 1px;
+    background: var(--rule);
+    border: 1px solid var(--rule);
+  }
+  .plane {
+    background: var(--panel);
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+  .plane .key {
+    font-family: var(--mono);
+    font-size: 11.5px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .plane .key::before {
+    content: "";
+    width: 22px;
+    height: 3px;
+    background: currentColor;
+    flex: none;
+  }
+  .plane p { font-size: 14.5px; line-height: 1.5; color: var(--ink-soft); }
+  .k-data { color: var(--data); }
+  .k-ctrl { color: var(--ctrl); }
+  .k-sched { color: var(--sched); }
+
+  /* ---------- tables ---------- */
+  .tablewrap { overflow-x: auto; border: 1px solid var(--rule); background: var(--panel); }
+  table { border-collapse: collapse; width: 100%; font-size: 14.5px; min-width: 560px; }
+  th, td { text-align: left; padding: 9px 14px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+  thead th {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--slate);
+    font-weight: 600;
+    background: color-mix(in srgb, var(--slate) 7%, transparent);
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  td.m, th.m { font-family: var(--mono); font-size: 13px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+
+  /* ---------- step list ---------- */
+  ol.steps { list-style: none; padding: 0; gap: 0; max-width: none; }
+  ol.steps li {
+    display: grid;
+    grid-template-columns: 2.6rem minmax(0, 1fr);
+    gap: 14px;
+    padding: 13px 0;
+    border-bottom: 1px dotted var(--rule);
+    max-width: none;
+  }
+  ol.steps li:last-child { border-bottom: none; }
+  ol.steps .st {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--ctrl);
+    letter-spacing: 0.06em;
+    padding-top: 0.35em;
+  }
+  ol.steps .sd { max-width: var(--measure); font-size: 16px; }
+
+  /* ---------- note block ---------- */
+  .note {
+    border-left: 3px solid var(--ctrl);
+    background: color-mix(in srgb, var(--ctrl) 8%, transparent);
+    padding: 14px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .note .label {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ctrl);
+  }
+  .note p { font-size: 15.5px; }
+
+  /* ---------- file path chips ---------- */
+  .paths { display: flex; flex-wrap: wrap; gap: 6px; }
+  .paths span {
+    font-family: var(--mono);
+    font-size: 11.5px;
+    color: var(--slate);
+    border: 1px solid var(--rule);
+    padding: 3px 8px;
+    border-radius: 2px;
+    white-space: nowrap;
+  }
+
+  footer {
+    border-top: 1px solid var(--rule);
+    padding-top: 18px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--slate);
+    letter-spacing: 0.03em;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; }
+  }
+</style>
+
+<div class="wrap">
+
+  <header class="masthead">
+    <div class="eyebrow">Quadramind DNN Accelerator · sim_framework/rtl</div>
+    <h1>multi_dnn_top: how data and control actually flow</h1>
+    <p class="standfirst">One scheduler, one accelerator core, and a three-state dispatch FSM between them. This walks the path from a task arriving at the scheduler to bytes leaving DRAM and results landing in the array — and marks the places where the RTL differs from what the comments claim.</p>
+  </header>
+
+  <section>
+    <div class="num">00</div>
+    <div class="body">
+      <h2>Three planes, colour-coded throughout</h2>
+      <p>Every diagram below uses the same three colours. Keeping them apart is the whole trick to reading this design: the schedulers never touch a byte of tensor data, and the data plane never sees a task ID.</p>
+      <div class="planes">
+        <div class="plane">
+          <div class="key k-data">Data plane</div>
+          <p>Tensor bytes. DRAM → AXI → scratchpad banks → fetchers → PE array. Carries no scheduling identity at all.</p>
+        </div>
+        <div class="plane">
+          <div class="key k-ctrl">Control plane</div>
+          <p>Single-cycle strobes. <code>start</code>, <code>phase_mem_done</code>, <code>phase_compute_done</code>, <code>done</code> — the handshake that closes the loop back to the scheduler.</p>
+        </div>
+        <div class="plane">
+          <div class="key k-sched">Scheduling plane</div>
+          <p>Task descriptors and the compiler-built scheduling table. Layer IDs, DNN IDs, cycle estimates, memory footprints, batch sizes.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="num">01</div>
+    <div class="body">
+      <h2>Top-level flow</h2>
+      <p>The host (a cocotb testbench, or the Python harness) feeds two entirely separate front doors. Basic tasks go in through a FIFO-style task port; DNN-aware schedulers get a scheduling table written a row at a time before the run starts. <code>scheduler_select</code> decides which door is live.</p>
+
+      <div class="sheet">
+        <pre class="mermaid">
+%%{init: {'theme':'base','themeVariables':{'primaryColor':'#eef2f1','primaryTextColor':'#131a1e','primaryBorderColor':'#5d6b6f','lineColor':'#6b797d','secondaryColor':'#ffffff','tertiaryColor':'#f7f9f8','fontFamily':'ui-monospace, Menlo, monospace','fontSize':'12px'}}}%%
+flowchart LR
+  HOST["host / cocotb TB"]
+
+  subgraph USW["unified_scheduler_wrapper"]
+    direction TB
+    BASIC["multi_scheduler_wrapper<br/>sel 0-10 · FIFO LIFO SJF RR<br/>PRI EDF LRU SRTF HRRN MLQ MLFQ"]
+    DNNW["dnn_scheduler_wrapper<br/>sel 11-13 · AI-MT<br/>BatchDNN · BatchDNN++"]
+    MUX{{"sched_output_t<br/>tagged-union mux"}}
+    BASIC --> MUX
+    DNNW --> MUX
+  end
+
+  DISP["dispatch FSM<br/>D_IDLE / D_RUN / D_WAIT_DONE"]
+
+  subgraph SDT["single_dnn_top"]
+    direction TB
+    FSM["phase FSM<br/>S_IDLE S_MEM S_COMPUTE S_FINAL"]
+    MEMB["mem_backend_wrap<br/>STAMP or PAGED"]
+    PF["layout_prefetcher"]
+    SPAD["scratchpad_ram<br/>NUM_BANKS interleaved"]
+    ARR["systolic_array_wrap<br/>OS / IS / WS"]
+    FSM --> MEMB
+    FSM --> PF
+    MEMB --> SPAD
+    PF --> SPAD
+    SPAD --> ARR
+  end
+
+  DRAM[("off-chip DRAM<br/>AXI read channel")]
+  EXT["ext_* memory model<br/>behavioural operand feed"]
+
+  HOST -->|"task_valid, task_id, burst_time,<br/>priority, deadline, task_tick"| BASIC
+  HOST -->|"st_write_en + scheduling table row:<br/>mem_cycles, compute_cycles,<br/>weight/ifmap/ofmap_fp, batch"| DNNW
+  MUX -->|"valid, is_dnn_aware, task_or_layer_id,<br/>dnn_id, is_compute_task"| DISP
+  DISP -->|"sdt_start"| FSM
+  FSM -.->|"phase_mem_done"| DISP
+  FSM -.->|"phase_compute_done"| DISP
+  FSM -.->|"done"| DISP
+  DISP -.->|"mem_access_done"| DNNW
+  DISP -.->|"compute_done"| DNNW
+  DISP -.->|"task_complete"| BASIC
+  DISP -->|"task_complete_pulse"| HOST
+  DRAM <-->|"arvalid/araddr/rdata/rlast"| PF
+  DRAM <--> MEMB
+  EXT ==>|"operands"| ARR
+  ARR ==>|"results"| EXT
+
+  classDef sched fill:#e8eaf4,stroke:#3f4d80,color:#232c4d;
+  classDef ctrl  fill:#f6ebe0,stroke:#a8571b,color:#5c300d;
+  classDef data  fill:#e2efee,stroke:#16706a,color:#0b3f3b;
+  class BASIC,DNNW,MUX sched;
+  class DISP,FSM ctrl;
+  class MEMB,PF,SPAD,ARR,DRAM,EXT data;
+        </pre>
+        <div class="sheet-cap">Fig. 1 — solid arrows carry payload; dotted arrows are single-cycle strobes; heavy arrows are the operand/result path</div>
+      </div>
+
+      <p>Note the asymmetry in the mux: it is a <em>tagged union</em>, not two parallel outputs. Only one scheduler family can be observed at a time, and both families are still elaborated in silicon — <code>scheduler_select</code> gates their inputs so the inactive one never advances state.</p>
+      <div class="paths">
+        <span>rtl/tops/multi_dnn_top.sv</span>
+        <span>rtl/schedulers/unified_scheduler_wrapper.sv</span>
+        <span>rtl/pkg/sim_framework_pkg.sv</span>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="num">02</div>
+    <div class="body">
+      <h2>The dispatch handshake, cycle by cycle</h2>
+      <p>The dispatch FSM is the only thing standing between the two worlds. It is deliberately tiny — three states, all pulses defaulted low each cycle and asserted for exactly one clock.</p>
+
+      <ol class="steps">
+        <li><span class="st">D_IDLE</span><span class="sd">Waits for <code>sched_out.valid</code>. On assertion it latches <code>task_or_layer_id</code> into <code>current_layer_id</code> and <code>dnn_id</code> into <code>current_dnn_id</code>, raises <code>sdt_start</code> for one cycle, and moves to D_RUN.</span></li>
+        <li><span class="st">D_RUN</span><span class="sd">Watches two strobes coming back from <code>single_dnn_top</code>. <code>phase_mem_done</code> is re-emitted as <code>mem_access_done</code>; <code>phase_compute_done</code> becomes <code>compute_done</code>. Both go only to the DNN-aware family — the wrapper masks them off below <code>scheduler_select == 11</code>.</span></li>
+        <li><span class="st">D_RUN</span><span class="sd">When <code>sdt_done</code> arrives (the accelerator hit S_FINAL), it advances to D_WAIT_DONE.</span></li>
+        <li><span class="st">D_WAIT</span><span class="sd">Pulses <code>task_complete</code> back into the basic scheduler — which is what retires the queue entry and bumps <code>total_tasks_processed</code> — plus <code>task_complete_pulse</code> out to the testbench. Then straight back to D_IDLE.</span></li>
+      </ol>
+
+      <div class="sheet">
+        <pre class="mermaid">
+%%{init: {'theme':'base','themeVariables':{'primaryColor':'#eef2f1','primaryTextColor':'#131a1e','primaryBorderColor':'#5d6b6f','lineColor':'#6b797d','fontFamily':'ui-monospace, Menlo, monospace','fontSize':'12px','actorBkg':'#e8eaf4','actorBorder':'#3f4d80','signalColor':'#4a585c','signalTextColor':'#131a1e','labelBoxBkg':'#f6ebe0','labelBoxBorderColor':'#a8571b','noteBkgColor':'#f6ebe0','noteBorderColor':'#a8571b','noteTextColor':'#5c300d'}}}%%
+sequenceDiagram
+  autonumber
+  participant SC as AI-MT scheduler
+  participant DP as dispatch FSM
+  participant SD as single_dnn_top
+  participant MEM as memory backend + prefetcher
+  participant AR as systolic array
+
+  Note over SC: scheduling table already loaded<br/>MT queue holds layer L of DNN 0
+  SC->>DP: sched_out.valid, layer=L, dnn=0
+  DP->>SD: sdt_start (1 cycle)
+  SD->>MEM: enter S_MEM — stamp phase, then layout walk
+  MEM-->>SD: be_phase_done, then pf_done
+  SD-->>DP: phase_mem_done
+  DP-->>SC: mem_access_done → layer L moves MT queue → CT queue
+  SD->>AR: array_start on S_MEM → S_COMPUTE edge
+  AR-->>SD: array_done
+  SD-->>DP: phase_compute_done
+  DP-->>SC: compute_done → CT retires, successors unblock
+  SD-->>DP: done (S_FINAL)
+  DP-->>SC: task_complete
+  DP->>DP: back to D_IDLE, next task
+        </pre>
+        <div class="sheet-cap">Fig. 2 — one layer dispatched under a DNN-aware scheduler</div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="num">03</div>
+    <div class="body">
+      <h2>Inside single_dnn_top: the split-FSM</h2>
+      <p>The reason the accelerator core exposes two done strobes instead of one is entirely for the schedulers' benefit. AI-MT and the BatchDNN family need to know when the <em>memory</em> half of a layer has retired, independently of the compute half, so they can overlap the next layer's fetch with the current layer's MACs.</p>
+
+      <div class="sheet">
+        <pre class="mermaid">
+%%{init: {'theme':'base','themeVariables':{'primaryColor':'#f6ebe0','primaryTextColor':'#131a1e','primaryBorderColor':'#a8571b','lineColor':'#6b797d','fontFamily':'ui-monospace, Menlo, monospace','fontSize':'12px'}}}%%
+stateDiagram-v2
+  direction LR
+  [*] --> S_IDLE
+  S_IDLE --> S_MEM: start
+  S_MEM --> S_COMPUTE: pf_done<br/>(emits phase_mem_done)
+  S_COMPUTE --> S_FINAL: array_done<br/>(emits phase_compute_done)
+  S_FINAL --> S_IDLE: emits done
+
+  note right of S_MEM
+    STAMP: run the delta-op phase
+    (be_phase_done), then start the
+    layout_prefetcher AXI walk.
+    PAGED: stamp_ok is preset, so
+    the walk starts immediately.
+    Exit is gated on pf_done, so the
+    memory phase length tracks real
+    layout-dependent off-chip traffic.
+  end note
+
+  note right of S_COMPUTE
+    array_start fires on the
+    S_MEM to S_COMPUTE edge.
+    compute_cycles increments
+    every array_busy cycle.
+  end note
+        </pre>
+        <div class="sheet-cap">Fig. 3 — the phase FSM, and what gates each transition</div>
+      </div>
+
+      <p>Because <code>S_MEM</code> only exits on <code>pf_done</code>, the memory-phase duration that a DNN-aware scheduler observes is not a constant. It varies with <code>mem_layout</code>, casting scheme, and tile geometry, because the prefetcher walks the layer's weight and input tiles in fetch order through the layout-dependent address mapping. That is what makes memory/compute balancing in AI-MT mean anything.</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="num">04</div>
+    <div class="body">
+      <h2>Where the bytes actually move</h2>
+      <p>This is the part most easily misread from the block diagram. There are two distinct memory paths inside <code>single_dnn_top</code>, and they serve different purposes.</p>
+
+      <div class="tablewrap">
+        <table>
+          <thead>
+            <tr><th>Path</th><th>Carries</th><th>Purpose</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="m">layout_prefetcher → AXI</td>
+              <td>Real burst reads for the layer's weight + input tiles</td>
+              <td>Generates the off-chip traffic and the <em>timing</em> of the memory phase. Shares the AXI master with the stamp backend through a fixed-priority mux; they never overlap because the walk starts only after the stamp phase completes.</td>
+            </tr>
+            <tr>
+              <td class="m">mem_backend_wrap → scratchpad_ram</td>
+              <td>Delta-ops (STAMP) or page-table translations (PAGED); banked SRAM reads</td>
+              <td>Models on-chip capacity, replacement behaviour, and bank conflicts. Its <code>rd_en</code> is driven from the debug port, <code>wr_en</code> is tied to zero — this backend is a timing and statistics model, not the operand feed.</td>
+            </tr>
+            <tr>
+              <td class="m">ext_* ports</td>
+              <td>Operands into the PE array and results back out</td>
+              <td>The actual compute data plane. Shape depends on dataflow: WS uses a 2-D weight port and a 1-D output port; OS and IS are the inverse. <code>systolic_array_wrap</code> exposes the union and ties off the unused flavour.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>Bank conflicts surface as three counters that climb all the way to the top: <code>bank_conflict_detected</code> pulses whenever at least one port stalls, <code>stats_bank_conflicts</code> counts events, and <code>stats_bank_conflict_stall_cycles</code> accumulates stalled port-cycles. Under <code>NUM_BANKS ≥ 2</code> the low-order address bits pick the bank and the lower-indexed port wins a collision; the loser gets <code>rd_valid = 0</code> and retries next cycle.</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="num">05</div>
+    <div class="body">
+      <h2>Scheduler family A — the eleven queue schedulers</h2>
+      <p>Selects 0 through 10. These are classic OS scheduling policies operating on an abstract task queue. They know nothing about layers, DNNs, or memory footprints — a task is an ID, a burst time, a priority, and a deadline.</p>
+
+      <div class="sheet">
+        <pre class="mermaid">
+%%{init: {'theme':'base','themeVariables':{'primaryColor':'#e8eaf4','primaryTextColor':'#232c4d','primaryBorderColor':'#3f4d80','lineColor':'#6b797d','fontFamily':'ui-monospace, Menlo, monospace','fontSize':'12px'}}}%%
+flowchart LR
+  IN["task_valid + id, burst,<br/>priority, deadline"] --> Q["shared task queue<br/>MAX_TASKS deep"]
+  Q --> POL{"scheduler_select[3:0]"}
+  POL --> B7["task_scheduler x7<br/>FIFO LIFO SJF RR<br/>PRI EDF LRU"]
+  POL --> A4["advanced_task_scheduler x4<br/>SRTF HRRN MLQ MLFQ"]
+  B7 --> OUT["scheduled_task_valid<br/>scheduled_task_id<br/>scheduled_burst_time"]
+  A4 --> OUT
+  OUT --> UN["sched_out with<br/>is_dnn_aware = 0<br/>is_compute_task = 1<br/>ct_batch_size = 1"]
+  TICK["task_tick"] -.->|"ages RR / HRRN / MLFQ"| POL
+  DONE["task_complete<br/>from dispatch FSM"] -.->|"retires entry,<br/>updates wait/turnaround stats"| Q
+
+  classDef sched fill:#e8eaf4,stroke:#3f4d80,color:#232c4d;
+  classDef ctrl  fill:#f6ebe0,stroke:#a8571b,color:#5c300d;
+  class IN,Q,POL,B7,A4,OUT,UN sched;
+  class TICK,DONE ctrl;
+        </pre>
+        <div class="sheet-cap">Fig. 4 — multi_scheduler_wrapper; every policy is elaborated, the select mux picks one</div>
+      </div>
+
+      <p>All eleven are instantiated in parallel and fed the same queue inputs; the select line only chooses whose outputs are believed. For these schedulers the memory phase is invisible — the dispatch FSM's <code>mem_access_done</code> pulse is masked off, and only the end-to-end <code>done</code> closes the loop.</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="num">06</div>
+    <div class="body">
+      <h2>Scheduler family B — the three DNN-aware schedulers</h2>
+      <p>Selects 11, 12, 13. These take a compiler-built scheduling table as their input: one row per layer, holding the predecessor layer, the memory and compute cycle estimates, the weight/ifmap/ofmap footprints in bytes, and a batch size. From that they build a three-stage queue pipeline.</p>
+
+      <div class="sheet">
+        <pre class="mermaid">
+%%{init: {'theme':'base','themeVariables':{'primaryColor':'#e8eaf4','primaryTextColor':'#232c4d','primaryBorderColor':'#3f4d80','lineColor':'#6b797d','fontFamily':'ui-monospace, Menlo, monospace','fontSize':'12px'}}}%%
+flowchart TB
+  ST[("scheduling table<br/>MAX_LAYERS rows · loaded once<br/>prev_layer, mem_cycles, compute_cycles,<br/>weight_fp, ifmap_fp, ofmap_fp, batch")]
+  ST --> MTQ["MT candidate queue<br/>layers whose predecessor<br/>has retired"]
+  MTQ --> BAL{"balance condition<br/>mem_cycles ≤ cycles_to_fill_remaining<br/>AND compute headroom<br/>&gt; COMPUTE_BAL_THRESH"}
+  BAL -->|"pass"| ISS["issue MT<br/>mt_valid, mt_layer_id, mt_dnn_id"]
+  BAL -->|"blocked"| STALL["stall_detected pulse<br/>total_stall_cycles++"]
+  ISS -.->|"mem_access_done<br/>from dispatch FSM"| CTQ["CT candidate queue<br/>operands resident on-chip"]
+  CTQ --> SCT["scheduled CT queue<br/>FIFO order — prevents starvation"]
+  SCT --> CT["issue CT<br/>ct_valid, ct_layer_id, ct_batch_size"]
+  CT -.->|"compute_done"| RET["retire layer<br/>free ifmap/weight footprint,<br/>unblock successors"]
+  RET --> MTQ
+  AV["available_memory<br/>ONCHIP_MEM_SIZE minus live footprints"] --- BAL
+
+  classDef sched fill:#e8eaf4,stroke:#3f4d80,color:#232c4d;
+  classDef ctrl  fill:#f6ebe0,stroke:#a8571b,color:#5c300d;
+  class ST,MTQ,CTQ,SCT,AV sched;
+  class BAL,ISS,CT,RET,STALL ctrl;
+        </pre>
+        <div class="sheet-cap">Fig. 5 — AI-MT: memory tasks run ahead of compute tasks, throttled by a memory/compute balance condition</div>
+      </div>
+
+      <div class="tablewrap">
+        <table>
+          <thead>
+            <tr><th class="m">sel</th><th>Scheduler</th><th>What it adds over AI-MT</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="m">11</td><td>AI-MT</td><td>Baseline. Layer-granularity MT/CT overlap, balance-gated issue, FIFO compute dispatch. <code>ct_batch_size</code> is hard-wired to 1.</td></tr>
+            <tr><td class="m">12</td><td>BatchDNN</td><td>A per-DNN LIFO sub-batching stack. When a layer's OFMAP footprint won't fit, the batch is <em>split</em> and the remainder pushed; it is popped and <em>merged</em> later. <code>max_batch_size()</code> enforces two constraints: <code>ofmap_fp × batch ≤ available_memory</code>, and batch ≤ the previous layer's batch. Split/merge events are counted.</td></tr>
+            <tr><td class="m">13</td><td>BatchDNN++</td><td>Everything BatchDNN does, plus throttle and expedition events and slice-level execution counters — the requested batch becomes a target rather than a starting point.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>All three are elaborated inside <code>dnn_scheduler_wrapper</code>, and the <code>mem_access_done</code>/<code>compute_done</code> strobes are gated per-instance so only the selected scheduler advances. The scheduling-table write port is likewise gated by <code>st_write_en &amp;&amp; (dnn_scheduler_select == n)</code> — load the table <em>after</em> setting the select line, or it lands in the wrong scheduler.</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="num">07</div>
+    <div class="body">
+      <h2>Implementation notes worth knowing</h2>
+      <p>Three places where the current RTL behaves differently from what the surrounding comments suggest. None are fatal, but they change how you interpret results.</p>
+
+      <div class="note">
+        <div class="label">The dispatch FSM ignores is_compute_task</div>
+        <p>The tagged union carries <code>is_compute_task</code>, and both the package comment and the wrapper comment say the dispatch FSM uses it to drive "a memory-only phase or a compute phase". It does not — <code>D_IDLE</code> latches on <code>sched_out.valid</code> alone and always runs the full <code>S_MEM → S_COMPUTE → S_FINAL</code> sequence. So an MT and a CT dispatch cost the same in the RTL, and the memory/compute overlap the schedulers reason about is modelled in the scheduler's own counters rather than realised in the datapath.</p>
+      </div>
+
+      <div class="note">
+        <div class="label">ct_batch_size is observed, not applied</div>
+        <p><code>multi_dnn_top</code> declares <code>ct_batch_size</code> and wires it out of the scheduler wrapper, but nothing downstream consumes it. BatchDNN's split/merge decisions therefore affect scheduler-side statistics and issue order, not the tile geometry handed to <code>single_dnn_top</code> — that comes from the <code>cfg_*</code> ports the host drives directly.</p>
+      </div>
+
+      <div class="note">
+        <div class="label">CT wins over MT in the mux</div>
+        <p>When a DNN-aware scheduler raises <code>ct_valid</code> and <code>mt_valid</code> in the same cycle, the union mux takes the compute task. The memory task is not lost — it simply waits — but under a fully-backed-up CT queue the MT stream can be deferred for a long stretch.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="num">08</div>
+    <div class="body">
+      <h2>Signal reference</h2>
+      <div class="tablewrap">
+        <table>
+          <thead>
+            <tr><th class="m">Signal</th><th class="m">Direction</th><th>Meaning</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="m">scheduler_select[4:0]</td><td class="m">in</td><td>0–6 basic, 7–10 advanced, 11 AI-MT, 12 BatchDNN, 13 BatchDNN++</td></tr>
+            <tr><td class="m">task_valid / task_id</td><td class="m">in</td><td>Basic-family task enqueue; gated off when select ≥ 11</td></tr>
+            <tr><td class="m">task_tick</td><td class="m">in</td><td>Time base for RR quantum, HRRN ageing, MLFQ demotion</td></tr>
+            <tr><td class="m">st_write_en + st_*</td><td class="m">in</td><td>One scheduling-table row per assertion; gated off when select &lt; 11</td></tr>
+            <tr><td class="m">sdt_start</td><td class="m">internal</td><td>One-cycle launch from D_IDLE into the phase FSM</td></tr>
+            <tr><td class="m">phase_mem_done</td><td class="m">internal</td><td>Asserted the cycle after <code>pf_done</code> in S_MEM; becomes <code>mem_access_done</code></td></tr>
+            <tr><td class="m">phase_compute_done</td><td class="m">internal</td><td>Asserted the cycle after <code>array_done</code> in S_COMPUTE; becomes <code>compute_done</code></td></tr>
+            <tr><td class="m">task_complete_pulse</td><td class="m">out</td><td>One pulse per retired task, from D_WAIT_DONE</td></tr>
+            <tr><td class="m">current_layer_id / current_dnn_id</td><td class="m">out</td><td>Latched at dispatch; identifies what the core is running right now</td></tr>
+            <tr><td class="m">sched_out_dbg</td><td class="m">out</td><td>The raw tagged union, exposed for waveform inspection</td></tr>
+            <tr><td class="m">dnn_stall_detected</td><td class="m">out</td><td>Selected DNN-aware scheduler wanted to issue but was blocked</td></tr>
+            <tr><td class="m">total_tasks_processed</td><td class="m">out</td><td>Basic-family retirement count (DNN-aware family reports through its own counters)</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="num">09</div>
+    <div class="body">
+      <h2>The Python layer above it</h2>
+      <p>Nothing in the RTL knows a scheduler by name. <code>SimConfig.scheduler</code> holds a string from a fourteen-entry list, and <code>scheduler_select()</code> turns it into the integer that reaches the <code>scheduler_select</code> port — via <code>-GNAME=value</code> overrides when Verilator is present, or the <code>SIM_SCHEDULER</code> environment variable that the cocotb testbench reads. With neither toolchain installed the runner falls back to the NumPy reference model, which reproduces the same accounting without elaborating any of this.</p>
+      <div class="paths">
+        <span>pysim/sim_config.py</span>
+        <span>pysim/runner.py</span>
+        <span>tb/integration/test_multi_dnn_smoke.py</span>
+        <span>scripts/choose_scheduler.py</span>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    Derived from the RTL on branch fix/scheduler-synthesis · multi_dnn_top.sv, unified_scheduler_wrapper.sv, dnn_scheduler_wrapper.sv, aimt_scheduler.sv, batchdnn_scheduler.sv, single_dnn_top.sv
+  </footer>
+
+</div>
+</body>
+</html>

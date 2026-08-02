@@ -16,7 +16,9 @@ Usage (from sim_framework/):
       --weights makespan=0.5,turnaround=0.3,wait=0.2
 
 --mix accepts:
-  * a named mix from scripts/workloads.py: mix1 | mix2 | mix3 | mix4
+  * a named mix from scripts/workloads.py: mix1 .. mix6 (SCHED_EVAL_MIXES --
+      the representative set: task counts 2/3/3/4/4/6, per-task model cost
+      1,620 .. 131,412 cycles)
   * a comma-separated list of model dirs (models/tiny_cnn,models/mnist_cnn)
   * a JSON file: {"name":..., "tasks":[{"name":..., "layers":[...],
       "arrival":0, "priority":0, "deadline":1000}, ...]}
@@ -65,11 +67,17 @@ def load_mix(spec: str) -> tuple[str, list, dict]:
     """Return (mix_name, [(task_name, layers)], extra_attrs)."""
     extra: dict = {}
 
-    m = re.fullmatch(r"mix([1-4])", spec.strip().lower())
+    m = re.fullmatch(r"mix(\d+)", spec.strip().lower())
     if m:
-        from scripts.workloads import (WORKLOAD_MIXES, EDGE_WORKLOADS,
+        from scripts.workloads import (SCHED_EVAL_MIXES, EDGE_WORKLOADS,
                                        CLOUD_WORKLOADS)
-        mix = WORKLOAD_MIXES[int(m.group(1)) - 1]
+        n = int(m.group(1))
+        if not 1 <= n <= len(SCHED_EVAL_MIXES):
+            raise SystemExit(
+                f"unknown mix {spec!r}; available: "
+                + ", ".join(f"mix{i} ({mx['name']}, {len(mx['dnns'])} tasks)"
+                            for i, mx in enumerate(SCHED_EVAL_MIXES, 1)))
+        mix = SCHED_EVAL_MIXES[n - 1]
         by_name = {w["name"]: w for w in EDGE_WORKLOADS + CLOUD_WORKLOADS}
         tasks = []
         for dnn in mix["dnns"]:
@@ -145,7 +153,7 @@ def main() -> None:
         description="Analytical multi-DNN scheduler chooser: ranks all 14 "
                     "RTL schedulers (no RTL or synthesis run per query).")
     ap.add_argument("--mix", required=True,
-                    help="mix1..mix4 | model dirs (comma-separated) | JSON")
+                    help="mix1..mix6 | model dirs (comma-separated) | JSON")
     ap.add_argument("--array", default="8x8", help="array HxW (default 8x8)")
     ap.add_argument("--mem", default="256KB",
                     help="on-chip memory provision (default 256KB)")
@@ -239,6 +247,16 @@ def main() -> None:
                   "for scheduling quality, or --goal area / power for "
                   "measured hardware cost.")
 
+        if args.goal == "throughput":
+            print("\n  NOTE: throughput here is tasks / (makespan / Fmax). "
+                  "Makespan is invariant across schedulers on this "
+                  "accelerator (see --goal makespan), and the task count is "
+                  "fixed, so this goal reduces exactly to ranking by "
+                  "MEASURED Fmax -- it selects the scheduler with the "
+                  "fastest clock, not the one with the best dispatch order. "
+                  "Use --goal turnaround_us for latency the ordering "
+                  "actually affects.")
+
         tied = ties_at_best(ranked, args.goal)
         if len(tied) > 1:
             print(f"\n  NOTE: {len(tied)} schedulers tie exactly at "
@@ -255,8 +273,8 @@ def main() -> None:
     print()
 
     hdr = (f"{'#':>3} {'scheduler':<12} {'order':<10} {'turnaround':>11} "
-           f"{'wait':>10} {'real us':>10} {'LUT':>7} {'FF':>7} "
-           f"{'dyn W':>7} {'Fmax MHz':>9}")
+           f"{'wait':>10} {'real us':>10} {'tasks/s':>9} {'LUT':>7} "
+           f"{'FF':>7} {'dyn W':>7} {'Fmax MHz':>9}")
     print(hdr)
     print("-" * len(hdr))
     for i, s in enumerate(ranked, 1):
@@ -264,6 +282,7 @@ def main() -> None:
         print(f"{i:>3} {s.scheduler:<12} {order[:10]:<10} "
               f"{s.mean_turnaround:>11,.0f} {s.mean_wait:>10,.0f} "
               f"{_fmt(s.mean_turnaround_us, ',.1f'):>10} "
+              f"{_fmt(s.throughput_tasks_per_s, ',.0f'):>9} "
               f"{_fmt(s.luts, ',d'):>7} {_fmt(s.ffs, ',d'):>7} "
               f"{_fmt(s.power_dynamic_w, '.3f'):>7} "
               f"{_fmt(s.fmax_mhz, ',.1f'):>9}")

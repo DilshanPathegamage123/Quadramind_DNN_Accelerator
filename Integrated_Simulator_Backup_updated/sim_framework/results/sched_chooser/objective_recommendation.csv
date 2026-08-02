@@ -1,0 +1,7 @@
+goal,recommended,optimal_on,stability,co_optimal_set,picked_by,meaning
+turnaround,SRTF,6/6,optimal on all 6,SRTF;SJF,lowest measured area among 2 co-optimal policies,mean cycles from submission to completion (model)
+turnaround_us,MLQ,5/6,workload-dependent,MLQ,only candidate,mean wall-clock latency = model cycles / measured Fmax
+wait,SRTF,6/6,optimal on all 6,SRTF;SJF,lowest measured area among 2 co-optimal policies,mean cycles queued before first dispatch (model)
+throughput,MLQ,6/6,optimal on all 6,MLQ,only candidate,tasks/s; reduces to measured Fmax (makespan is invariant)
+area,MLQ,6/6,optimal on all 6,MLQ,only candidate,measured LUT count
+power,MLQ,6/6,optimal on all 6,MLQ,only candidate,measured Vivado vectorless dynamic power

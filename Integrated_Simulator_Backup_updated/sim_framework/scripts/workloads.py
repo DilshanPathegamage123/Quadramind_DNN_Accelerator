@@ -470,6 +470,54 @@ WORKLOAD_MIXES: list[dict] = [
 ]
 
 
+# ===========================================================================
+# Extra mixes for the scheduler-chooser evaluation
+# ===========================================================================
+#  WORKLOAD_MIXES above is frozen at four entries because run_full_eval.py's
+#  Exp 5 figures are laid out around exactly those four bar groups.  The
+#  scheduler chooser needs a wider sweep than that: a scheduler that wins on
+#  one queue shape can lose on another, so a recommendation backed by a
+#  single mix is not evidence.  These two extra mixes widen the sweep along
+#  the two axes that actually change a scheduling decision.
+#
+#  AXIS 1 -- queue depth.  WORKLOAD_MIXES only spans 3 and 4 tasks.  Mix 5
+#  is the shallowest queue that can still be reordered (2 tasks) and Mix 6
+#  is the deepest (6 tasks).  Depth matters because wait time accumulates
+#  over the tasks queued behind the running one, so policies that differ by
+#  a little at N=3 diverge at N=6.
+#
+#  AXIS 2 -- task-size skew.  Model cycle costs at 8x8/OS span 81x across
+#  the suites (DLRM 1,620 -> 3D-UNet 131,412).  Shortest-first policies
+#  (SJF/SRTF) only separate from arrival-order policies (FIFO/MLQ/RR) when
+#  the queue holds tasks of very different lengths, so Mix 5 pairs the
+#  cheapest workload with the most expensive one directly.
+#
+#  Cycle costs quoted below are software_ref.estimate_cycles at 8x8 / OS --
+#  rank scores, not cycle predictions (GOLDEN_CHECK_SUMMARY.md sec. 7).
+
+EXTRA_SCHED_MIXES: list[dict] = [
+    {
+        "name": "Mix 5: Skewed Pair",
+        "label": "Workload mix 5",
+        # DLRM 1,620 cycles vs 3D-UNet 131,412 cycles -> 81x skew, the
+        # widest ratio available, on the shortest reorderable queue.
+        "dnns": ["DLRM", "3D-UNet"],
+    },
+    {
+        "name": "Mix 6: Deep Mixed Queue",
+        "label": "Workload mix 6",
+        # Six tasks spanning both suites and the full cost range
+        # (1,620 / 1,876 / 4,484 / 10,569 / 64,532 / 131,412 cycles).
+        "dnns": ["DLRM", "TinyBERT", "MobileNetV2", "DS-CNN-KWS",
+                 "ResNet-50", "3D-UNet"],
+    },
+]
+
+# The representative set the scheduler chooser sweeps: 6 mixes covering task
+# counts 2, 3, 3, 4, 4, 6 and per-task costs from 1,620 to 131,412 cycles.
+SCHED_EVAL_MIXES: list[dict] = WORKLOAD_MIXES + EXTRA_SCHED_MIXES
+
+
 # ---------------------------------------------------------------------------
 # Quick sanity check
 # ---------------------------------------------------------------------------

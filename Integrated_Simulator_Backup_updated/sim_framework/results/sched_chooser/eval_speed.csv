@@ -1,5 +1,5 @@
 what,seconds,source
-"WARM scoring: 14 schedulers, one mix (median of 5; EXCLUDES one-time imports)",0.0005,measured
-WARM: all 4 mixes x 14 schedulers,0.0037,measured
-COLD CLI end-to-end (interpreter + imports + scoring + table + CSV; median of 3 subprocesses),1.0650,measured
+"WARM scoring: 14 schedulers, one mix (median of 5; EXCLUDES one-time imports)",0.0001,measured
+WARM: all 4 mixes x 14 schedulers,0.0010,measured
+COLD CLI end-to-end (interpreter + imports + scoring + table + CSV; median of 3 subprocesses),0.5388,measured
 "Vivado synthesis per scheduler (cached, NOT per query)",~135,measured (synth_scheduler_hw.py)
