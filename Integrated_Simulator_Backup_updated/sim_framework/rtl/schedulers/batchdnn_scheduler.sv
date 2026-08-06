@@ -223,17 +223,8 @@ module batchdnn_scheduler #(
     // ================================================================
     // MT candidate queue population on layer load
     // ================================================================
-    always_ff @(posedge clk or negedge rst_n) begin
-        if (!rst_n) begin
-            mt_cq_head <= '0; mt_cq_tail <= '0; mt_cq_cnt <= '0;
-            ct_cq_head <= '0; ct_cq_tail <= '0; ct_cq_cnt <= '0;
-            sct_head   <= '0; sct_tail   <= '0; sct_cnt   <= '0;
-        end else if (st_write_en) begin
-            mt_cq[mt_cq_tail] <= st_layer_idx;
-            mt_cq_tail        <= (mt_cq_tail + 1) % QD;
-            mt_cq_cnt         <= mt_cq_cnt + 1;
-        end
-    end
+    // MT queue ownership moved into the main block (finding F7): the
+    // separate enqueue always_ff multi-drove head/tail/cnt with the pop.
 
     // ================================================================
     // Main scheduler state machine
@@ -251,7 +242,13 @@ module batchdnn_scheduler #(
             stall_detected           <= 1'b0;
             mt_active <= 1'b0; mt_valid  <= 1'b0;
             ct_active <= 1'b0; ct_valid  <= 1'b0;
+            mt_cq_head <= '0; mt_cq_tail <= '0; mt_cq_cnt <= '0;
+            ct_cq_head <= '0; ct_cq_tail <= '0; ct_cq_cnt <= '0;
+            sct_head   <= '0; sct_tail   <= '0; sct_cnt   <= '0;
         end else begin
+            // F7: MT queue ops applied once at block end
+            automatic logic mt_pop;
+            mt_pop = 1'b0;
 
             // =========================================================
             // BLOCK A: Memory Access Scheduler (identical to AI-MT)
@@ -277,14 +274,14 @@ module batchdnn_scheduler #(
                     if (sched_table[cand].mem_cycles <= cycles_to_fill_remaining &&
                         mem_req <= avail_mem_reg) begin
                         if (compute_cycle_ctr > COMPUTE_BAL_THRESH ||                      // Compute side is busy → better feed it with memory
-                            sched_table[cand].mem_cycles <= compute_cycle_ctr) begin       // Memory won’t overload the system
+                            sched_table[cand].mem_cycles <= compute_cycle_ctr ||           // Memory won’t overload the system
+                            compute_cycle_ctr == 0) begin  // F7 bootstrap: nothing scheduled yet
                             do_sched = 1'b1;
                         end
                     end
 
                     if (do_sched) begin
-                        mt_cq_head               <= (mt_cq_head + 1) % QD;
-                        mt_cq_cnt                <= mt_cq_cnt - 1;
+                        mt_pop = 1'b1;  // applied at block end (F7)
                         avail_mem_reg            <= avail_mem_reg - mem_req;
                         cycles_to_fill_remaining <= cycles_to_fill_remaining -
                                                     sched_table[cand].mem_cycles;
@@ -461,6 +458,15 @@ module batchdnn_scheduler #(
                 ct_valid  <= 1'b0;
             end
 
+
+            // F7: single-owner MT queue update (enqueue may coincide w/ pop)
+            if (st_write_en) begin
+                mt_cq[mt_cq_tail] <= st_layer_idx;
+                mt_cq_tail        <= (mt_cq_tail + 1) % QD;
+            end
+            if (mt_pop)
+                mt_cq_head <= (mt_cq_head + 1) % QD;
+            mt_cq_cnt <= mt_cq_cnt + (st_write_en ? 1 : 0) - (mt_pop ? 1 : 0);
         end // else (not reset)
     end
 

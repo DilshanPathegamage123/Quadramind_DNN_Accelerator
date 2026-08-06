@@ -37,13 +37,15 @@ module single_dnn_top
     parameter int PAGE_SIZE_BITS = 12,
     parameter int VPN_WIDTH      = 8,
     parameter int PPN_WIDTH      = 20,
-    parameter int N_MEM_PORTS    = 4
+    parameter int N_MEM_PORTS    = 4,
+    parameter int NUM_BANKS      = 4     // scratchpad banks; 1 = flat/no conflicts
 ) (
     input  logic clk,
     input  logic rst_n,
 
     //--- Layer configuration (driven by host)
     input  mem_layout_t           mem_layout,
+    input  casting_t              casting_scheme,
     input  logic [15:0]           input_channels, input_height, input_width,
     input  logic [15:0]           weight_k, weight_c, weight_kh, weight_kw,
     input  logic [15:0]           output_channels, output_height, output_width,
@@ -117,13 +119,23 @@ module single_dnn_top
     output logic [DATA_WIDTH-1:0]   ext_output_data_1d  [ARRAY_HEIGHT],
     output logic [ARRAY_HEIGHT-1:0] ext_output_data_valid_1d,
 
+    //--- External scratchpad read ports (memory-side exerciser; default 0 =
+    //    legacy v1 wiring where the backend data plane is idle). Reads go
+    //    through the real banked scratchpad arbitration, so bank conflicts
+    //    and stalls are observable. NOT connected to compute (see v1 note).
+    input  logic [N_MEM_PORTS-1:0] spad_dbg_rd_en,
+    input  logic [ADDR_WIDTH-1:0]  spad_dbg_rd_addr [N_MEM_PORTS],
+    output logic [N_MEM_PORTS-1:0] spad_dbg_rd_valid,
+
     //--- Statistics
     output logic [31:0] stats_loads_or_hits,
     output logic [31:0] stats_moves_or_misses,
     output logic [31:0] stats_keeps,
     output logic [31:0] stats_bytes_loaded,
     output logic [31:0] stats_bytes_moved,
-    output logic [31:0] stats_compute_cycles
+    output logic [31:0] stats_compute_cycles,
+    output logic [31:0] stats_bank_conflicts,
+    output logic [31:0] stats_bank_conflict_stall_cycles
 );
 
     // ---------------------------------------------------------------------
@@ -141,15 +153,78 @@ module single_dnn_top
     // model); the on-chip memory backend models the scratchpad / DRAM and
     // signals phase_mem_done. Tie the backend's data plane to zero unless
     // explicitly driven.
-    assign be_rd_en   = '0;
+    assign be_rd_en   = spad_dbg_rd_en;   // '0 when the port is undriven
     assign be_wr_en   = '0;
     always_comb begin
         for (int i = 0; i < N_MEM_PORTS; i++) begin
-            be_rd_addr[i] = '0;
+            be_rd_addr[i] = spad_dbg_rd_addr[i];
             be_wr_addr[i] = '0;
             be_wr_data[i] = '0;
         end
     end
+    assign spad_dbg_rd_valid = be_rd_valid;
+
+    // ---------------------------------------------------------------------
+    // Layout prefetcher (layout fix): issues real AXI reads for the layer's
+    // weight+input tiles in fetch order through the layout-dependent address
+    // mapping, so off-chip traffic differs per memory layout. The compute
+    // data plane is unchanged (ext_* ports). The AXI port is shared with the
+    // stamp backend via a fixed-priority mux; the two never overlap because
+    // the prefetcher starts only after the stamp phase completes.
+    // ---------------------------------------------------------------------
+    logic                  pf_start, pf_busy, pf_done;
+    logic [ADDR_WIDTH-1:0] pf_araddr;
+    logic [7:0]            pf_arlen;
+    logic                  pf_arvalid, pf_arready;
+    logic                  pf_rvalid, pf_rlast, pf_rready;
+
+    logic [ADDR_WIDTH-1:0] be_araddr;
+    logic [7:0]            be_arlen;
+    logic                  be_arvalid;
+    logic                  be_rready;
+
+    layout_prefetcher #(
+        .ADDR_WIDTH   (ADDR_WIDTH),
+        .ARRAY_HEIGHT (ARRAY_HEIGHT),
+        .ARRAY_WIDTH  (ARRAY_WIDTH),
+        .MAX_BURST    (16)
+    ) u_prefetch (
+        .clk              (clk),
+        .rst_n            (rst_n),
+        .layout           (mem_layout),
+        .casting          (casting_scheme),
+        .input_c          (input_channels),
+        .input_h          (input_height),
+        .input_w          (input_width),
+        .weight_k         (weight_k),
+        .weight_c         (weight_c),
+        .weight_kh        (weight_kh),
+        .weight_kw        (weight_kw),
+        .input_base_addr  (input_base_addr),
+        .weight_base_addr (weight_base_addr),
+        .tile_row         (tile_row),
+        .tile_col_start   (tile_col_start),
+        .tile_ch_start    (tile_ch_start),
+        .start            (pf_start),
+        .busy             (pf_busy),
+        .done             (pf_done),
+        .axi_araddr       (pf_araddr),
+        .axi_arlen        (pf_arlen),
+        .axi_arvalid      (pf_arvalid),
+        .axi_arready      (pf_arready),
+        .axi_rvalid       (pf_rvalid),
+        .axi_rlast        (pf_rlast),
+        .axi_rready       (pf_rready)
+    );
+
+    // AXI 2:1 mux (prefetcher owns the port while busy)
+    assign axi_arvalid_addr = pf_busy ? pf_araddr  : be_araddr;
+    assign axi_arlen        = pf_busy ? pf_arlen   : be_arlen;
+    assign axi_arvalid      = pf_busy ? pf_arvalid : be_arvalid;
+    assign axi_rready       = pf_busy ? pf_rready  : be_rready;
+    assign pf_arready       = axi_arready && pf_busy;
+    assign pf_rvalid        = axi_rvalid  && pf_busy;
+    assign pf_rlast         = axi_rlast   && pf_busy;
 
     mem_backend_wrap #(
         .MEMORY         (MEMORY),
@@ -162,7 +237,8 @@ module single_dnn_top
         .NUM_PAGES      (NUM_PAGES),
         .PAGE_SIZE_BITS (PAGE_SIZE_BITS),
         .VPN_WIDTH      (VPN_WIDTH),
-        .PPN_WIDTH      (PPN_WIDTH)
+        .PPN_WIDTH      (PPN_WIDTH),
+        .NUM_BANKS      (NUM_BANKS)
     ) u_mem (
         .clk                   (clk),
         .rst_n                 (rst_n),
@@ -186,20 +262,23 @@ module single_dnn_top
         .wr_en                 (be_wr_en),
         .wr_addr               (be_wr_addr),
         .wr_data               (be_wr_data),
-        .axi_arvalid_addr      (axi_arvalid_addr),
-        .axi_arlen             (axi_arlen),
-        .axi_arvalid           (axi_arvalid),
-        .axi_arready           (axi_arready),
+        .axi_arvalid_addr      (be_araddr),
+        .axi_arlen             (be_arlen),
+        .axi_arvalid           (be_arvalid),
+        .axi_arready           (axi_arready && !pf_busy),
         .axi_rdata             (axi_rdata),
-        .axi_rvalid            (axi_rvalid),
-        .axi_rready            (axi_rready),
-        .axi_rlast             (axi_rlast),
+        .axi_rvalid            (axi_rvalid && !pf_busy),
+        .axi_rready            (be_rready),
+        .axi_rlast             (axi_rlast && !pf_busy),
         .stats_loads_or_hits   (stats_loads_or_hits),
         .stats_moves_or_misses (stats_moves_or_misses),
         .stats_keeps           (stats_keeps),
         .stats_bytes_loaded    (stats_bytes_loaded),
         .stats_bytes_moved     (stats_bytes_moved),
-        .controller_busy       (be_busy)
+        .controller_busy       (be_busy),
+        .bank_conflict_detected           (),
+        .stats_bank_conflicts             (stats_bank_conflicts),
+        .stats_bank_conflict_stall_cycles (stats_bank_conflict_stall_cycles)
     );
 
     // ---------------------------------------------------------------------
@@ -283,6 +362,33 @@ module single_dnn_top
 
     logic [31:0] compute_cycles;
 
+    // Memory-phase sequencing (layout fix): S_MEM now runs the stamp phase
+    // (as before; PAGED skips it) and THEN the layout prefetcher's off-chip
+    // walk. S_MEM exits when the prefetch completes, so the memory phase
+    // duration - and phase_mem_done seen by DNN-aware schedulers - reflects
+    // the real, layout-dependent off-chip traffic.
+    logic stamp_ok, pf_started;
+
+    always_ff @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            stamp_ok   <= 1'b0;
+            pf_started <= 1'b0;
+            pf_start   <= 1'b0;
+        end else begin
+            pf_start <= 1'b0;
+            if (state == S_IDLE) begin
+                stamp_ok   <= (MEMORY == MEM_PAGED);
+                pf_started <= 1'b0;
+            end else if (state == S_MEM) begin
+                if (be_phase_done) stamp_ok <= 1'b1;
+                if ((stamp_ok || be_phase_done) && !pf_started) begin
+                    pf_start   <= 1'b1;
+                    pf_started <= 1'b1;
+                end
+            end
+        end
+    end
+
     always_ff @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             state              <= S_IDLE;
@@ -291,7 +397,7 @@ module single_dnn_top
             phase_compute_done <= 1'b0;
         end else begin
             state              <= next_state;
-            phase_mem_done     <= (state == S_MEM     && be_phase_done);
+            phase_mem_done     <= (state == S_MEM     && pf_done);
             phase_compute_done <= (state == S_COMPUTE && array_done);
             if (state == S_COMPUTE && array_busy) compute_cycles <= compute_cycles + 1;
         end
@@ -301,8 +407,7 @@ module single_dnn_top
         next_state = state;
         case (state)
             S_IDLE:    if (start)         next_state = S_MEM;
-            S_MEM:     if (be_phase_done || MEMORY == MEM_PAGED)
-                                          next_state = S_COMPUTE;
+            S_MEM:     if (pf_done)       next_state = S_COMPUTE;
             S_COMPUTE: if (array_done)    next_state = S_FINAL;
             S_FINAL:                      next_state = S_IDLE;
             default:                      next_state = S_IDLE;

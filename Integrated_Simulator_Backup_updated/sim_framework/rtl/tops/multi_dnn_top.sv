@@ -34,6 +34,7 @@ module multi_dnn_top
     parameter int           NUM_PAGES         = 256,
     parameter int           PAGE_SIZE_BITS    = 12,
     parameter int           N_MEM_PORTS       = 4,
+    parameter int           NUM_BANKS         = 4,
 
     parameter int           MAX_TASKS         = 16,
     parameter int           MAX_LAYERS        = 32,
@@ -77,6 +78,7 @@ module multi_dnn_top
     //--- Per-task layer config (the dispatcher writes these into the
     //    single_dnn_top before issuing start)
     input  mem_layout_t           cfg_mem_layout,
+    input  casting_t              cfg_casting_scheme,
     input  logic [15:0]           cfg_input_channels, cfg_input_height, cfg_input_width,
     input  logic [15:0]           cfg_weight_k, cfg_weight_c, cfg_weight_kh, cfg_weight_kw,
     input  logic [15:0]           cfg_output_channels, cfg_output_height, cfg_output_width,
@@ -187,6 +189,8 @@ module multi_dnn_top
     logic        sdt_start;
     logic        sdt_done;
     logic        sdt_phase_mem_done, sdt_phase_compute_done;
+    logic [ADDR_WIDTH-1:0] sdt_spad_dbg_addr [N_MEM_PORTS];
+    always_comb for (int i = 0; i < N_MEM_PORTS; i++) sdt_spad_dbg_addr[i] = '0;
 
     single_dnn_top #(
         .DATAFLOW      (DATAFLOW),
@@ -201,11 +205,13 @@ module multi_dnn_top
         .METADATA_DEPTH(METADATA_DEPTH),
         .NUM_PAGES     (NUM_PAGES),
         .PAGE_SIZE_BITS(PAGE_SIZE_BITS),
-        .N_MEM_PORTS   (N_MEM_PORTS)
+        .N_MEM_PORTS   (N_MEM_PORTS),
+        .NUM_BANKS     (NUM_BANKS)
     ) u_sdt (
         .clk                (clk),
         .rst_n              (rst_n),
         .mem_layout         (cfg_mem_layout),
+        .casting_scheme     (cfg_casting_scheme),
         .input_channels     (cfg_input_channels),
         .input_height       (cfg_input_height),
         .input_width        (cfg_input_width),
@@ -273,12 +279,17 @@ module multi_dnn_top
         .ext_output_addr_valid_1d(ext_output_addr_valid_1d),
         .ext_output_data_1d      (ext_output_data_1d),
         .ext_output_data_valid_1d(ext_output_data_valid_1d),
+        .spad_dbg_rd_en          ('0),
+        .spad_dbg_rd_addr        (sdt_spad_dbg_addr),
+        .spad_dbg_rd_valid       (),
         .stats_loads_or_hits     (),
         .stats_moves_or_misses   (),
         .stats_keeps             (),
         .stats_bytes_loaded      (),
         .stats_bytes_moved       (),
-        .stats_compute_cycles    ()
+        .stats_compute_cycles    (),
+        .stats_bank_conflicts             (),
+        .stats_bank_conflict_stall_cycles ()
     );
 
     // --------------------------------------------------------------------

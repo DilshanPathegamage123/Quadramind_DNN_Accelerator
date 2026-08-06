@@ -44,6 +44,7 @@ from cocotb.clock import Clock
 from cocotb.triggers import RisingEdge
 
 LAYOUTS = {"CHANNEL_MAJOR": 0, "ROW_MAJOR": 1, "COLUMN_MAJOR": 2}
+CASTINGS = {"MULTICAST": 0, "UNICAST": 1, "HYBRID": 2}
 
 
 def _quant(a: np.ndarray, frac_bits: int) -> np.ndarray:
@@ -76,6 +77,7 @@ def _read_cfg():
         "cfg":       cfg,
         "dataflow":  os.environ.get("GOLDEN_DATAFLOW", "OS"),
         "layout":    os.environ.get("GOLDEN_LAYOUT", "CHANNEL_MAJOR"),
+        "casting":   os.environ.get("GOLDEN_CASTING", "MULTICAST"),
         "memory":    os.environ.get("GOLDEN_MEMORY", "STAMP"),
         "array_h":   int(os.environ.get("GOLDEN_ARRAY_H", "8")),
         "array_w":   int(os.environ.get("GOLDEN_ARRAY_W", "8")),
@@ -95,6 +97,7 @@ async def _reset(dut, ncyc=5):
 
 def _set_layer_ports(dut, cfg, layout_code):
     dut.mem_layout.value       = layout_code
+    dut.casting_scheme.value   = CASTINGS[os.environ.get("GOLDEN_CASTING", "MULTICAST")]
     dut.input_channels.value   = cfg["input_channels"]
     dut.input_height.value     = cfg["input_height"]
     dut.input_width.value      = cfg["input_width"]
@@ -120,6 +123,7 @@ def _set_layer_ports(dut, cfg, layout_code):
     dut.pt_write_vpn.value    = 0
     dut.pt_write_ppn.value    = 0
     dut.pt_write_valid.value  = 0
+    dut.spad_dbg_rd_en.value = 0
     dut.axi_arready.value = 1
     dut.axi_rdata.value   = 0
     dut.axi_rvalid.value  = 0
@@ -149,17 +153,47 @@ async def _pulse_start(dut):
     dut.phase_start_in.value = 0
 
 
+async def _axi_responder(dut, stats=None):
+    """Behavioural DRAM: accepts AR bursts from the DUT's real AXI port and
+    streams arlen+1 R beats. Records every AR (addr, len) when stats given.
+    Payload is zeros - the compute data plane uses the ext_* ports; this
+    models the off-chip traffic the layout prefetcher generates."""
+    dut.axi_arready.value = 1
+    dut.axi_rvalid.value = 0
+    dut.axi_rlast.value = 0
+    while True:
+        await RisingEdge(dut.clk)
+        if int(dut.axi_arvalid.value):
+            ln = int(dut.axi_arlen.value)
+            if stats is not None:
+                stats["ar"] += 1
+                stats["beats"] += ln + 1
+                if len(stats["trace"]) < 300000:
+                    stats["trace"].append([int(dut.axi_arvalid_addr.value), ln])
+            await RisingEdge(dut.clk)   # AR handshake completes this edge
+            for b in range(ln + 1):
+                dut.axi_rvalid.value = 1
+                dut.axi_rlast.value = 1 if b == ln else 0
+                await RisingEdge(dut.clk)
+            dut.axi_rvalid.value = 0
+            dut.axi_rlast.value = 0
+
+
 # ===========================================================================
 # OS harness (validated in step 3)
 # ===========================================================================
-async def _run_os_pixel(dut, ctx, ch_start, oh, ow, timeout):
+async def _run_os_tile(dut, ctx, ch_start, oh, ow0, timeout):
+    """One OS invocation computes a full tile: ARRAY_HEIGHT output channels
+    x up to ARRAY_WIDTH output pixels of row oh (post-F1/F5/F8). Natural
+    schedule: every column is served at its own obs+3; row weights ride
+    the column-0 observation at obs+r."""
     H, W = ctx["H"], ctx["W"]
     flat_in, wq_rows = ctx["flat_in"], ctx["wq_rows"]
     in_base = ctx["cfg"]["input_base_addr"]
     n_tuples = ctx["n_tuples"]
 
     dut.tile_row.value       = oh
-    dut.tile_col_start.value = ow
+    dut.tile_col_start.value = ow0
     dut.tile_ch_start.value  = ch_start
     await _pulse_start(dut)
 
@@ -172,57 +206,54 @@ async def _run_os_pixel(dut, ctx, ch_start, oh, ow, timeout):
         cyc += 1
 
         iav = int(dut.ext_input_addr_valid_w.value)
-        if iav & 1:
-            addr = int(dut.ext_input_addr_w[0].value)
-            off = addr - in_base
-            val = int(flat_in[off]) if 0 <= off < flat_in.size else 0
-            if n < n_tuples:
-                if n == 0:
-                    for r in range(H):
-                        events.setdefault(cyc + r, []).append(
-                            ("w", r, int(wq_rows[r][0])))
-                    events.setdefault(cyc + 3, []).append(("x", val))
-                else:
-                    for r in range(2, H):
-                        events.setdefault(cyc + r - 2, []).append(
-                            ("w", r, int(wq_rows[r][n])))
-                    events.setdefault(cyc + 1, []).append(("x", val))
-                if n + 1 < n_tuples:
-                    for r in range(min(2, H)):
-                        events.setdefault(cyc + W - 2 + r, []).append(
-                            ("w", r, int(wq_rows[r][n + 1])))
-            n += 1
+        if iav:
+            for c in range(W):
+                if (iav >> c) & 1:
+                    addr = int(dut.ext_input_addr_w[c].value)
+                    off = addr - in_base
+                    val = int(flat_in[off]) if 0 <= off < flat_in.size else 0
+                    if c == 0:
+                        if n < n_tuples:
+                            for r in range(H):
+                                events.setdefault(cyc + r, []).append(
+                                    ("w", r, int(wq_rows[r][n])))
+                        n += 1
+                    events.setdefault(cyc + 2, []).append(("x", c, val))
 
         oav = int(dut.ext_output_addr_valid_2d.value)
         if oav:
             for r in range(H):
-                if (oav >> (r * W)) & 1:
-                    d = _tosigned(int(dut.ext_output_data_2d[r][0].value))
-                    results[r] = d
+                for c in range(W):
+                    if (oav >> (r * W + c)) & 1:
+                        results[(r, c)] = _tosigned(
+                            int(dut.ext_output_data_2d[r][c].value))
 
         wvalid = 0
-        dut.ext_input_data_valid_w.value = 0
+        ivalid = 0
         for ev in events.pop(cyc, []):
             if ev[0] == "w":
                 _, r, wv = ev
                 dut.ext_weight_data_1d[r].value = wv & 0xFFFFFFFF
                 wvalid |= (1 << r)
             else:
-                _, xv = ev
-                dut.ext_input_data_w[0].value = xv & 0xFFFFFFFF
-                dut.ext_input_data_valid_w.value = 1
+                _, c, xv = ev
+                dut.ext_input_data_w[c].value = xv & 0xFFFFFFFF
+                ivalid |= (1 << c)
         dut.ext_weight_data_valid_1d.value = wvalid
+        dut.ext_input_data_valid_w.value = ivalid
 
         if int(dut.done.value) == 1:
             return results, cyc
-    raise TimeoutError(f"OS pixel (ch{ch_start},{oh},{ow}): no done in {timeout}")
+    raise TimeoutError(f"OS tile (ch{ch_start},{oh},{ow0}): no done in {timeout}")
 
 
 async def _harness_os(dut, p, cfg, xq, wq_stream, flat_in):
     H, W = p["array_h"], p["array_w"]
     K, OH, OW = cfg["weight_k"], cfg["output_height"], cfg["output_width"]
     n_tuples = cfg["weight_c"] * cfg["weight_kh"] * cfg["weight_kw"]
-    timeout = n_tuples * (W + 1) + 800
+    timeout = n_tuples * (W + 1) + 800 + 3 * n_tuples * (H + W) + 600
+    if p["casting"] != "MULTICAST":
+        timeout += 12 * n_tuples * H * W + 2000
 
     out_fixed = np.zeros((OH, OW, K), dtype=np.int64)
     got = np.zeros((OH, OW, K), dtype=bool)
@@ -233,102 +264,158 @@ async def _harness_os(dut, p, cfg, xq, wq_stream, flat_in):
         ctx = {"H": H, "W": W, "cfg": cfg, "flat_in": flat_in,
                "wq_rows": wq_rows, "n_tuples": n_tuples}
         for oh in range(OH):
-            for ow in range(OW):
-                res, cyc = await _run_os_pixel(dut, ctx, ch_start, oh, ow, timeout)
+            for ow0 in range(0, OW, W):
+                res, cyc = await _run_os_tile(dut, ctx, ch_start, oh, ow0, timeout)
                 total_cycles += cyc
                 n_runs += 1
-                for r, val in res.items():
-                    if ch_start + r < K:
-                        out_fixed[oh, ow, ch_start + r] = val
-                        got[oh, ow, ch_start + r] = True
+                for (r, c), val in res.items():
+                    if ch_start + r < K and ow0 + c < OW:
+                        out_fixed[oh, ow0 + c, ch_start + r] = val
+                        got[oh, ow0 + c, ch_start + r] = True
                 for _ in range(4):
                     await RisingEdge(dut.clk)
     return out_fixed, got, total_cycles, n_runs, "hardware_full", {}
 
 
 # ===========================================================================
-# IS harness: one product per usable column per invocation; TB sums tuples.
-# Usable columns limited by the 3-cycle WAIT_WEIGHTS enable window.
+# IS harness (post-F3/F4): full convolution per invocation. The stationary
+# registers are re-loaded per weight tuple while the PEs stay enabled across
+# the whole streaming loop; the DRAIN state lets the last pulse ripple to
+# every column. Rows = output channels, columns = output pixels.
+#
+# Timing per weight iteration (observed at cyc): the weight response is
+# driven at cyc+1 (all rows); the stationary reload for column c is driven
+# at cyc+c so input_reg(c) updates one edge before the weight pulse's
+# accumulate at that column (accumulate lands at response+1+c).
 # ===========================================================================
-IS_USABLE_COLS = 1
-
-
-async def _run_is_tuple(dut, ctx, k, oh, ow0, t_load, t_weight, wval, timeout):
-    H, W = ctx["H"], ctx["W"]  # noqa - t_weight also keys probe stats
-    _ = t_weight
-    flat_in = ctx["flat_in"]
-    in_base = ctx["cfg"]["input_base_addr"]
-    n_tuples = ctx["n_tuples"]
+async def _run_is_tile(dut, ctx, k0, oh, ow0, timeout):
+    H, W = ctx["H"], ctx["W"]
+    cfg = ctx["cfg"]
+    xq, wq_stream = ctx["xq"], ctx["wq_stream"]
+    K = cfg["weight_k"]
+    C, KH, KW = cfg["weight_c"], cfg["weight_kh"], cfg["weight_kw"]
+    IH, IW = cfg["input_height"], cfg["input_width"]
+    n_tuples = C * KH * KW
 
     dut.tile_row.value       = oh
     dut.tile_col_start.value = ow0
-    dut.tile_ch_start.value  = k
+    dut.tile_ch_start.value  = k0
     await _pulse_start(dut)
 
+    events: dict[int, list] = {}
     results = {}
-    n_load = 0
-    n_w = 0
+    m = 0
     cyc = 0
-    col_stats = ctx["col_stats"]
     while cyc < timeout:
         await RisingEdge(dut.clk)
         cyc += 1
 
-        # phase 1: input load iterations (all columns pulse together).
-        # The response normally rides the observation window; the LAST load
-        # window is not honoured by the RTL (probe: only t_load==26 fails),
-        # so the final tuple is served predictively one window early using
-        # the TB's own copy of the input tensor.
-        ivalid_drive = 0
-        iav = int(dut.ext_input_addr_valid_w.value)
-        if iav:
-            hit = (n_load == t_load) and not (
-                t_load == n_tuples - 1 and t_load > 0)
-            pred = (t_load == n_tuples - 1 and t_load > 0
-                    and n_load == t_load - 1)
-            if hit or pred:
-                for c in range(W):
-                    if (iav >> c) & 1:
-                        if pred:
-                            v = ctx["xpred"].get(c, 0)
-                        else:
-                            addr = int(dut.ext_input_addr_w[c].value)
-                            off = addr - in_base
-                            v = int(flat_in[off]) if 0 <= off < flat_in.size else 0
-                        dut.ext_input_data_w[c].value = v & 0xFFFFFFFF
-                        ivalid_drive |= (1 << c)
-                        ctx["xcache"][c] = v
-            n_load += 1
-        dut.ext_input_data_valid_w.value = ivalid_drive
-
-        # phase 2: weight iterations (row 0 only)
-        wvalid_drive = 0
         wav = int(dut.ext_weight_addr_valid_1d.value)
         if wav & 1:
-            if n_w == t_weight:
-                dut.ext_weight_data_1d[0].value = wval & 0xFFFFFFFF
-                wvalid_drive |= 1
-            n_w += 1
-        dut.ext_weight_data_valid_1d.value = wvalid_drive
+            if m < n_tuples:
+                # top-level weight loop order: ch innermost, then kw, kh
+                c_in = m % C
+                kw_i = (m // C) % KW
+                kh_i = m // (C * KW)
+                t_load = (c_in * KH + kh_i) * KW + kw_i
+                wr = [int(wq_stream[k0 + r][t_load]) if k0 + r < K else 0
+                      for r in range(H)]
+                events.setdefault(cyc + 1, []).append(("w", wr))
+                for c in range(W):
+                    hp, wp = oh + kh_i, ow0 + c + kw_i
+                    xv = int(xq[0, hp, wp, c_in]) if (hp < IH and wp < IW) else 0
+                    events.setdefault(cyc + c, []).append(("x", c, xv))
+            m += 1
 
-        # writeback capture: row 0, all columns (stats), usable columns (data)
         oav = int(dut.ext_output_addr_valid_2d.value)
         if oav:
-            for c in range(W):
-                if (oav >> (0 * W + c)) & 1:
-                    d = _tosigned(int(dut.ext_output_data_2d[0][c].value))
-                    exp = ctx["xcache"].get(c, 0) * wval
-                    key = (c, ctx["t_load"]) if ctx.get("probe") else c
-                    col_stats.setdefault(key, [0, 0])
-                    col_stats[key][0] += 1
-                    if d == exp:
-                        col_stats[key][1] += 1
-                    if c < IS_USABLE_COLS:
-                        results[c] = d
+            for r in range(H):
+                for c in range(W):
+                    if (oav >> (r * W + c)) & 1:
+                        results[(r, c)] = _tosigned(
+                            int(dut.ext_output_data_2d[r][c].value))
+
+        wvalid = 0
+        ivalid = 0
+        for ev in events.pop(cyc, []):
+            if ev[0] == "w":
+                for r in range(H):
+                    dut.ext_weight_data_1d[r].value = ev[1][r] & 0xFFFFFFFF
+                wvalid = (1 << H) - 1
+            else:
+                _, c, xv = ev
+                dut.ext_input_data_w[c].value = xv & 0xFFFFFFFF
+                ivalid |= (1 << c)
+        dut.ext_weight_data_valid_1d.value = wvalid
+        dut.ext_input_data_valid_w.value = ivalid
 
         if int(dut.done.value) == 1:
             return results, cyc
-    raise TimeoutError(f"IS tuple run (k{k},{oh},{ow0},t{t_load}): no done in {timeout}")
+    raise TimeoutError(f"IS tile (k{k0},{oh},{ow0}): no done in {timeout} "
+                       f"(weight iterations seen {m}/{n_tuples})")
+
+
+async def _probe_is_loadpath(dut, ctx, timeout):
+    """F4 verification: for each tuple t, serve the phase-1 load REACTIVELY
+    on its own window (no prediction), pulse only tuple t's weight on the
+    first weight iteration, and check PE(0,0)'s product == x_t(0) * w_t."""
+    cfg = ctx["cfg"]
+    H, W = ctx["H"], ctx["W"]
+    flat_in = ctx["flat_in"]
+    in_base = cfg["input_base_addr"]
+    K = cfg["weight_k"]
+    C, KH, KW = cfg["weight_c"], cfg["weight_kh"], cfg["weight_kw"]
+    n_tuples = C * KH * KW
+    wq_stream = ctx["wq_stream"]
+    stats = {}
+    for t in range(n_tuples):
+        dut.tile_row.value = 0
+        dut.tile_col_start.value = 0
+        dut.tile_ch_start.value = 0
+        await _pulse_start(dut)
+        wval = int(wq_stream[0][t])
+        events: dict[int, list] = {}
+        xcache = 0
+        n_load = 0
+        m = 0
+        got = None
+        cyc = 0
+        while cyc < timeout:
+            await RisingEdge(dut.clk)
+            cyc += 1
+            ivalid = 0
+            iav = int(dut.ext_input_addr_valid_w.value)
+            if iav:
+                if n_load == t and (iav & 1):
+                    addr = int(dut.ext_input_addr_w[0].value)
+                    off = addr - in_base
+                    v = int(flat_in[off]) if 0 <= off < flat_in.size else 0
+                    dut.ext_input_data_w[0].value = v & 0xFFFFFFFF
+                    ivalid |= 1
+                    xcache = v
+                n_load += 1
+            dut.ext_input_data_valid_w.value = ivalid
+
+            wvalid = 0
+            wav = int(dut.ext_weight_addr_valid_1d.value)
+            if wav & 1:
+                if m == 0:
+                    events.setdefault(cyc + 1, []).append(("w", wval))
+                m += 1
+            for ev in events.pop(cyc, []):
+                dut.ext_weight_data_1d[0].value = ev[1] & 0xFFFFFFFF
+                wvalid |= 1
+            dut.ext_weight_data_valid_1d.value = wvalid
+
+            oav = int(dut.ext_output_addr_valid_2d.value)
+            if oav & 1:
+                got = _tosigned(int(dut.ext_output_data_2d[0][0].value))
+            if int(dut.done.value) == 1:
+                break
+        stats[t] = (got == xcache * wval)
+        for _ in range(2):
+            await RisingEdge(dut.clk)
+    return stats
 
 
 async def _harness_is(dut, p, cfg, xq, wq_stream, flat_in):
@@ -336,75 +423,58 @@ async def _harness_is(dut, p, cfg, xq, wq_stream, flat_in):
     K, OH, OW = cfg["weight_k"], cfg["output_height"], cfg["output_width"]
     C, KH, KW = cfg["weight_c"], cfg["weight_kh"], cfg["weight_kw"]
     n_tuples = C * KH * KW
-    timeout = n_tuples * 5 + 400
+    timeout = n_tuples * 7 + W + 400 + 3 * n_tuples * (H + W) + 600
+
+    if os.environ.get("GOLDEN_IS_PROBE"):
+        ctx = {"H": H, "W": W, "cfg": cfg, "flat_in": flat_in,
+               "wq_stream": wq_stream}
+        stats = await _probe_is_loadpath(dut, ctx, timeout)
+        bad = [t for t, ok in stats.items() if not ok]
+        out_fixed = np.zeros((OH, OW, K), dtype=np.int64)
+        got = np.zeros((OH, OW, K), dtype=bool)
+        return (out_fixed, got, 0, n_tuples, "f4_load_probe",
+                {"f4_loadpath_bad_tuples": bad,
+                 "f4_loadpath_ok": f"{n_tuples - len(bad)}/{n_tuples}"})
 
     out_fixed = np.zeros((OH, OW, K), dtype=np.int64)
-    got = np.zeros((OH, OW, K), dtype=np.int32)
+    got = np.zeros((OH, OW, K), dtype=bool)
     total_cycles = 0
     n_runs = 0
-    col_stats: dict = {}
-    probe = bool(os.environ.get("GOLDEN_IS_PROBE"))
-    if probe:
-        K, OH, OW = 1, 1, min(OW, IS_USABLE_COLS)
-
-    for k in range(K):
+    ctx = {"H": H, "W": W, "cfg": cfg, "xq": xq, "wq_stream": wq_stream}
+    for k0 in range(0, K, H):
         for oh in range(OH):
-            for ow0 in range(0, OW, IS_USABLE_COLS):
-                for c_in in range(C):
-                    for kh in range(KH):
-                        for kw in range(KW):
-                            # input fetcher order: c outer, kh, kw inner
-                            t_load = (c_in * KH + kh) * KW + kw
-                            # weight pulse always rides the FIRST weight
-                            # iteration: the fetcher's address content is
-                            # unused and the last iteration's enable window
-                            # closes before column 0 can accumulate.
-                            t_weight = 0
-                            wval = int(wq_stream[k][t_load])
-                            IH, IW = cfg["input_height"], cfg["input_width"]
-                            xpred = {}
-                            for c in range(W):
-                                hpos, wpos = oh + kh, ow0 + c + kw
-                                if hpos < IH and wpos < IW:
-                                    xpred[c] = int(xq[0, hpos, wpos, c_in])
-                            ctx = {"H": H, "W": W, "cfg": cfg,
-                                   "flat_in": flat_in, "n_tuples": n_tuples,
-                                   "xcache": {}, "col_stats": col_stats,
-                                   "probe": probe, "t_load": t_load,
-                                   "xpred": xpred}
-                            res, cyc = await _run_is_tuple(
-                                dut, ctx, k, oh, ow0,
-                                t_load, t_weight, wval, timeout)
-                            total_cycles += cyc
-                            n_runs += 1
-                            for c, val in res.items():
-                                if ow0 + c < OW:
-                                    out_fixed[oh, ow0 + c, k] += val
-                                    got[oh, ow0 + c, k] += 1
-                            for _ in range(2):
-                                await RisingEdge(dut.clk)
-    stats = {"is_col_integer_match": {
-        str(c): f"{v[1]}/{v[0]}" for c, v in sorted(col_stats.items())}}
-    return (out_fixed, (got == n_tuples), total_cycles, n_runs,
-            "tb_sum_over_tuples", stats)
+            for ow0 in range(0, OW, W):
+                res, cyc = await _run_is_tile(dut, ctx, k0, oh, ow0, timeout)
+                total_cycles += cyc
+                n_runs += 1
+                for (r, c), val in res.items():
+                    if k0 + r < K and ow0 + c < OW:
+                        out_fixed[oh, ow0 + c, k0 + r] = val
+                        got[oh, ow0 + c, k0 + r] = True
+                for _ in range(2):
+                    await RisingEdge(dut.clk)
+    return out_fixed, got, total_cycles, n_runs, "hardware_full", {}
 
 
 # ===========================================================================
-# WS harness: rightmost PE of row 0; one (pixel, k, channel) per invocation;
-# TB sums the per-channel partials.
-# ===========================================================================
-async def _run_ws_pass(dut, ctx, k, oh, ow, c_in, timeout):
-    """One WS invocation. All addresses are deterministic, so the stream is
-    anchored on the FSM's COMPUTE transition (state==3): weight for tuple i
-    is driven at compute+i (3-cycle load pipeline -> ready at edge +i+3),
-    the activation at compute+i+2 (accumulate lands at edge +i+4, one edge
-    after the weight load, well inside the pe_enable window)."""
+async def _run_ws_pass(dut, ctx, k, oh0, ow, c_in, timeout):
+    """One WS invocation computes up to ARRAY_HEIGHT output rows (row r =
+    output row oh0+r) for one (column, channel k, input channel) - post-F2
+    (drain) and F8-WS (clean per-PE accumulators on every row).
+
+    All addresses are deterministic, so the stream is anchored on the FSM's
+    COMPUTE transition (state==3). The accumulate for tuple i lands at
+    PE(r,W-1) at edge anchor+i+3+W (2-cycle act serve path + W-1 ripple
+    hops); the weight has a 3-cycle load pipeline, so tuple i's weight is
+    driven at anchor+i+(W-1), loading exactly one edge before its
+    accumulate. Activations are driven at anchor+i+2 on every row port."""
     H, W = ctx["H"], ctx["W"]
     xq = ctx["xq"]           # (1,H,W,C) int64
     wq = ctx["wq"]           # (kh,kw,C,K) int64
     KH, KW = ctx["cfg"]["weight_kh"], ctx["cfg"]["weight_kw"]
+    IH = ctx["cfg"]["input_height"]
 
-    dut.tile_row.value       = oh    # -> tile_row_start
+    dut.tile_row.value       = oh0   # -> tile_row_start
     dut.tile_col_start.value = ow    # -> tile_col
     dut.tile_ch_start.value  = k
     dut.ws_input_ch.value    = c_in
@@ -414,41 +484,52 @@ async def _run_ws_pass(dut, ctx, k, oh, ow, c_in, timeout):
 
     ws_state = ctx["ws_state"]
     events: dict[int, list] = {}
-    result = None
+    results = {}
     scheduled = False
     cyc = 0
-    wbit = (0 * W) + (W - 1)   # packed bit index of PE(0, W-1)
+    wmask = 0
+    for r in range(H):
+        wmask |= (1 << (r * W + (W - 1)))
     while cyc < timeout:
         await RisingEdge(dut.clk)
         cyc += 1
 
         if not scheduled and int(ws_state.value) == 3:   # COMPUTE
+            K = ctx["cfg"]["weight_k"]
             for i in range(KH * KW):
                 kh_i, kw_i = divmod(i, KW)
-                wv = int(wq[kh_i, kw_i, c_in, k])
-                xv = int(xq[0, oh + kh_i, ow + kw_i, c_in])
-                events.setdefault(cyc + i, []).append(("w", wv))
-                events.setdefault(cyc + i + 2, []).append(("x", xv))
+                # row r computes channel k+r at output row oh0+r (the WS
+                # output fetcher's diagonal mapping)
+                wr = [int(wq[kh_i, kw_i, c_in, k + r])
+                      if (k + r) < K else 0 for r in range(H)]
+                xr = [int(xq[0, oh0 + r + kh_i, ow + kw_i, c_in])
+                      if (oh0 + r + kh_i) < IH else 0 for r in range(H)]
+                events.setdefault(cyc + i + (W - 1), []).append(("w", wr))
+                events.setdefault(cyc + i + 2, []).append(("x", xr))
             scheduled = True
 
         wvalid2d = 0
         dut.ext_input_data_valid_h.value = 0
         for ev in events.pop(cyc, []):
             if ev[0] == "w":
-                dut.ext_weight_data_2d[0][W - 1].value = ev[1] & 0xFFFFFFFF
-                wvalid2d |= (1 << wbit)
+                for r in range(H):
+                    dut.ext_weight_data_2d[r][W - 1].value = ev[1][r] & 0xFFFFFFFF
+                wvalid2d = wmask
             else:
-                dut.ext_input_data_h[0].value = ev[1] & 0xFFFFFFFF
-                dut.ext_input_data_valid_h.value = 1
+                for r in range(H):
+                    dut.ext_input_data_h[r].value = ev[1][r] & 0xFFFFFFFF
+                dut.ext_input_data_valid_h.value = (1 << H) - 1
         dut.ext_weight_data_valid_2d.value = wvalid2d
 
         oav = int(dut.ext_output_addr_valid_1d.value)
-        if oav & 1:
-            result = _tosigned(int(dut.ext_output_data_1d[0].value))
+        if oav:
+            for r in range(H):
+                if (oav >> r) & 1:
+                    results[r] = _tosigned(int(dut.ext_output_data_1d[r].value))
 
         if int(dut.done.value) == 1:
-            return result, cyc
-    raise TimeoutError(f"WS pass (k{k},{oh},{ow},c{c_in}): no done in {timeout}")
+            return results, cyc
+    raise TimeoutError(f"WS pass (k{k},{oh0},{ow},c{c_in}): no done in {timeout}")
 
 
 async def _harness_ws(dut, p, cfg, xq, wq_stream, flat_in):
@@ -456,7 +537,7 @@ async def _harness_ws(dut, p, cfg, xq, wq_stream, flat_in):
     K, OH, OW = cfg["weight_k"], cfg["output_height"], cfg["output_width"]
     C, KH, KW = cfg["weight_c"], cfg["weight_kh"], cfg["weight_kw"]
     wq = _quant(np.load(p["layer_dir"] / "weights.npy"), p["frac_w"])
-    timeout = KH * KW * 4 + 600
+    timeout = KH * KW * 4 + W + 600 + 3 * C * KH * KW * (H + W) + 600
 
     xq = _quant(np.load(p["layer_dir"] / "input.npy"), p["frac_x"])
     out_fixed = np.zeros((OH, OW, K), dtype=np.int64)
@@ -465,16 +546,23 @@ async def _harness_ws(dut, p, cfg, xq, wq_stream, flat_in):
     n_runs = 0
     ctx = {"H": H, "W": W, "cfg": cfg, "xq": xq, "wq": wq,
            "ws_state": dut.u_array.g_ws.u_ws.state}
-    for k in range(K):
-        for oh in range(OH):
+    # The WS output fetcher writes row r to (channel_start+r, row_start+r,
+    # col) - a diagonal of the (row, channel) grid. Tile all diagonals.
+    for d in range(-(OH - 1), K):
+        oh_lo, oh_hi = max(0, -d), min(OH, K - d)
+        if oh_hi <= oh_lo:
+            continue
+        for oh0 in range(oh_lo, oh_hi, H):
+            k0 = oh0 + d
             for ow in range(OW):
                 for c_in in range(C):
-                    res, cyc = await _run_ws_pass(dut, ctx, k, oh, ow, c_in, timeout)
+                    res, cyc = await _run_ws_pass(dut, ctx, k0, oh0, ow, c_in, timeout)
                     total_cycles += cyc
                     n_runs += 1
-                    if res is not None:
-                        out_fixed[oh, ow, k] += res
-                        got[oh, ow, k] += 1
+                    for r, val in res.items():
+                        if oh0 + r < OH and k0 + r < K:
+                            out_fixed[oh0 + r, ow, k0 + r] += val
+                            got[oh0 + r, ow, k0 + r] += 1
                     for _ in range(2):
                         await RisingEdge(dut.clk)
     return (out_fixed, (got == C), total_cycles, n_runs,
@@ -510,6 +598,9 @@ async def golden_layer(dut):
     dut.tile_ch_start.value = 0
     await _reset(dut)
 
+    axi_stats = {"ar": 0, "beats": 0, "trace": []}
+    cocotb.start_soon(_axi_responder(dut, axi_stats))
+
     harness = {"OS": _harness_os, "IS": _harness_is, "WS": _harness_ws}[p["dataflow"]]
     out_fixed, got, total_cycles, n_runs, assembly, extra = await harness(
         dut, p, cfg, xq, wq_stream, flat_in)
@@ -521,6 +612,15 @@ async def golden_layer(dut):
         "frac_x": p["frac_x"], "frac_w": p["frac_w"],
         "n_runs": n_runs, "total_cycles": total_cycles,
         "assembly": assembly,
+        "axi_ar_requests": axi_stats["ar"],
+        "axi_beats": axi_stats["beats"],
+        "stats_bank_conflicts": int(dut.stats_bank_conflicts.value),
+        "stats_bank_conflict_stall_cycles": int(dut.stats_bank_conflict_stall_cycles.value),
+        "stats_loads_or_hits": int(dut.stats_loads_or_hits.value),
+        "stats_moves_or_misses": int(dut.stats_moves_or_misses.value),
+        "stats_keeps": int(dut.stats_keeps.value),
+        "stats_bytes_loaded": int(dut.stats_bytes_loaded.value),
+        "stats_bytes_moved": int(dut.stats_bytes_moved.value),
         "coverage": float(np.asarray(got, dtype=bool).mean()),
         "out_fixed": out_fixed.reshape(1, OH, OW, K).tolist(),
     }

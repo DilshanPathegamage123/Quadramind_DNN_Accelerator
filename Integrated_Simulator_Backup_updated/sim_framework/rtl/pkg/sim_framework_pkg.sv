@@ -23,6 +23,22 @@ package sim_framework_pkg;
     } mem_layout_t;
 
     //-------------------------------------------------------------------------
+    // Casting scheme: how a value shared by multiple PEs is fetched off-chip.
+    //   MULTICAST: one read per unique shared value (encoded 0 so an undriven
+    //              port defaults to the baseline scheme).
+    //   UNICAST:   one read per consuming PE.
+    //   HYBRID:    multicast the widely-shared operand (weights), unicast
+    //              the other (inputs).
+    // Consumed only by layout_prefetcher's off-chip read issue - never by the
+    // compute data path.
+    //-------------------------------------------------------------------------
+    typedef enum logic [1:0] {
+        CAST_MULTICAST = 2'b00,
+        CAST_UNICAST   = 2'b01,
+        CAST_HYBRID    = 2'b10
+    } casting_t;
+
+    //-------------------------------------------------------------------------
     // Address request / data packet structures (unchanged from legacy pkgs).
     //-------------------------------------------------------------------------
     typedef struct packed {

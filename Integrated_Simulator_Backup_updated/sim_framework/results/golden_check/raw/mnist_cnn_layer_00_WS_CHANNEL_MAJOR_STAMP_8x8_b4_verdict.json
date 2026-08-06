@@ -1,0 +1,22 @@
+{
+  "layer": "models/mnist_cnn/layer_00",
+  "dataflow": "WS",
+  "layout": "CHANNEL_MAJOR",
+  "memory": "STAMP",
+  "array": "8x8",
+  "num_banks": 4,
+  "relu": true,
+  "tol_frac_of_fullscale": 0.05,
+  "full_scale": 2.0524709224700928,
+  "passed": true,
+  "assembly": "hardware_full",
+  "n_total": 5408,
+  "n_within_tol": 5408,
+  "max_abs_err": 0.00018320605158805847,
+  "mean_abs_err": 1.84502458865372e-05,
+  "max_rel_err_pct": 0.008926121660597022,
+  "mean_rel_err_pct": 0.0008989284907545892,
+  "rtl_cycles_total": 36894,
+  "rtl_runs": 858,
+  "wall_seconds": 4.3
+}

@@ -25,14 +25,10 @@ import cocotb
 from cocotb.clock import Clock
 from cocotb.triggers import RisingEdge
 
-# NOTE on select values: unified_scheduler_wrapper routes
-# scheduler_select[1:0] (not select-11) into dnn_scheduler_wrapper, whose
-# write-gates decode 0=AI-MT, 1=BatchDNN, 2=BatchDNN++. The documented
-# selects 11/12/13 therefore do NOT run the named algorithm; the values
-# below are chosen so select[1:0] lands on the intended scheduler for both
-# the st-write gating and the output mux (and select stays >= 11).
-SCHED_SEL = {"FIFO": 0, "LIFO": 1, "AIMT": 12, "BATCHDNN": 13,
-             "BATCHDNN_PP": 14}
+# Canonical select codes (F6 fixed in RTL: the unified wrapper now decodes
+# select-11 for the DNN-aware family, so the documented codes work).
+SCHED_SEL = {"FIFO": 0, "LIFO": 1, "AIMT": 11, "BATCHDNN": 12,
+             "BATCHDNN_PP": 13}
 
 
 def _quant(a, fb):
@@ -132,6 +128,7 @@ async def golden_multi(dut):
         dut.ext_input_data_h[i].value = 0
         dut.ext_weight_data_1d[i].value = 0
     dut.cfg_mem_layout.value = 0
+    dut.cfg_casting_scheme.value = 0
     dut.cfg_tile_row.value = 0
     dut.cfg_tile_col_start.value = 0
     dut.cfg_tile_ch_start.value = 0
@@ -144,6 +141,10 @@ async def golden_multi(dut):
         await RisingEdge(dut.clk)
     dut.rst_n.value = 1
     await RisingEdge(dut.clk)
+
+    import test_golden_single as _g
+    axi_stats = {"ar": 0, "beats": 0, "trace": []}
+    cocotb.start_soon(_g._axi_responder(dut, axi_stats))
 
     # ---- submit workload ----
     if SCHED_SEL[sched] <= 10:
@@ -158,21 +159,17 @@ async def golden_multi(dut):
         dut.task_valid.value = 0
     else:
         # DNN-aware family: scheduling table, one root layer per DNN.
-        # The wrapper only accepts st writes while select>=11, and the
-        # scheduler dispatches as soon as the first row lands - so load the
-        # table from a background coroutine while the main loop below is
-        # already serving dispatches. Writes are spaced 10 cycles apart:
-        # the mt candidate queue is enqueued and popped from two separate
-        # always_ff blocks and a same-edge enqueue+pop loses the enqueue.
+        # Post-F7 the queue registers are single-owner and the balance
+        # check bootstraps, so rows are written back-to-back with real
+        # (nonzero) mem_cycles; the main loop below serves dispatches that
+        # may begin while later rows are still being written.
         async def _load_table():
             for tid, t in enumerate(tasks):
                 dut.st_write_en.value = 1
                 dut.st_layer_idx.value = tid
                 dut.st_dnn_id.value = tid
                 dut.st_prev_layer.value = 0xFF
-                # mem_cycles must be 0: the AI-MT balance check only admits
-                # the first MT when mem_cycles <= compute_cycle_ctr (init 0)
-                dut.st_mem_cycles.value = 0
+                dut.st_mem_cycles.value = 50
                 dut.st_compute_cycles.value = 300
                 dut.st_weight_fp.value = 1024
                 dut.st_ifmap_fp.value = 1024
@@ -180,9 +177,6 @@ async def golden_multi(dut):
                 dut.st_batch.value = 1
                 dut.st_total_layers.value = len(tasks)
                 await RisingEdge(dut.clk)
-                dut.st_write_en.value = 0
-                for _ in range(10):
-                    await RisingEdge(dut.clk)
             dut.st_write_en.value = 0
 
         cocotb.start_soon(_load_table())
@@ -240,6 +234,7 @@ async def golden_multi(dut):
                     cfg = current["cfg"]
                     oh, ow = current["pixel"]
                     dut.cfg_mem_layout.value       = 0
+                    dut.cfg_casting_scheme.value   = 0
                     dut.cfg_input_channels.value   = cfg["input_channels"]
                     dut.cfg_input_height.value     = cfg["input_height"]
                     dut.cfg_input_width.value      = cfg["input_width"]
@@ -270,21 +265,12 @@ async def golden_multi(dut):
                 val = int(t["flat_in"][off]) if 0 <= off < t["flat_in"].size else 0
                 wqs = t["wq_stream"]
                 K = t["cfg"]["weight_k"]
+                # natural schedule (F5 fixed in RTL)
                 if n < t["n_tuples"]:
-                    if n == 0:
-                        for r in range(H):
-                            events.setdefault(cyc + r, []).append(
-                                ("w", r, int(wqs[min(r, K - 1)][0])))
-                        events.setdefault(cyc + 3, []).append(("x", val))
-                    else:
-                        for r in range(2, H):
-                            events.setdefault(cyc + r - 2, []).append(
-                                ("w", r, int(wqs[min(r, K - 1)][n])))
-                        events.setdefault(cyc + 1, []).append(("x", val))
-                    if n + 1 < t["n_tuples"]:
-                        for r in range(min(2, H)):
-                            events.setdefault(cyc + W - 2 + r, []).append(
-                                ("w", r, int(wqs[min(r, K - 1)][n + 1])))
+                    for r in range(H):
+                        events.setdefault(cyc + r, []).append(
+                            ("w", r, int(wqs[min(r, K - 1)][n])))
+                    events.setdefault(cyc + 3, []).append(("x", val))
                 n += 1
 
             oav = int(dut.ext_output_addr_valid_2d.value)

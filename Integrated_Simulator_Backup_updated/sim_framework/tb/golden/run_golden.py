@@ -38,6 +38,8 @@ def main() -> int:
     ap.add_argument("--layout", default="CHANNEL_MAJOR",
                     choices=["CHANNEL_MAJOR", "ROW_MAJOR", "COLUMN_MAJOR"])
     ap.add_argument("--memory", default="STAMP", choices=["STAMP", "PAGED"])
+    ap.add_argument("--casting", default="MULTICAST",
+                    choices=["MULTICAST", "UNICAST", "HYBRID"])
     ap.add_argument("--array", default="8x8")
     ap.add_argument("--num-banks", type=int, default=4)
     ap.add_argument("--frac-x", type=int, default=14)
@@ -75,6 +77,7 @@ def main() -> int:
             "DATAFLOW": DATAFLOW_CODE[args.dataflow],
             "MEMORY":   MEMORY_CODE[args.memory],
             "ARRAY_HEIGHT": H, "ARRAY_WIDTH": W,
+            "NUM_BANKS": args.num_banks,
         },
         build_args=["-Wno-fatal", "-Wno-DECLFILENAME", "-Wno-UNUSED",
                     "--timescale", "1ns/1ps",
@@ -84,6 +87,7 @@ def main() -> int:
 
     slug = (f"{layer_dir.parent.name}_{layer_dir.name}_{args.dataflow}_"
             f"{args.layout}_{args.memory}_{H}x{W}_b{args.num_banks}"
+            + (f"_{args.casting}" if args.casting != "MULTICAST" else "")
             + (f"_{args.tag}" if args.tag else ""))
     result_json = FRAMEWORK / "results" / "golden_check" / "raw" / f"{slug}.json"
 
@@ -99,6 +103,7 @@ def main() -> int:
             "GOLDEN_DATAFLOW":    args.dataflow,
             "GOLDEN_LAYOUT":      args.layout,
             "GOLDEN_MEMORY":      args.memory,
+            "GOLDEN_CASTING":     args.casting,
             "GOLDEN_ARRAY_H":     str(H),
             "GOLDEN_ARRAY_W":     str(W),
             "GOLDEN_FRAC_X":      str(args.frac_x),
@@ -123,7 +128,7 @@ def main() -> int:
     verdict = {
         "layer": str(layer_dir.relative_to(FRAMEWORK)),
         "dataflow": args.dataflow, "layout": args.layout,
-        "memory": args.memory, "array": f"{H}x{W}",
+        "memory": args.memory, "casting": args.casting, "array": f"{H}x{W}",
         "num_banks": args.num_banks, "relu": bool(args.relu),
         "tol_frac_of_fullscale": args.tol,
         "full_scale": fs,
@@ -134,6 +139,13 @@ def main() -> int:
         "max_rel_err_pct": float(err.max() / fs * 100.0),
         "mean_rel_err_pct": float(err.mean() / fs * 100.0),
         "rtl_cycles_total": raw["total_cycles"],
+        "stats_bank_conflicts": raw.get("stats_bank_conflicts"),
+        "stats_bank_conflict_stall_cycles": raw.get("stats_bank_conflict_stall_cycles"),
+        "stats_loads_or_hits": raw.get("stats_loads_or_hits"),
+        "stats_moves_or_misses": raw.get("stats_moves_or_misses"),
+        "stats_keeps": raw.get("stats_keeps"),
+        "stats_bytes_loaded": raw.get("stats_bytes_loaded"),
+        "stats_bytes_moved": raw.get("stats_bytes_moved"),
         "rtl_runs": raw["n_runs"],
         "wall_seconds": round(wall, 1),
     }

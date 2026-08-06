@@ -48,18 +48,29 @@ module processing_element_is #(
     // Internal registers
     logic [DATA_WIDTH-1:0]   input_reg;    // Stationary input value
     logic [ACCUM_WIDTH-1:0]  accumulator;
+    logic [ACCUM_WIDTH-1:0]  product;
     logic [ACCUM_WIDTH-1:0]  mac_result;
 
-    // MAC operation: stationary input × streaming weight + incoming psum
+    // MAC operation. The local accumulator (read by writeback via `result`)
+    // accumulates only this PE's own products; psum_in stays on the vertical
+    // forwarding chain (finding F8, IS instance). This also removes the
+    // psum_valid gating from the accumulate: the vertical valid chain lags
+    // each row's weight pulse by one cycle, which silently disabled every
+    // row below row 0 when all rows are streamed simultaneously.
     always_comb begin
-        mac_result = $signed(input_reg) * $signed(weight_in) + $signed(psum_in);
+        product    = $signed(input_reg) * $signed(weight_in);
+        mac_result = $signed(product) + $signed(psum_in);
     end
 
-    // Input register (stationary - loaded once and held)
+    // Input register (stationary). Loadable via the LOAD_INPUTS strobe and
+    // also re-loadable while the PE is enabled during weight streaming
+    // (finding F3): without the reload path one pass can only ever apply a
+    // single stationary value against all C*KH*KW weights, which cannot
+    // form a convolution.
     always_ff @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             input_reg <= '0;
-        end else if (load_input && activation_valid_in) begin
+        end else if ((load_input || enable) && activation_valid_in) begin
             input_reg <= activation_in;
         end
     end
@@ -70,8 +81,8 @@ module processing_element_is #(
             accumulator <= '0;
         end else if (clear_accum) begin
             accumulator <= '0;
-        end else if (enable && weight_valid_in && psum_valid_in) begin
-            accumulator <= accumulator + mac_result;
+        end else if (enable && weight_valid_in) begin
+            accumulator <= accumulator + product;
         end
     end
 

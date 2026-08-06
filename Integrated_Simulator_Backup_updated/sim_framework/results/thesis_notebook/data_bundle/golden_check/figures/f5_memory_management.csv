@@ -1,0 +1,17 @@
+layer,metric,value,source
+tiny L0,STAMP off-chip bytes,1640,measured (RTL)
+tiny L0,PAGED off-chip bytes (pages x 4KB),8192,derived from measured page faults
+tiny L0,PAGED page hits,1470,measured (RTL)
+tiny L0,PAGED page misses,294,measured (RTL)
+mnist L0,STAMP off-chip bytes,3448,measured (RTL)
+mnist L0,PAGED off-chip bytes (pages x 4KB),8192,derived from measured page faults
+mnist L0,PAGED page hits,10506,measured (RTL)
+mnist L0,PAGED page misses,102,measured (RTL)
+tiny L0 STAMP,bank conflicts @ 2 banks,438,measured (RTL)
+tiny L0 STAMP,stall port-cycles @ 2 banks,876,measured (RTL)
+tiny L0 STAMP,bank conflicts @ 4 banks,2,measured (RTL)
+tiny L0 STAMP,stall port-cycles @ 4 banks,4,measured (RTL)
+tiny L0 STAMP,bank conflicts @ 8 banks,2,measured (RTL)
+tiny L0 STAMP,stall port-cycles @ 8 banks,4,measured (RTL)
+tiny L0 STAMP,bank conflicts @ 16 banks,0,measured (RTL)
+tiny L0 STAMP,stall port-cycles @ 16 banks,0,measured (RTL)
