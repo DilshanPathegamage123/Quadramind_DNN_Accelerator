@@ -39,13 +39,32 @@ module stamp_based_memory_controller
     input  logic [DATA_WIDTH-1:0] mem_rd_data,
     input  logic                  mem_rd_valid,
 
+    // Read-data handshake: high on exactly the cycles a beat is consumed
+    // (AXI RREADY & RVALID). A DRAM model needs this to advance its beat
+    // counter in lockstep; without it the testbench cannot tell a consumed
+    // beat from an idle LOAD_RECV cycle and drifts by one word per burst.
+    output logic                  mem_rd_ready_ack,
+
     output logic [31:0] stats_loads,
     output logic [31:0] stats_moves,
     output logic [31:0] stats_keeps,
+    output logic [31:0] stats_allocs,
+    output logic [31:0] stats_zeros,
     output logic [31:0] stats_bytes_loaded,
     output logic [31:0] stats_bytes_moved,
+    output logic [31:0] stats_bytes_zeroed,
+    output logic [31:0] stats_bad_ops,
     output logic        controller_busy
 );
+
+//----------------------------------------------------------
+// Opcode map - MUST stay in sync with OPCODE in stamp_compiler.py
+//----------------------------------------------------------
+localparam logic [7:0] OP_KEEP  = 8'd0;  // already at the right address
+localparam logic [7:0] OP_MOVE  = 8'd1;  // on-chip relocation
+localparam logic [7:0] OP_LOAD  = 8'd2;  // off-chip DRAM burst
+localparam logic [7:0] OP_ALLOC = 8'd3;  // output slot; compute writes it
+localparam logic [7:0] OP_ZERO  = 8'd4;  // zero-padding halo fill
 
 typedef struct packed {
     logic [7:0]  op_type;
@@ -75,6 +94,7 @@ typedef enum logic [3:0] {
     MOVE_WRITE,
     LOAD_REQ,
     LOAD_RECV,
+    ZERO_WRITE,
     PHASE_DONE
 } state_t;
 
@@ -108,8 +128,12 @@ always_ff @(posedge clk or negedge rst_n) begin
         stats_loads <= 0;
         stats_moves <= 0;
         stats_keeps <= 0;
+        stats_allocs <= 0;
+        stats_zeros <= 0;
         stats_bytes_loaded <= 0;
         stats_bytes_moved <= 0;
+        stats_bytes_zeroed <= 0;
+        stats_bad_ops <= 0;
     end
     else begin
 
@@ -139,29 +163,71 @@ always_ff @(posedge clk or negedge rst_n) begin
 
                 case(metadata_ram[op_idx].op_type)
 
-                    8'd0: begin
+                    OP_KEEP: begin
                         stats_keeps <= stats_keeps + 1;
                         op_idx <= op_idx + 1;
                         state <= FETCH_META;
                     end
 
-                    8'd1: begin
+                    // NOTE on the zero-length guard used by MOVE/LOAD/ZERO:
+                    // the transfer states test `words_left == 1` to finish, so
+                    // an op whose size is smaller than one word would wrap
+                    // 0 -> 0xFFFF and spin for 65k cycles. Skip those instead.
+                    OP_MOVE: begin
                         stats_moves <= stats_moves + 1;
                         stats_bytes_moved <=
                             stats_bytes_moved + metadata_ram[op_idx].size;
 
-                        state <= MOVE_READ;
+                        if (metadata_ram[op_idx].size < BPW) begin
+                            op_idx <= op_idx + 1;
+                            state <= FETCH_META;
+                        end else begin
+                            state <= MOVE_READ;
+                        end
                     end
 
-                    8'd2: begin
+                    OP_LOAD: begin
                         stats_loads <= stats_loads + 1;
                         stats_bytes_loaded <=
                             stats_bytes_loaded + metadata_ram[op_idx].size;
 
-                        state <= LOAD_REQ;
+                        if (metadata_ram[op_idx].size < BPW) begin
+                            op_idx <= op_idx + 1;
+                            state <= FETCH_META;
+                        end else begin
+                            state <= LOAD_REQ;
+                        end
                     end
 
+                    // Output tile slot: produced by the compute pipeline, so
+                    // the controller only records it and moves on. No DRAM
+                    // read and no on-chip copy.
+                    OP_ALLOC: begin
+                        stats_allocs <= stats_allocs + 1;
+                        op_idx <= op_idx + 1;
+                        state <= FETCH_META;
+                    end
+
+                    // Zero-padding halo: written on-chip as zeros. Costs
+                    // scratchpad write cycles but no off-chip bandwidth.
+                    OP_ZERO: begin
+                        stats_zeros <= stats_zeros + 1;
+                        stats_bytes_zeroed <=
+                            stats_bytes_zeroed + metadata_ram[op_idx].size;
+
+                        if (metadata_ram[op_idx].size < BPW) begin
+                            op_idx <= op_idx + 1;
+                            state <= FETCH_META;
+                        end else begin
+                            state <= ZERO_WRITE;
+                        end
+                    end
+
+                    // An opcode the hardware does not implement is a
+                    // compiler/RTL version mismatch. Count it so the
+                    // testbench can fail loudly instead of silently skipping.
                     default: begin
+                        stats_bad_ops <= stats_bad_ops + 1;
                         op_idx <= op_idx + 1;
                         state <= FETCH_META;
                     end
@@ -200,6 +266,17 @@ always_ff @(posedge clk or negedge rst_n) begin
                     burst_words_left <= words_left;
 
                 state <= LOAD_RECV;
+            end
+        end
+
+        ZERO_WRITE: begin
+
+            words_left <= words_left - 1;
+            dst_addr   <= dst_addr + BPW;
+
+            if (words_left == 1) begin
+                op_idx <= op_idx + 1;
+                state <= FETCH_META;
             end
         end
 
@@ -264,6 +341,12 @@ always_comb begin
         end
     end
 
+    ZERO_WRITE: begin
+        spad_wr_en   = 1;
+        spad_wr_addr = dst_addr[$clog2(SPAD_DEPTH)+1:2];
+        spad_wr_data = '0;
+    end
+
     endcase
 end
 
@@ -272,6 +355,8 @@ end
 //----------------------------------------------------------
 
 assign mem_rd_req  = (state == LOAD_REQ);
+
+assign mem_rd_ready_ack = (state == LOAD_RECV) && mem_rd_valid;
 
 assign mem_rd_addr = src_addr;
 

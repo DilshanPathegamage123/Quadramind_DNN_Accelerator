@@ -1,0 +1,12 @@
+config,scheme,knob,knob_value,luts,ffs,brams,dsps,lutram,wns_ns,fmax_mhz
+stamp_ctrl_m256,STAMP (static),metadata_depth,256,6434,22198,0,0,0,7.533,405.4
+stamp_ctrl_m512,STAMP (static),metadata_depth,512,12574,43938,0,0,0,7.237,361.9
+stamp_ctrl_m1024,STAMP (static),metadata_depth,1024,24680,87468,0,0,0,7.512,401.9
+paged_mgmt_p128,PAGED (dynamic),num_pages,128,3074,2752,0,0,0,8.361,610.1
+paged_mgmt_p256,PAGED (dynamic),num_pages,256,6110,5440,0,0,0,8.317,594.2
+paged_mgmt_p512,PAGED (dynamic),num_pages,512,12106,10816,0,0,0,8.121,532.2
+scratchpad_b1,Shared scratchpad,num_banks,1,71388,8357,0,0,0,6.341,273.3
+scratchpad_b2,Shared scratchpad,num_banks,2,38186,8421,0,0,0,8.834,857.6
+scratchpad_b4,Shared scratchpad,num_banks,4,44880,8421,0,0,0,8.604,716.3
+scratchpad_b8,Shared scratchpad,num_banks,8,35356,8421,0,0,0,8.875,888.9
+scratchpad_b16,Shared scratchpad,num_banks,16,37713,8421,0,0,0,9.001,1001.0

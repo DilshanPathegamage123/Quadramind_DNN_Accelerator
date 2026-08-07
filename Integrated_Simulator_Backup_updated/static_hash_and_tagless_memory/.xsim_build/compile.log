@@ -1,0 +1,6 @@
+INFO: [VRFC 10-2263] Analyzing SystemVerilog file "/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/static_hash_and_tagless_memory/.xsim_build/stamp_memory_pkg.sv" into library work
+INFO: [VRFC 10-2263] Analyzing SystemVerilog file "/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/static_hash_and_tagless_memory/.xsim_build/stamp_based_memory_controller.sv" into library work
+INFO: [VRFC 10-311] analyzing module stamp_based_memory_controller
+INFO: [VRFC 10-2263] Analyzing SystemVerilog file "/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/static_hash_and_tagless_memory/.xsim_build/tb_stamp_based_memory_controller.sv" into library work
+WARNING: [VRFC 10-3609] overwriting previous definition of package 'systolic_array_pkg' [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/static_hash_and_tagless_memory/.xsim_build/tb_stamp_based_memory_controller.sv:33]
+INFO: [VRFC 10-311] analyzing module tb_stamp_based_memory_controller

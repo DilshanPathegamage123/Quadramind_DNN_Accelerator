@@ -5514,16 +5514,34 @@
       "to_phase": 1,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "move",
           "tile_id": 1000,
           "tile_type": "input",
           "src_addr": 0,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 768,
           "offset": 0
         },
         {
           "op_type": "load",
+          "tile_id": 1000,
+          "tile_type": "input",
+          "src_addr": 20,
+          "dst_addr": 768,
+          "size": 1280,
+          "offset": 0
+        },
+        {
+          "op_type": "zero",
+          "tile_id": 1000,
+          "tile_type": "input",
+          "src_addr": -1,
+          "dst_addr": 2048,
+          "size": 256,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 1002,
           "tile_type": "output",
           "src_addr": -1,
@@ -5543,12 +5561,17 @@
       ],
       "stats": {
         "loads": 1,
-        "moves": 0,
-        "keeps": 2,
-        "load_bytes": 256,
-        "move_bytes": 0,
-        "total_ops": 3,
-        "bandwidth_saved": 0
+        "moves": 1,
+        "keeps": 1,
+        "allocs": 1,
+        "zeros": 1,
+        "load_bytes": 1280,
+        "move_bytes": 768,
+        "keep_bytes": 2304,
+        "alloc_bytes": 256,
+        "zero_bytes": 256,
+        "total_ops": 5,
+        "bandwidth_saved": 3072
       }
     },
     {
@@ -5556,16 +5579,34 @@
       "to_phase": 2,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "move",
           "tile_id": 2000,
           "tile_type": "input",
           "src_addr": 0,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 768,
           "offset": 0
         },
         {
           "op_type": "load",
+          "tile_id": 2000,
+          "tile_type": "input",
+          "src_addr": 36,
+          "dst_addr": 768,
+          "size": 1280,
+          "offset": 0
+        },
+        {
+          "op_type": "zero",
+          "tile_id": 2000,
+          "tile_type": "input",
+          "src_addr": -1,
+          "dst_addr": 2048,
+          "size": 256,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 2002,
           "tile_type": "output",
           "src_addr": -1,
@@ -5585,12 +5626,17 @@
       ],
       "stats": {
         "loads": 1,
-        "moves": 0,
-        "keeps": 2,
-        "load_bytes": 256,
-        "move_bytes": 0,
-        "total_ops": 3,
-        "bandwidth_saved": 0
+        "moves": 1,
+        "keeps": 1,
+        "allocs": 1,
+        "zeros": 1,
+        "load_bytes": 1280,
+        "move_bytes": 768,
+        "keep_bytes": 2304,
+        "alloc_bytes": 256,
+        "zero_bytes": 256,
+        "total_ops": 5,
+        "bandwidth_saved": 3072
       }
     },
     {
@@ -5598,16 +5644,34 @@
       "to_phase": 3,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "move",
           "tile_id": 3000,
           "tile_type": "input",
           "src_addr": 0,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 768,
           "offset": 0
         },
         {
           "op_type": "load",
+          "tile_id": 3000,
+          "tile_type": "input",
+          "src_addr": 52,
+          "dst_addr": 768,
+          "size": 320,
+          "offset": 0
+        },
+        {
+          "op_type": "zero",
+          "tile_id": 3000,
+          "tile_type": "input",
+          "src_addr": -1,
+          "dst_addr": 1088,
+          "size": 1216,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 3002,
           "tile_type": "output",
           "src_addr": -1,
@@ -5627,12 +5691,17 @@
       ],
       "stats": {
         "loads": 1,
-        "moves": 1,
-        "keeps": 1,
-        "load_bytes": 128,
-        "move_bytes": 2304,
-        "total_ops": 3,
-        "bandwidth_saved": 2304
+        "moves": 2,
+        "keeps": 0,
+        "allocs": 1,
+        "zeros": 1,
+        "load_bytes": 320,
+        "move_bytes": 3072,
+        "keep_bytes": 0,
+        "alloc_bytes": 128,
+        "zero_bytes": 1216,
+        "total_ops": 5,
+        "bandwidth_saved": 3072
       }
     },
     {
@@ -5640,16 +5709,25 @@
       "to_phase": 4,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "load",
           "tile_id": 4000,
           "tile_type": "input",
-          "src_addr": 0,
+          "src_addr": 168,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 1920,
           "offset": 0
         },
         {
-          "op_type": "load",
+          "op_type": "zero",
+          "tile_id": 4000,
+          "tile_type": "input",
+          "src_addr": -1,
+          "dst_addr": 1920,
+          "size": 384,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 4002,
           "tile_type": "output",
           "src_addr": -1,
@@ -5670,10 +5748,15 @@
       "stats": {
         "loads": 1,
         "moves": 1,
-        "keeps": 1,
-        "load_bytes": 256,
+        "keeps": 0,
+        "allocs": 1,
+        "zeros": 1,
+        "load_bytes": 1920,
         "move_bytes": 2304,
-        "total_ops": 3,
+        "keep_bytes": 0,
+        "alloc_bytes": 256,
+        "zero_bytes": 384,
+        "total_ops": 4,
         "bandwidth_saved": 2304
       }
     },
@@ -5682,16 +5765,25 @@
       "to_phase": 5,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "move",
           "tile_id": 5000,
           "tile_type": "input",
           "src_addr": 0,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 768,
           "offset": 0
         },
         {
           "op_type": "load",
+          "tile_id": 5000,
+          "tile_type": "input",
+          "src_addr": 188,
+          "dst_addr": 768,
+          "size": 1536,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 5002,
           "tile_type": "output",
           "src_addr": -1,
@@ -5711,12 +5803,17 @@
       ],
       "stats": {
         "loads": 1,
-        "moves": 0,
-        "keeps": 2,
-        "load_bytes": 256,
-        "move_bytes": 0,
-        "total_ops": 3,
-        "bandwidth_saved": 0
+        "moves": 1,
+        "keeps": 1,
+        "allocs": 1,
+        "zeros": 0,
+        "load_bytes": 1536,
+        "move_bytes": 768,
+        "keep_bytes": 2304,
+        "alloc_bytes": 256,
+        "zero_bytes": 0,
+        "total_ops": 4,
+        "bandwidth_saved": 3072
       }
     },
     {
@@ -5724,16 +5821,25 @@
       "to_phase": 6,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "move",
           "tile_id": 6000,
           "tile_type": "input",
           "src_addr": 0,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 768,
           "offset": 0
         },
         {
           "op_type": "load",
+          "tile_id": 6000,
+          "tile_type": "input",
+          "src_addr": 204,
+          "dst_addr": 768,
+          "size": 1536,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 6002,
           "tile_type": "output",
           "src_addr": -1,
@@ -5753,12 +5859,17 @@
       ],
       "stats": {
         "loads": 1,
-        "moves": 0,
-        "keeps": 2,
-        "load_bytes": 256,
-        "move_bytes": 0,
-        "total_ops": 3,
-        "bandwidth_saved": 0
+        "moves": 1,
+        "keeps": 1,
+        "allocs": 1,
+        "zeros": 0,
+        "load_bytes": 1536,
+        "move_bytes": 768,
+        "keep_bytes": 2304,
+        "alloc_bytes": 256,
+        "zero_bytes": 0,
+        "total_ops": 4,
+        "bandwidth_saved": 3072
       }
     },
     {
@@ -5766,16 +5877,34 @@
       "to_phase": 7,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "move",
           "tile_id": 7000,
           "tile_type": "input",
           "src_addr": 0,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 768,
           "offset": 0
         },
         {
           "op_type": "load",
+          "tile_id": 7000,
+          "tile_type": "input",
+          "src_addr": 220,
+          "dst_addr": 768,
+          "size": 384,
+          "offset": 0
+        },
+        {
+          "op_type": "zero",
+          "tile_id": 7000,
+          "tile_type": "input",
+          "src_addr": -1,
+          "dst_addr": 1152,
+          "size": 1152,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 7002,
           "tile_type": "output",
           "src_addr": -1,
@@ -5795,12 +5924,17 @@
       ],
       "stats": {
         "loads": 1,
-        "moves": 1,
-        "keeps": 1,
-        "load_bytes": 128,
-        "move_bytes": 2304,
-        "total_ops": 3,
-        "bandwidth_saved": 2304
+        "moves": 2,
+        "keeps": 0,
+        "allocs": 1,
+        "zeros": 1,
+        "load_bytes": 384,
+        "move_bytes": 3072,
+        "keep_bytes": 0,
+        "alloc_bytes": 128,
+        "zero_bytes": 1152,
+        "total_ops": 5,
+        "bandwidth_saved": 3072
       }
     },
     {
@@ -5808,16 +5942,25 @@
       "to_phase": 8,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "load",
           "tile_id": 8000,
           "tile_type": "input",
-          "src_addr": 0,
+          "src_addr": 392,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 1920,
           "offset": 0
         },
         {
-          "op_type": "load",
+          "op_type": "zero",
+          "tile_id": 8000,
+          "tile_type": "input",
+          "src_addr": -1,
+          "dst_addr": 1920,
+          "size": 384,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 8002,
           "tile_type": "output",
           "src_addr": -1,
@@ -5838,10 +5981,15 @@
       "stats": {
         "loads": 1,
         "moves": 1,
-        "keeps": 1,
-        "load_bytes": 256,
+        "keeps": 0,
+        "allocs": 1,
+        "zeros": 1,
+        "load_bytes": 1920,
         "move_bytes": 2304,
-        "total_ops": 3,
+        "keep_bytes": 0,
+        "alloc_bytes": 256,
+        "zero_bytes": 384,
+        "total_ops": 4,
         "bandwidth_saved": 2304
       }
     },
@@ -5850,16 +5998,25 @@
       "to_phase": 9,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "move",
           "tile_id": 9000,
           "tile_type": "input",
           "src_addr": 0,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 768,
           "offset": 0
         },
         {
           "op_type": "load",
+          "tile_id": 9000,
+          "tile_type": "input",
+          "src_addr": 412,
+          "dst_addr": 768,
+          "size": 1536,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 9002,
           "tile_type": "output",
           "src_addr": -1,
@@ -5879,12 +6036,17 @@
       ],
       "stats": {
         "loads": 1,
-        "moves": 0,
-        "keeps": 2,
-        "load_bytes": 256,
-        "move_bytes": 0,
-        "total_ops": 3,
-        "bandwidth_saved": 0
+        "moves": 1,
+        "keeps": 1,
+        "allocs": 1,
+        "zeros": 0,
+        "load_bytes": 1536,
+        "move_bytes": 768,
+        "keep_bytes": 2304,
+        "alloc_bytes": 256,
+        "zero_bytes": 0,
+        "total_ops": 4,
+        "bandwidth_saved": 3072
       }
     },
     {
@@ -5892,16 +6054,25 @@
       "to_phase": 10,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "move",
           "tile_id": 10000,
           "tile_type": "input",
           "src_addr": 0,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 768,
           "offset": 0
         },
         {
           "op_type": "load",
+          "tile_id": 10000,
+          "tile_type": "input",
+          "src_addr": 428,
+          "dst_addr": 768,
+          "size": 1536,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 10002,
           "tile_type": "output",
           "src_addr": -1,
@@ -5921,12 +6092,17 @@
       ],
       "stats": {
         "loads": 1,
-        "moves": 0,
-        "keeps": 2,
-        "load_bytes": 256,
-        "move_bytes": 0,
-        "total_ops": 3,
-        "bandwidth_saved": 0
+        "moves": 1,
+        "keeps": 1,
+        "allocs": 1,
+        "zeros": 0,
+        "load_bytes": 1536,
+        "move_bytes": 768,
+        "keep_bytes": 2304,
+        "alloc_bytes": 256,
+        "zero_bytes": 0,
+        "total_ops": 4,
+        "bandwidth_saved": 3072
       }
     },
     {
@@ -5934,16 +6110,34 @@
       "to_phase": 11,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "move",
           "tile_id": 11000,
           "tile_type": "input",
           "src_addr": 0,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 768,
           "offset": 0
         },
         {
           "op_type": "load",
+          "tile_id": 11000,
+          "tile_type": "input",
+          "src_addr": 444,
+          "dst_addr": 768,
+          "size": 384,
+          "offset": 0
+        },
+        {
+          "op_type": "zero",
+          "tile_id": 11000,
+          "tile_type": "input",
+          "src_addr": -1,
+          "dst_addr": 1152,
+          "size": 1152,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 11002,
           "tile_type": "output",
           "src_addr": -1,
@@ -5963,12 +6157,17 @@
       ],
       "stats": {
         "loads": 1,
-        "moves": 1,
-        "keeps": 1,
-        "load_bytes": 128,
-        "move_bytes": 2304,
-        "total_ops": 3,
-        "bandwidth_saved": 2304
+        "moves": 2,
+        "keeps": 0,
+        "allocs": 1,
+        "zeros": 1,
+        "load_bytes": 384,
+        "move_bytes": 3072,
+        "keep_bytes": 0,
+        "alloc_bytes": 128,
+        "zero_bytes": 1152,
+        "total_ops": 5,
+        "bandwidth_saved": 3072
       }
     },
     {
@@ -5976,16 +6175,25 @@
       "to_phase": 12,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "load",
           "tile_id": 12000,
           "tile_type": "input",
-          "src_addr": 0,
+          "src_addr": 616,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 960,
           "offset": 0
         },
         {
-          "op_type": "load",
+          "op_type": "zero",
+          "tile_id": 12000,
+          "tile_type": "input",
+          "src_addr": -1,
+          "dst_addr": 960,
+          "size": 1344,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 12002,
           "tile_type": "output",
           "src_addr": -1,
@@ -6006,11 +6214,16 @@
       "stats": {
         "loads": 1,
         "moves": 0,
-        "keeps": 2,
-        "load_bytes": 128,
+        "keeps": 1,
+        "allocs": 1,
+        "zeros": 1,
+        "load_bytes": 960,
         "move_bytes": 0,
-        "total_ops": 3,
-        "bandwidth_saved": 0
+        "keep_bytes": 2304,
+        "alloc_bytes": 128,
+        "zero_bytes": 1344,
+        "total_ops": 4,
+        "bandwidth_saved": 2304
       }
     },
     {
@@ -6018,16 +6231,34 @@
       "to_phase": 13,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "move",
           "tile_id": 13000,
           "tile_type": "input",
           "src_addr": 0,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 768,
           "offset": 0
         },
         {
           "op_type": "load",
+          "tile_id": 13000,
+          "tile_type": "input",
+          "src_addr": 636,
+          "dst_addr": 768,
+          "size": 768,
+          "offset": 0
+        },
+        {
+          "op_type": "zero",
+          "tile_id": 13000,
+          "tile_type": "input",
+          "src_addr": -1,
+          "dst_addr": 1536,
+          "size": 768,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 13002,
           "tile_type": "output",
           "src_addr": -1,
@@ -6047,12 +6278,17 @@
       ],
       "stats": {
         "loads": 1,
-        "moves": 0,
-        "keeps": 2,
-        "load_bytes": 128,
-        "move_bytes": 0,
-        "total_ops": 3,
-        "bandwidth_saved": 0
+        "moves": 1,
+        "keeps": 1,
+        "allocs": 1,
+        "zeros": 1,
+        "load_bytes": 768,
+        "move_bytes": 768,
+        "keep_bytes": 2304,
+        "alloc_bytes": 128,
+        "zero_bytes": 768,
+        "total_ops": 5,
+        "bandwidth_saved": 3072
       }
     },
     {
@@ -6060,16 +6296,34 @@
       "to_phase": 14,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "move",
           "tile_id": 14000,
           "tile_type": "input",
           "src_addr": 0,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 768,
           "offset": 0
         },
         {
           "op_type": "load",
+          "tile_id": 14000,
+          "tile_type": "input",
+          "src_addr": 652,
+          "dst_addr": 768,
+          "size": 768,
+          "offset": 0
+        },
+        {
+          "op_type": "zero",
+          "tile_id": 14000,
+          "tile_type": "input",
+          "src_addr": -1,
+          "dst_addr": 1536,
+          "size": 768,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 14002,
           "tile_type": "output",
           "src_addr": -1,
@@ -6089,12 +6343,17 @@
       ],
       "stats": {
         "loads": 1,
-        "moves": 0,
-        "keeps": 2,
-        "load_bytes": 128,
-        "move_bytes": 0,
-        "total_ops": 3,
-        "bandwidth_saved": 0
+        "moves": 1,
+        "keeps": 1,
+        "allocs": 1,
+        "zeros": 1,
+        "load_bytes": 768,
+        "move_bytes": 768,
+        "keep_bytes": 2304,
+        "alloc_bytes": 128,
+        "zero_bytes": 768,
+        "total_ops": 5,
+        "bandwidth_saved": 3072
       }
     },
     {
@@ -6102,16 +6361,34 @@
       "to_phase": 15,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "move",
           "tile_id": 15000,
           "tile_type": "input",
           "src_addr": 0,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 768,
           "offset": 0
         },
         {
           "op_type": "load",
+          "tile_id": 15000,
+          "tile_type": "input",
+          "src_addr": 668,
+          "dst_addr": 768,
+          "size": 192,
+          "offset": 0
+        },
+        {
+          "op_type": "zero",
+          "tile_id": 15000,
+          "tile_type": "input",
+          "src_addr": -1,
+          "dst_addr": 960,
+          "size": 1344,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 15002,
           "tile_type": "output",
           "src_addr": -1,
@@ -6131,12 +6408,17 @@
       ],
       "stats": {
         "loads": 1,
-        "moves": 1,
-        "keeps": 1,
-        "load_bytes": 64,
-        "move_bytes": 2304,
-        "total_ops": 3,
-        "bandwidth_saved": 2304
+        "moves": 2,
+        "keeps": 0,
+        "allocs": 1,
+        "zeros": 1,
+        "load_bytes": 192,
+        "move_bytes": 3072,
+        "keep_bytes": 0,
+        "alloc_bytes": 64,
+        "zero_bytes": 1344,
+        "total_ops": 5,
+        "bandwidth_saved": 3072
       }
     },
     {
@@ -6144,16 +6426,25 @@
       "to_phase": 16,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "load",
           "tile_id": 16000,
           "tile_type": "input",
           "src_addr": 0,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 1600,
           "offset": 0
         },
         {
-          "op_type": "load",
+          "op_type": "zero",
+          "tile_id": 16000,
+          "tile_type": "input",
+          "src_addr": -1,
+          "dst_addr": 1600,
+          "size": 704,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 16002,
           "tile_type": "output",
           "src_addr": -1,
@@ -6162,23 +6453,28 @@
           "offset": 0
         },
         {
-          "op_type": "move",
+          "op_type": "load",
           "tile_id": 16001,
           "tile_type": "weight",
-          "src_addr": 2368,
+          "src_addr": 268437760,
           "dst_addr": 2560,
           "size": 2304,
-          "offset": 192
+          "offset": 0
         }
       ],
       "stats": {
-        "loads": 1,
-        "moves": 1,
-        "keeps": 1,
-        "load_bytes": 256,
-        "move_bytes": 2304,
-        "total_ops": 3,
-        "bandwidth_saved": 2304
+        "loads": 2,
+        "moves": 0,
+        "keeps": 0,
+        "allocs": 1,
+        "zeros": 1,
+        "load_bytes": 3904,
+        "move_bytes": 0,
+        "keep_bytes": 0,
+        "alloc_bytes": 256,
+        "zero_bytes": 704,
+        "total_ops": 4,
+        "bandwidth_saved": 0
       }
     },
     {
@@ -6186,16 +6482,34 @@
       "to_phase": 17,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "move",
           "tile_id": 17000,
           "tile_type": "input",
           "src_addr": 0,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 768,
           "offset": 0
         },
         {
           "op_type": "load",
+          "tile_id": 17000,
+          "tile_type": "input",
+          "src_addr": 20,
+          "dst_addr": 768,
+          "size": 1280,
+          "offset": 0
+        },
+        {
+          "op_type": "zero",
+          "tile_id": 17000,
+          "tile_type": "input",
+          "src_addr": -1,
+          "dst_addr": 2048,
+          "size": 256,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 17002,
           "tile_type": "output",
           "src_addr": -1,
@@ -6215,12 +6529,17 @@
       ],
       "stats": {
         "loads": 1,
-        "moves": 0,
-        "keeps": 2,
-        "load_bytes": 256,
-        "move_bytes": 0,
-        "total_ops": 3,
-        "bandwidth_saved": 0
+        "moves": 1,
+        "keeps": 1,
+        "allocs": 1,
+        "zeros": 1,
+        "load_bytes": 1280,
+        "move_bytes": 768,
+        "keep_bytes": 2304,
+        "alloc_bytes": 256,
+        "zero_bytes": 256,
+        "total_ops": 5,
+        "bandwidth_saved": 3072
       }
     },
     {
@@ -6228,16 +6547,34 @@
       "to_phase": 18,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "move",
           "tile_id": 18000,
           "tile_type": "input",
           "src_addr": 0,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 768,
           "offset": 0
         },
         {
           "op_type": "load",
+          "tile_id": 18000,
+          "tile_type": "input",
+          "src_addr": 36,
+          "dst_addr": 768,
+          "size": 1280,
+          "offset": 0
+        },
+        {
+          "op_type": "zero",
+          "tile_id": 18000,
+          "tile_type": "input",
+          "src_addr": -1,
+          "dst_addr": 2048,
+          "size": 256,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 18002,
           "tile_type": "output",
           "src_addr": -1,
@@ -6257,12 +6594,17 @@
       ],
       "stats": {
         "loads": 1,
-        "moves": 0,
-        "keeps": 2,
-        "load_bytes": 256,
-        "move_bytes": 0,
-        "total_ops": 3,
-        "bandwidth_saved": 0
+        "moves": 1,
+        "keeps": 1,
+        "allocs": 1,
+        "zeros": 1,
+        "load_bytes": 1280,
+        "move_bytes": 768,
+        "keep_bytes": 2304,
+        "alloc_bytes": 256,
+        "zero_bytes": 256,
+        "total_ops": 5,
+        "bandwidth_saved": 3072
       }
     },
     {
@@ -6270,16 +6612,34 @@
       "to_phase": 19,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "move",
           "tile_id": 19000,
           "tile_type": "input",
           "src_addr": 0,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 768,
           "offset": 0
         },
         {
           "op_type": "load",
+          "tile_id": 19000,
+          "tile_type": "input",
+          "src_addr": 52,
+          "dst_addr": 768,
+          "size": 320,
+          "offset": 0
+        },
+        {
+          "op_type": "zero",
+          "tile_id": 19000,
+          "tile_type": "input",
+          "src_addr": -1,
+          "dst_addr": 1088,
+          "size": 1216,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 19002,
           "tile_type": "output",
           "src_addr": -1,
@@ -6299,12 +6659,17 @@
       ],
       "stats": {
         "loads": 1,
-        "moves": 1,
-        "keeps": 1,
-        "load_bytes": 128,
-        "move_bytes": 2304,
-        "total_ops": 3,
-        "bandwidth_saved": 2304
+        "moves": 2,
+        "keeps": 0,
+        "allocs": 1,
+        "zeros": 1,
+        "load_bytes": 320,
+        "move_bytes": 3072,
+        "keep_bytes": 0,
+        "alloc_bytes": 128,
+        "zero_bytes": 1216,
+        "total_ops": 5,
+        "bandwidth_saved": 3072
       }
     },
     {
@@ -6312,16 +6677,25 @@
       "to_phase": 20,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "load",
           "tile_id": 20000,
           "tile_type": "input",
-          "src_addr": 0,
+          "src_addr": 168,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 1920,
           "offset": 0
         },
         {
-          "op_type": "load",
+          "op_type": "zero",
+          "tile_id": 20000,
+          "tile_type": "input",
+          "src_addr": -1,
+          "dst_addr": 1920,
+          "size": 384,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 20002,
           "tile_type": "output",
           "src_addr": -1,
@@ -6342,10 +6716,15 @@
       "stats": {
         "loads": 1,
         "moves": 1,
-        "keeps": 1,
-        "load_bytes": 256,
+        "keeps": 0,
+        "allocs": 1,
+        "zeros": 1,
+        "load_bytes": 1920,
         "move_bytes": 2304,
-        "total_ops": 3,
+        "keep_bytes": 0,
+        "alloc_bytes": 256,
+        "zero_bytes": 384,
+        "total_ops": 4,
         "bandwidth_saved": 2304
       }
     },
@@ -6354,16 +6733,25 @@
       "to_phase": 21,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "move",
           "tile_id": 21000,
           "tile_type": "input",
           "src_addr": 0,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 768,
           "offset": 0
         },
         {
           "op_type": "load",
+          "tile_id": 21000,
+          "tile_type": "input",
+          "src_addr": 188,
+          "dst_addr": 768,
+          "size": 1536,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 21002,
           "tile_type": "output",
           "src_addr": -1,
@@ -6383,12 +6771,17 @@
       ],
       "stats": {
         "loads": 1,
-        "moves": 0,
-        "keeps": 2,
-        "load_bytes": 256,
-        "move_bytes": 0,
-        "total_ops": 3,
-        "bandwidth_saved": 0
+        "moves": 1,
+        "keeps": 1,
+        "allocs": 1,
+        "zeros": 0,
+        "load_bytes": 1536,
+        "move_bytes": 768,
+        "keep_bytes": 2304,
+        "alloc_bytes": 256,
+        "zero_bytes": 0,
+        "total_ops": 4,
+        "bandwidth_saved": 3072
       }
     },
     {
@@ -6396,16 +6789,25 @@
       "to_phase": 22,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "move",
           "tile_id": 22000,
           "tile_type": "input",
           "src_addr": 0,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 768,
           "offset": 0
         },
         {
           "op_type": "load",
+          "tile_id": 22000,
+          "tile_type": "input",
+          "src_addr": 204,
+          "dst_addr": 768,
+          "size": 1536,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 22002,
           "tile_type": "output",
           "src_addr": -1,
@@ -6425,12 +6827,17 @@
       ],
       "stats": {
         "loads": 1,
-        "moves": 0,
-        "keeps": 2,
-        "load_bytes": 256,
-        "move_bytes": 0,
-        "total_ops": 3,
-        "bandwidth_saved": 0
+        "moves": 1,
+        "keeps": 1,
+        "allocs": 1,
+        "zeros": 0,
+        "load_bytes": 1536,
+        "move_bytes": 768,
+        "keep_bytes": 2304,
+        "alloc_bytes": 256,
+        "zero_bytes": 0,
+        "total_ops": 4,
+        "bandwidth_saved": 3072
       }
     },
     {
@@ -6438,16 +6845,34 @@
       "to_phase": 23,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "move",
           "tile_id": 23000,
           "tile_type": "input",
           "src_addr": 0,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 768,
           "offset": 0
         },
         {
           "op_type": "load",
+          "tile_id": 23000,
+          "tile_type": "input",
+          "src_addr": 220,
+          "dst_addr": 768,
+          "size": 384,
+          "offset": 0
+        },
+        {
+          "op_type": "zero",
+          "tile_id": 23000,
+          "tile_type": "input",
+          "src_addr": -1,
+          "dst_addr": 1152,
+          "size": 1152,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 23002,
           "tile_type": "output",
           "src_addr": -1,
@@ -6467,12 +6892,17 @@
       ],
       "stats": {
         "loads": 1,
-        "moves": 1,
-        "keeps": 1,
-        "load_bytes": 128,
-        "move_bytes": 2304,
-        "total_ops": 3,
-        "bandwidth_saved": 2304
+        "moves": 2,
+        "keeps": 0,
+        "allocs": 1,
+        "zeros": 1,
+        "load_bytes": 384,
+        "move_bytes": 3072,
+        "keep_bytes": 0,
+        "alloc_bytes": 128,
+        "zero_bytes": 1152,
+        "total_ops": 5,
+        "bandwidth_saved": 3072
       }
     },
     {
@@ -6480,16 +6910,25 @@
       "to_phase": 24,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "load",
           "tile_id": 24000,
           "tile_type": "input",
-          "src_addr": 0,
+          "src_addr": 392,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 1920,
           "offset": 0
         },
         {
-          "op_type": "load",
+          "op_type": "zero",
+          "tile_id": 24000,
+          "tile_type": "input",
+          "src_addr": -1,
+          "dst_addr": 1920,
+          "size": 384,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 24002,
           "tile_type": "output",
           "src_addr": -1,
@@ -6510,10 +6949,15 @@
       "stats": {
         "loads": 1,
         "moves": 1,
-        "keeps": 1,
-        "load_bytes": 256,
+        "keeps": 0,
+        "allocs": 1,
+        "zeros": 1,
+        "load_bytes": 1920,
         "move_bytes": 2304,
-        "total_ops": 3,
+        "keep_bytes": 0,
+        "alloc_bytes": 256,
+        "zero_bytes": 384,
+        "total_ops": 4,
         "bandwidth_saved": 2304
       }
     },
@@ -6522,16 +6966,25 @@
       "to_phase": 25,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "move",
           "tile_id": 25000,
           "tile_type": "input",
           "src_addr": 0,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 768,
           "offset": 0
         },
         {
           "op_type": "load",
+          "tile_id": 25000,
+          "tile_type": "input",
+          "src_addr": 412,
+          "dst_addr": 768,
+          "size": 1536,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 25002,
           "tile_type": "output",
           "src_addr": -1,
@@ -6551,12 +7004,17 @@
       ],
       "stats": {
         "loads": 1,
-        "moves": 0,
-        "keeps": 2,
-        "load_bytes": 256,
-        "move_bytes": 0,
-        "total_ops": 3,
-        "bandwidth_saved": 0
+        "moves": 1,
+        "keeps": 1,
+        "allocs": 1,
+        "zeros": 0,
+        "load_bytes": 1536,
+        "move_bytes": 768,
+        "keep_bytes": 2304,
+        "alloc_bytes": 256,
+        "zero_bytes": 0,
+        "total_ops": 4,
+        "bandwidth_saved": 3072
       }
     },
     {
@@ -6564,16 +7022,25 @@
       "to_phase": 26,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "move",
           "tile_id": 26000,
           "tile_type": "input",
           "src_addr": 0,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 768,
           "offset": 0
         },
         {
           "op_type": "load",
+          "tile_id": 26000,
+          "tile_type": "input",
+          "src_addr": 428,
+          "dst_addr": 768,
+          "size": 1536,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 26002,
           "tile_type": "output",
           "src_addr": -1,
@@ -6593,12 +7060,17 @@
       ],
       "stats": {
         "loads": 1,
-        "moves": 0,
-        "keeps": 2,
-        "load_bytes": 256,
-        "move_bytes": 0,
-        "total_ops": 3,
-        "bandwidth_saved": 0
+        "moves": 1,
+        "keeps": 1,
+        "allocs": 1,
+        "zeros": 0,
+        "load_bytes": 1536,
+        "move_bytes": 768,
+        "keep_bytes": 2304,
+        "alloc_bytes": 256,
+        "zero_bytes": 0,
+        "total_ops": 4,
+        "bandwidth_saved": 3072
       }
     },
     {
@@ -6606,16 +7078,34 @@
       "to_phase": 27,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "move",
           "tile_id": 27000,
           "tile_type": "input",
           "src_addr": 0,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 768,
           "offset": 0
         },
         {
           "op_type": "load",
+          "tile_id": 27000,
+          "tile_type": "input",
+          "src_addr": 444,
+          "dst_addr": 768,
+          "size": 384,
+          "offset": 0
+        },
+        {
+          "op_type": "zero",
+          "tile_id": 27000,
+          "tile_type": "input",
+          "src_addr": -1,
+          "dst_addr": 1152,
+          "size": 1152,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 27002,
           "tile_type": "output",
           "src_addr": -1,
@@ -6635,12 +7125,17 @@
       ],
       "stats": {
         "loads": 1,
-        "moves": 1,
-        "keeps": 1,
-        "load_bytes": 128,
-        "move_bytes": 2304,
-        "total_ops": 3,
-        "bandwidth_saved": 2304
+        "moves": 2,
+        "keeps": 0,
+        "allocs": 1,
+        "zeros": 1,
+        "load_bytes": 384,
+        "move_bytes": 3072,
+        "keep_bytes": 0,
+        "alloc_bytes": 128,
+        "zero_bytes": 1152,
+        "total_ops": 5,
+        "bandwidth_saved": 3072
       }
     },
     {
@@ -6648,16 +7143,25 @@
       "to_phase": 28,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "load",
           "tile_id": 28000,
           "tile_type": "input",
-          "src_addr": 0,
+          "src_addr": 616,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 960,
           "offset": 0
         },
         {
-          "op_type": "load",
+          "op_type": "zero",
+          "tile_id": 28000,
+          "tile_type": "input",
+          "src_addr": -1,
+          "dst_addr": 960,
+          "size": 1344,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 28002,
           "tile_type": "output",
           "src_addr": -1,
@@ -6678,11 +7182,16 @@
       "stats": {
         "loads": 1,
         "moves": 0,
-        "keeps": 2,
-        "load_bytes": 128,
+        "keeps": 1,
+        "allocs": 1,
+        "zeros": 1,
+        "load_bytes": 960,
         "move_bytes": 0,
-        "total_ops": 3,
-        "bandwidth_saved": 0
+        "keep_bytes": 2304,
+        "alloc_bytes": 128,
+        "zero_bytes": 1344,
+        "total_ops": 4,
+        "bandwidth_saved": 2304
       }
     },
     {
@@ -6690,16 +7199,34 @@
       "to_phase": 29,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "move",
           "tile_id": 29000,
           "tile_type": "input",
           "src_addr": 0,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 768,
           "offset": 0
         },
         {
           "op_type": "load",
+          "tile_id": 29000,
+          "tile_type": "input",
+          "src_addr": 636,
+          "dst_addr": 768,
+          "size": 768,
+          "offset": 0
+        },
+        {
+          "op_type": "zero",
+          "tile_id": 29000,
+          "tile_type": "input",
+          "src_addr": -1,
+          "dst_addr": 1536,
+          "size": 768,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 29002,
           "tile_type": "output",
           "src_addr": -1,
@@ -6719,12 +7246,17 @@
       ],
       "stats": {
         "loads": 1,
-        "moves": 0,
-        "keeps": 2,
-        "load_bytes": 128,
-        "move_bytes": 0,
-        "total_ops": 3,
-        "bandwidth_saved": 0
+        "moves": 1,
+        "keeps": 1,
+        "allocs": 1,
+        "zeros": 1,
+        "load_bytes": 768,
+        "move_bytes": 768,
+        "keep_bytes": 2304,
+        "alloc_bytes": 128,
+        "zero_bytes": 768,
+        "total_ops": 5,
+        "bandwidth_saved": 3072
       }
     },
     {
@@ -6732,16 +7264,34 @@
       "to_phase": 30,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "move",
           "tile_id": 30000,
           "tile_type": "input",
           "src_addr": 0,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 768,
           "offset": 0
         },
         {
           "op_type": "load",
+          "tile_id": 30000,
+          "tile_type": "input",
+          "src_addr": 652,
+          "dst_addr": 768,
+          "size": 768,
+          "offset": 0
+        },
+        {
+          "op_type": "zero",
+          "tile_id": 30000,
+          "tile_type": "input",
+          "src_addr": -1,
+          "dst_addr": 1536,
+          "size": 768,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 30002,
           "tile_type": "output",
           "src_addr": -1,
@@ -6761,12 +7311,17 @@
       ],
       "stats": {
         "loads": 1,
-        "moves": 0,
-        "keeps": 2,
-        "load_bytes": 128,
-        "move_bytes": 0,
-        "total_ops": 3,
-        "bandwidth_saved": 0
+        "moves": 1,
+        "keeps": 1,
+        "allocs": 1,
+        "zeros": 1,
+        "load_bytes": 768,
+        "move_bytes": 768,
+        "keep_bytes": 2304,
+        "alloc_bytes": 128,
+        "zero_bytes": 768,
+        "total_ops": 5,
+        "bandwidth_saved": 3072
       }
     },
     {
@@ -6774,16 +7329,34 @@
       "to_phase": 31,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "move",
           "tile_id": 31000,
           "tile_type": "input",
           "src_addr": 0,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 768,
           "offset": 0
         },
         {
           "op_type": "load",
+          "tile_id": 31000,
+          "tile_type": "input",
+          "src_addr": 668,
+          "dst_addr": 768,
+          "size": 192,
+          "offset": 0
+        },
+        {
+          "op_type": "zero",
+          "tile_id": 31000,
+          "tile_type": "input",
+          "src_addr": -1,
+          "dst_addr": 960,
+          "size": 1344,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 31002,
           "tile_type": "output",
           "src_addr": -1,
@@ -6803,12 +7376,17 @@
       ],
       "stats": {
         "loads": 1,
-        "moves": 1,
-        "keeps": 1,
-        "load_bytes": 64,
-        "move_bytes": 2304,
-        "total_ops": 3,
-        "bandwidth_saved": 2304
+        "moves": 2,
+        "keeps": 0,
+        "allocs": 1,
+        "zeros": 1,
+        "load_bytes": 192,
+        "move_bytes": 3072,
+        "keep_bytes": 0,
+        "alloc_bytes": 64,
+        "zero_bytes": 1344,
+        "total_ops": 5,
+        "bandwidth_saved": 3072
       }
     },
     {
@@ -6816,16 +7394,25 @@
       "to_phase": 32,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "load",
           "tile_id": 32000,
           "tile_type": "input",
           "src_addr": 0,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 1600,
           "offset": 0
         },
         {
-          "op_type": "load",
+          "op_type": "zero",
+          "tile_id": 32000,
+          "tile_type": "input",
+          "src_addr": -1,
+          "dst_addr": 1600,
+          "size": 704,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 32002,
           "tile_type": "output",
           "src_addr": -1,
@@ -6834,23 +7421,28 @@
           "offset": 0
         },
         {
-          "op_type": "move",
+          "op_type": "load",
           "tile_id": 32001,
           "tile_type": "weight",
-          "src_addr": 2368,
+          "src_addr": 268440064,
           "dst_addr": 2560,
           "size": 2304,
-          "offset": 192
+          "offset": 0
         }
       ],
       "stats": {
-        "loads": 1,
-        "moves": 1,
-        "keeps": 1,
-        "load_bytes": 256,
-        "move_bytes": 2304,
-        "total_ops": 3,
-        "bandwidth_saved": 2304
+        "loads": 2,
+        "moves": 0,
+        "keeps": 0,
+        "allocs": 1,
+        "zeros": 1,
+        "load_bytes": 3904,
+        "move_bytes": 0,
+        "keep_bytes": 0,
+        "alloc_bytes": 256,
+        "zero_bytes": 704,
+        "total_ops": 4,
+        "bandwidth_saved": 0
       }
     },
     {
@@ -6858,16 +7450,34 @@
       "to_phase": 33,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "move",
           "tile_id": 33000,
           "tile_type": "input",
           "src_addr": 0,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 768,
           "offset": 0
         },
         {
           "op_type": "load",
+          "tile_id": 33000,
+          "tile_type": "input",
+          "src_addr": 20,
+          "dst_addr": 768,
+          "size": 1280,
+          "offset": 0
+        },
+        {
+          "op_type": "zero",
+          "tile_id": 33000,
+          "tile_type": "input",
+          "src_addr": -1,
+          "dst_addr": 2048,
+          "size": 256,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 33002,
           "tile_type": "output",
           "src_addr": -1,
@@ -6887,12 +7497,17 @@
       ],
       "stats": {
         "loads": 1,
-        "moves": 0,
-        "keeps": 2,
-        "load_bytes": 256,
-        "move_bytes": 0,
-        "total_ops": 3,
-        "bandwidth_saved": 0
+        "moves": 1,
+        "keeps": 1,
+        "allocs": 1,
+        "zeros": 1,
+        "load_bytes": 1280,
+        "move_bytes": 768,
+        "keep_bytes": 2304,
+        "alloc_bytes": 256,
+        "zero_bytes": 256,
+        "total_ops": 5,
+        "bandwidth_saved": 3072
       }
     },
     {
@@ -6900,16 +7515,34 @@
       "to_phase": 34,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "move",
           "tile_id": 34000,
           "tile_type": "input",
           "src_addr": 0,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 768,
           "offset": 0
         },
         {
           "op_type": "load",
+          "tile_id": 34000,
+          "tile_type": "input",
+          "src_addr": 36,
+          "dst_addr": 768,
+          "size": 1280,
+          "offset": 0
+        },
+        {
+          "op_type": "zero",
+          "tile_id": 34000,
+          "tile_type": "input",
+          "src_addr": -1,
+          "dst_addr": 2048,
+          "size": 256,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 34002,
           "tile_type": "output",
           "src_addr": -1,
@@ -6929,12 +7562,17 @@
       ],
       "stats": {
         "loads": 1,
-        "moves": 0,
-        "keeps": 2,
-        "load_bytes": 256,
-        "move_bytes": 0,
-        "total_ops": 3,
-        "bandwidth_saved": 0
+        "moves": 1,
+        "keeps": 1,
+        "allocs": 1,
+        "zeros": 1,
+        "load_bytes": 1280,
+        "move_bytes": 768,
+        "keep_bytes": 2304,
+        "alloc_bytes": 256,
+        "zero_bytes": 256,
+        "total_ops": 5,
+        "bandwidth_saved": 3072
       }
     },
     {
@@ -6942,16 +7580,34 @@
       "to_phase": 35,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "move",
           "tile_id": 35000,
           "tile_type": "input",
           "src_addr": 0,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 768,
           "offset": 0
         },
         {
           "op_type": "load",
+          "tile_id": 35000,
+          "tile_type": "input",
+          "src_addr": 52,
+          "dst_addr": 768,
+          "size": 320,
+          "offset": 0
+        },
+        {
+          "op_type": "zero",
+          "tile_id": 35000,
+          "tile_type": "input",
+          "src_addr": -1,
+          "dst_addr": 1088,
+          "size": 1216,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 35002,
           "tile_type": "output",
           "src_addr": -1,
@@ -6971,12 +7627,17 @@
       ],
       "stats": {
         "loads": 1,
-        "moves": 1,
-        "keeps": 1,
-        "load_bytes": 128,
-        "move_bytes": 2304,
-        "total_ops": 3,
-        "bandwidth_saved": 2304
+        "moves": 2,
+        "keeps": 0,
+        "allocs": 1,
+        "zeros": 1,
+        "load_bytes": 320,
+        "move_bytes": 3072,
+        "keep_bytes": 0,
+        "alloc_bytes": 128,
+        "zero_bytes": 1216,
+        "total_ops": 5,
+        "bandwidth_saved": 3072
       }
     },
     {
@@ -6984,16 +7645,25 @@
       "to_phase": 36,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "load",
           "tile_id": 36000,
           "tile_type": "input",
-          "src_addr": 0,
+          "src_addr": 168,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 1920,
           "offset": 0
         },
         {
-          "op_type": "load",
+          "op_type": "zero",
+          "tile_id": 36000,
+          "tile_type": "input",
+          "src_addr": -1,
+          "dst_addr": 1920,
+          "size": 384,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 36002,
           "tile_type": "output",
           "src_addr": -1,
@@ -7014,10 +7684,15 @@
       "stats": {
         "loads": 1,
         "moves": 1,
-        "keeps": 1,
-        "load_bytes": 256,
+        "keeps": 0,
+        "allocs": 1,
+        "zeros": 1,
+        "load_bytes": 1920,
         "move_bytes": 2304,
-        "total_ops": 3,
+        "keep_bytes": 0,
+        "alloc_bytes": 256,
+        "zero_bytes": 384,
+        "total_ops": 4,
         "bandwidth_saved": 2304
       }
     },
@@ -7026,16 +7701,25 @@
       "to_phase": 37,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "move",
           "tile_id": 37000,
           "tile_type": "input",
           "src_addr": 0,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 768,
           "offset": 0
         },
         {
           "op_type": "load",
+          "tile_id": 37000,
+          "tile_type": "input",
+          "src_addr": 188,
+          "dst_addr": 768,
+          "size": 1536,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 37002,
           "tile_type": "output",
           "src_addr": -1,
@@ -7055,12 +7739,17 @@
       ],
       "stats": {
         "loads": 1,
-        "moves": 0,
-        "keeps": 2,
-        "load_bytes": 256,
-        "move_bytes": 0,
-        "total_ops": 3,
-        "bandwidth_saved": 0
+        "moves": 1,
+        "keeps": 1,
+        "allocs": 1,
+        "zeros": 0,
+        "load_bytes": 1536,
+        "move_bytes": 768,
+        "keep_bytes": 2304,
+        "alloc_bytes": 256,
+        "zero_bytes": 0,
+        "total_ops": 4,
+        "bandwidth_saved": 3072
       }
     },
     {
@@ -7068,16 +7757,25 @@
       "to_phase": 38,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "move",
           "tile_id": 38000,
           "tile_type": "input",
           "src_addr": 0,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 768,
           "offset": 0
         },
         {
           "op_type": "load",
+          "tile_id": 38000,
+          "tile_type": "input",
+          "src_addr": 204,
+          "dst_addr": 768,
+          "size": 1536,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 38002,
           "tile_type": "output",
           "src_addr": -1,
@@ -7097,12 +7795,17 @@
       ],
       "stats": {
         "loads": 1,
-        "moves": 0,
-        "keeps": 2,
-        "load_bytes": 256,
-        "move_bytes": 0,
-        "total_ops": 3,
-        "bandwidth_saved": 0
+        "moves": 1,
+        "keeps": 1,
+        "allocs": 1,
+        "zeros": 0,
+        "load_bytes": 1536,
+        "move_bytes": 768,
+        "keep_bytes": 2304,
+        "alloc_bytes": 256,
+        "zero_bytes": 0,
+        "total_ops": 4,
+        "bandwidth_saved": 3072
       }
     },
     {
@@ -7110,16 +7813,34 @@
       "to_phase": 39,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "move",
           "tile_id": 39000,
           "tile_type": "input",
           "src_addr": 0,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 768,
           "offset": 0
         },
         {
           "op_type": "load",
+          "tile_id": 39000,
+          "tile_type": "input",
+          "src_addr": 220,
+          "dst_addr": 768,
+          "size": 384,
+          "offset": 0
+        },
+        {
+          "op_type": "zero",
+          "tile_id": 39000,
+          "tile_type": "input",
+          "src_addr": -1,
+          "dst_addr": 1152,
+          "size": 1152,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 39002,
           "tile_type": "output",
           "src_addr": -1,
@@ -7139,12 +7860,17 @@
       ],
       "stats": {
         "loads": 1,
-        "moves": 1,
-        "keeps": 1,
-        "load_bytes": 128,
-        "move_bytes": 2304,
-        "total_ops": 3,
-        "bandwidth_saved": 2304
+        "moves": 2,
+        "keeps": 0,
+        "allocs": 1,
+        "zeros": 1,
+        "load_bytes": 384,
+        "move_bytes": 3072,
+        "keep_bytes": 0,
+        "alloc_bytes": 128,
+        "zero_bytes": 1152,
+        "total_ops": 5,
+        "bandwidth_saved": 3072
       }
     },
     {
@@ -7152,16 +7878,25 @@
       "to_phase": 40,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "load",
           "tile_id": 40000,
           "tile_type": "input",
-          "src_addr": 0,
+          "src_addr": 392,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 1920,
           "offset": 0
         },
         {
-          "op_type": "load",
+          "op_type": "zero",
+          "tile_id": 40000,
+          "tile_type": "input",
+          "src_addr": -1,
+          "dst_addr": 1920,
+          "size": 384,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 40002,
           "tile_type": "output",
           "src_addr": -1,
@@ -7182,10 +7917,15 @@
       "stats": {
         "loads": 1,
         "moves": 1,
-        "keeps": 1,
-        "load_bytes": 256,
+        "keeps": 0,
+        "allocs": 1,
+        "zeros": 1,
+        "load_bytes": 1920,
         "move_bytes": 2304,
-        "total_ops": 3,
+        "keep_bytes": 0,
+        "alloc_bytes": 256,
+        "zero_bytes": 384,
+        "total_ops": 4,
         "bandwidth_saved": 2304
       }
     },
@@ -7194,16 +7934,25 @@
       "to_phase": 41,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "move",
           "tile_id": 41000,
           "tile_type": "input",
           "src_addr": 0,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 768,
           "offset": 0
         },
         {
           "op_type": "load",
+          "tile_id": 41000,
+          "tile_type": "input",
+          "src_addr": 412,
+          "dst_addr": 768,
+          "size": 1536,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 41002,
           "tile_type": "output",
           "src_addr": -1,
@@ -7223,12 +7972,17 @@
       ],
       "stats": {
         "loads": 1,
-        "moves": 0,
-        "keeps": 2,
-        "load_bytes": 256,
-        "move_bytes": 0,
-        "total_ops": 3,
-        "bandwidth_saved": 0
+        "moves": 1,
+        "keeps": 1,
+        "allocs": 1,
+        "zeros": 0,
+        "load_bytes": 1536,
+        "move_bytes": 768,
+        "keep_bytes": 2304,
+        "alloc_bytes": 256,
+        "zero_bytes": 0,
+        "total_ops": 4,
+        "bandwidth_saved": 3072
       }
     },
     {
@@ -7236,16 +7990,25 @@
       "to_phase": 42,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "move",
           "tile_id": 42000,
           "tile_type": "input",
           "src_addr": 0,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 768,
           "offset": 0
         },
         {
           "op_type": "load",
+          "tile_id": 42000,
+          "tile_type": "input",
+          "src_addr": 428,
+          "dst_addr": 768,
+          "size": 1536,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 42002,
           "tile_type": "output",
           "src_addr": -1,
@@ -7265,12 +8028,17 @@
       ],
       "stats": {
         "loads": 1,
-        "moves": 0,
-        "keeps": 2,
-        "load_bytes": 256,
-        "move_bytes": 0,
-        "total_ops": 3,
-        "bandwidth_saved": 0
+        "moves": 1,
+        "keeps": 1,
+        "allocs": 1,
+        "zeros": 0,
+        "load_bytes": 1536,
+        "move_bytes": 768,
+        "keep_bytes": 2304,
+        "alloc_bytes": 256,
+        "zero_bytes": 0,
+        "total_ops": 4,
+        "bandwidth_saved": 3072
       }
     },
     {
@@ -7278,16 +8046,34 @@
       "to_phase": 43,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "move",
           "tile_id": 43000,
           "tile_type": "input",
           "src_addr": 0,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 768,
           "offset": 0
         },
         {
           "op_type": "load",
+          "tile_id": 43000,
+          "tile_type": "input",
+          "src_addr": 444,
+          "dst_addr": 768,
+          "size": 384,
+          "offset": 0
+        },
+        {
+          "op_type": "zero",
+          "tile_id": 43000,
+          "tile_type": "input",
+          "src_addr": -1,
+          "dst_addr": 1152,
+          "size": 1152,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 43002,
           "tile_type": "output",
           "src_addr": -1,
@@ -7307,12 +8093,17 @@
       ],
       "stats": {
         "loads": 1,
-        "moves": 1,
-        "keeps": 1,
-        "load_bytes": 128,
-        "move_bytes": 2304,
-        "total_ops": 3,
-        "bandwidth_saved": 2304
+        "moves": 2,
+        "keeps": 0,
+        "allocs": 1,
+        "zeros": 1,
+        "load_bytes": 384,
+        "move_bytes": 3072,
+        "keep_bytes": 0,
+        "alloc_bytes": 128,
+        "zero_bytes": 1152,
+        "total_ops": 5,
+        "bandwidth_saved": 3072
       }
     },
     {
@@ -7320,16 +8111,25 @@
       "to_phase": 44,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "load",
           "tile_id": 44000,
           "tile_type": "input",
-          "src_addr": 0,
+          "src_addr": 616,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 960,
           "offset": 0
         },
         {
-          "op_type": "load",
+          "op_type": "zero",
+          "tile_id": 44000,
+          "tile_type": "input",
+          "src_addr": -1,
+          "dst_addr": 960,
+          "size": 1344,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 44002,
           "tile_type": "output",
           "src_addr": -1,
@@ -7350,11 +8150,16 @@
       "stats": {
         "loads": 1,
         "moves": 0,
-        "keeps": 2,
-        "load_bytes": 128,
+        "keeps": 1,
+        "allocs": 1,
+        "zeros": 1,
+        "load_bytes": 960,
         "move_bytes": 0,
-        "total_ops": 3,
-        "bandwidth_saved": 0
+        "keep_bytes": 2304,
+        "alloc_bytes": 128,
+        "zero_bytes": 1344,
+        "total_ops": 4,
+        "bandwidth_saved": 2304
       }
     },
     {
@@ -7362,16 +8167,34 @@
       "to_phase": 45,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "move",
           "tile_id": 45000,
           "tile_type": "input",
           "src_addr": 0,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 768,
           "offset": 0
         },
         {
           "op_type": "load",
+          "tile_id": 45000,
+          "tile_type": "input",
+          "src_addr": 636,
+          "dst_addr": 768,
+          "size": 768,
+          "offset": 0
+        },
+        {
+          "op_type": "zero",
+          "tile_id": 45000,
+          "tile_type": "input",
+          "src_addr": -1,
+          "dst_addr": 1536,
+          "size": 768,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 45002,
           "tile_type": "output",
           "src_addr": -1,
@@ -7391,12 +8214,17 @@
       ],
       "stats": {
         "loads": 1,
-        "moves": 0,
-        "keeps": 2,
-        "load_bytes": 128,
-        "move_bytes": 0,
-        "total_ops": 3,
-        "bandwidth_saved": 0
+        "moves": 1,
+        "keeps": 1,
+        "allocs": 1,
+        "zeros": 1,
+        "load_bytes": 768,
+        "move_bytes": 768,
+        "keep_bytes": 2304,
+        "alloc_bytes": 128,
+        "zero_bytes": 768,
+        "total_ops": 5,
+        "bandwidth_saved": 3072
       }
     },
     {
@@ -7404,16 +8232,34 @@
       "to_phase": 46,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "move",
           "tile_id": 46000,
           "tile_type": "input",
           "src_addr": 0,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 768,
           "offset": 0
         },
         {
           "op_type": "load",
+          "tile_id": 46000,
+          "tile_type": "input",
+          "src_addr": 652,
+          "dst_addr": 768,
+          "size": 768,
+          "offset": 0
+        },
+        {
+          "op_type": "zero",
+          "tile_id": 46000,
+          "tile_type": "input",
+          "src_addr": -1,
+          "dst_addr": 1536,
+          "size": 768,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 46002,
           "tile_type": "output",
           "src_addr": -1,
@@ -7433,12 +8279,17 @@
       ],
       "stats": {
         "loads": 1,
-        "moves": 0,
-        "keeps": 2,
-        "load_bytes": 128,
-        "move_bytes": 0,
-        "total_ops": 3,
-        "bandwidth_saved": 0
+        "moves": 1,
+        "keeps": 1,
+        "allocs": 1,
+        "zeros": 1,
+        "load_bytes": 768,
+        "move_bytes": 768,
+        "keep_bytes": 2304,
+        "alloc_bytes": 128,
+        "zero_bytes": 768,
+        "total_ops": 5,
+        "bandwidth_saved": 3072
       }
     },
     {
@@ -7446,16 +8297,34 @@
       "to_phase": 47,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "move",
           "tile_id": 47000,
           "tile_type": "input",
           "src_addr": 0,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 768,
           "offset": 0
         },
         {
           "op_type": "load",
+          "tile_id": 47000,
+          "tile_type": "input",
+          "src_addr": 668,
+          "dst_addr": 768,
+          "size": 192,
+          "offset": 0
+        },
+        {
+          "op_type": "zero",
+          "tile_id": 47000,
+          "tile_type": "input",
+          "src_addr": -1,
+          "dst_addr": 960,
+          "size": 1344,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 47002,
           "tile_type": "output",
           "src_addr": -1,
@@ -7475,12 +8344,17 @@
       ],
       "stats": {
         "loads": 1,
-        "moves": 1,
-        "keeps": 1,
-        "load_bytes": 64,
-        "move_bytes": 2304,
-        "total_ops": 3,
-        "bandwidth_saved": 2304
+        "moves": 2,
+        "keeps": 0,
+        "allocs": 1,
+        "zeros": 1,
+        "load_bytes": 192,
+        "move_bytes": 3072,
+        "keep_bytes": 0,
+        "alloc_bytes": 64,
+        "zero_bytes": 1344,
+        "total_ops": 5,
+        "bandwidth_saved": 3072
       }
     },
     {
@@ -7488,16 +8362,25 @@
       "to_phase": 48,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "load",
           "tile_id": 48000,
           "tile_type": "input",
           "src_addr": 0,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 1600,
           "offset": 0
         },
         {
-          "op_type": "load",
+          "op_type": "zero",
+          "tile_id": 48000,
+          "tile_type": "input",
+          "src_addr": -1,
+          "dst_addr": 1600,
+          "size": 704,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 48002,
           "tile_type": "output",
           "src_addr": -1,
@@ -7506,23 +8389,28 @@
           "offset": 0
         },
         {
-          "op_type": "move",
+          "op_type": "load",
           "tile_id": 48001,
           "tile_type": "weight",
-          "src_addr": 2368,
+          "src_addr": 268442368,
           "dst_addr": 2560,
           "size": 2304,
-          "offset": 192
+          "offset": 0
         }
       ],
       "stats": {
-        "loads": 1,
-        "moves": 1,
-        "keeps": 1,
-        "load_bytes": 256,
-        "move_bytes": 2304,
-        "total_ops": 3,
-        "bandwidth_saved": 2304
+        "loads": 2,
+        "moves": 0,
+        "keeps": 0,
+        "allocs": 1,
+        "zeros": 1,
+        "load_bytes": 3904,
+        "move_bytes": 0,
+        "keep_bytes": 0,
+        "alloc_bytes": 256,
+        "zero_bytes": 704,
+        "total_ops": 4,
+        "bandwidth_saved": 0
       }
     },
     {
@@ -7530,16 +8418,34 @@
       "to_phase": 49,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "move",
           "tile_id": 49000,
           "tile_type": "input",
           "src_addr": 0,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 768,
           "offset": 0
         },
         {
           "op_type": "load",
+          "tile_id": 49000,
+          "tile_type": "input",
+          "src_addr": 20,
+          "dst_addr": 768,
+          "size": 1280,
+          "offset": 0
+        },
+        {
+          "op_type": "zero",
+          "tile_id": 49000,
+          "tile_type": "input",
+          "src_addr": -1,
+          "dst_addr": 2048,
+          "size": 256,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 49002,
           "tile_type": "output",
           "src_addr": -1,
@@ -7559,12 +8465,17 @@
       ],
       "stats": {
         "loads": 1,
-        "moves": 0,
-        "keeps": 2,
-        "load_bytes": 256,
-        "move_bytes": 0,
-        "total_ops": 3,
-        "bandwidth_saved": 0
+        "moves": 1,
+        "keeps": 1,
+        "allocs": 1,
+        "zeros": 1,
+        "load_bytes": 1280,
+        "move_bytes": 768,
+        "keep_bytes": 2304,
+        "alloc_bytes": 256,
+        "zero_bytes": 256,
+        "total_ops": 5,
+        "bandwidth_saved": 3072
       }
     },
     {
@@ -7572,16 +8483,34 @@
       "to_phase": 50,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "move",
           "tile_id": 50000,
           "tile_type": "input",
           "src_addr": 0,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 768,
           "offset": 0
         },
         {
           "op_type": "load",
+          "tile_id": 50000,
+          "tile_type": "input",
+          "src_addr": 36,
+          "dst_addr": 768,
+          "size": 1280,
+          "offset": 0
+        },
+        {
+          "op_type": "zero",
+          "tile_id": 50000,
+          "tile_type": "input",
+          "src_addr": -1,
+          "dst_addr": 2048,
+          "size": 256,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 50002,
           "tile_type": "output",
           "src_addr": -1,
@@ -7601,12 +8530,17 @@
       ],
       "stats": {
         "loads": 1,
-        "moves": 0,
-        "keeps": 2,
-        "load_bytes": 256,
-        "move_bytes": 0,
-        "total_ops": 3,
-        "bandwidth_saved": 0
+        "moves": 1,
+        "keeps": 1,
+        "allocs": 1,
+        "zeros": 1,
+        "load_bytes": 1280,
+        "move_bytes": 768,
+        "keep_bytes": 2304,
+        "alloc_bytes": 256,
+        "zero_bytes": 256,
+        "total_ops": 5,
+        "bandwidth_saved": 3072
       }
     },
     {
@@ -7614,16 +8548,34 @@
       "to_phase": 51,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "move",
           "tile_id": 51000,
           "tile_type": "input",
           "src_addr": 0,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 768,
           "offset": 0
         },
         {
           "op_type": "load",
+          "tile_id": 51000,
+          "tile_type": "input",
+          "src_addr": 52,
+          "dst_addr": 768,
+          "size": 320,
+          "offset": 0
+        },
+        {
+          "op_type": "zero",
+          "tile_id": 51000,
+          "tile_type": "input",
+          "src_addr": -1,
+          "dst_addr": 1088,
+          "size": 1216,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 51002,
           "tile_type": "output",
           "src_addr": -1,
@@ -7643,12 +8595,17 @@
       ],
       "stats": {
         "loads": 1,
-        "moves": 1,
-        "keeps": 1,
-        "load_bytes": 128,
-        "move_bytes": 2304,
-        "total_ops": 3,
-        "bandwidth_saved": 2304
+        "moves": 2,
+        "keeps": 0,
+        "allocs": 1,
+        "zeros": 1,
+        "load_bytes": 320,
+        "move_bytes": 3072,
+        "keep_bytes": 0,
+        "alloc_bytes": 128,
+        "zero_bytes": 1216,
+        "total_ops": 5,
+        "bandwidth_saved": 3072
       }
     },
     {
@@ -7656,16 +8613,25 @@
       "to_phase": 52,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "load",
           "tile_id": 52000,
           "tile_type": "input",
-          "src_addr": 0,
+          "src_addr": 168,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 1920,
           "offset": 0
         },
         {
-          "op_type": "load",
+          "op_type": "zero",
+          "tile_id": 52000,
+          "tile_type": "input",
+          "src_addr": -1,
+          "dst_addr": 1920,
+          "size": 384,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 52002,
           "tile_type": "output",
           "src_addr": -1,
@@ -7686,10 +8652,15 @@
       "stats": {
         "loads": 1,
         "moves": 1,
-        "keeps": 1,
-        "load_bytes": 256,
+        "keeps": 0,
+        "allocs": 1,
+        "zeros": 1,
+        "load_bytes": 1920,
         "move_bytes": 2304,
-        "total_ops": 3,
+        "keep_bytes": 0,
+        "alloc_bytes": 256,
+        "zero_bytes": 384,
+        "total_ops": 4,
         "bandwidth_saved": 2304
       }
     },
@@ -7698,16 +8669,25 @@
       "to_phase": 53,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "move",
           "tile_id": 53000,
           "tile_type": "input",
           "src_addr": 0,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 768,
           "offset": 0
         },
         {
           "op_type": "load",
+          "tile_id": 53000,
+          "tile_type": "input",
+          "src_addr": 188,
+          "dst_addr": 768,
+          "size": 1536,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 53002,
           "tile_type": "output",
           "src_addr": -1,
@@ -7727,12 +8707,17 @@
       ],
       "stats": {
         "loads": 1,
-        "moves": 0,
-        "keeps": 2,
-        "load_bytes": 256,
-        "move_bytes": 0,
-        "total_ops": 3,
-        "bandwidth_saved": 0
+        "moves": 1,
+        "keeps": 1,
+        "allocs": 1,
+        "zeros": 0,
+        "load_bytes": 1536,
+        "move_bytes": 768,
+        "keep_bytes": 2304,
+        "alloc_bytes": 256,
+        "zero_bytes": 0,
+        "total_ops": 4,
+        "bandwidth_saved": 3072
       }
     },
     {
@@ -7740,16 +8725,25 @@
       "to_phase": 54,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "move",
           "tile_id": 54000,
           "tile_type": "input",
           "src_addr": 0,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 768,
           "offset": 0
         },
         {
           "op_type": "load",
+          "tile_id": 54000,
+          "tile_type": "input",
+          "src_addr": 204,
+          "dst_addr": 768,
+          "size": 1536,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 54002,
           "tile_type": "output",
           "src_addr": -1,
@@ -7769,12 +8763,17 @@
       ],
       "stats": {
         "loads": 1,
-        "moves": 0,
-        "keeps": 2,
-        "load_bytes": 256,
-        "move_bytes": 0,
-        "total_ops": 3,
-        "bandwidth_saved": 0
+        "moves": 1,
+        "keeps": 1,
+        "allocs": 1,
+        "zeros": 0,
+        "load_bytes": 1536,
+        "move_bytes": 768,
+        "keep_bytes": 2304,
+        "alloc_bytes": 256,
+        "zero_bytes": 0,
+        "total_ops": 4,
+        "bandwidth_saved": 3072
       }
     },
     {
@@ -7782,16 +8781,34 @@
       "to_phase": 55,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "move",
           "tile_id": 55000,
           "tile_type": "input",
           "src_addr": 0,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 768,
           "offset": 0
         },
         {
           "op_type": "load",
+          "tile_id": 55000,
+          "tile_type": "input",
+          "src_addr": 220,
+          "dst_addr": 768,
+          "size": 384,
+          "offset": 0
+        },
+        {
+          "op_type": "zero",
+          "tile_id": 55000,
+          "tile_type": "input",
+          "src_addr": -1,
+          "dst_addr": 1152,
+          "size": 1152,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 55002,
           "tile_type": "output",
           "src_addr": -1,
@@ -7811,12 +8828,17 @@
       ],
       "stats": {
         "loads": 1,
-        "moves": 1,
-        "keeps": 1,
-        "load_bytes": 128,
-        "move_bytes": 2304,
-        "total_ops": 3,
-        "bandwidth_saved": 2304
+        "moves": 2,
+        "keeps": 0,
+        "allocs": 1,
+        "zeros": 1,
+        "load_bytes": 384,
+        "move_bytes": 3072,
+        "keep_bytes": 0,
+        "alloc_bytes": 128,
+        "zero_bytes": 1152,
+        "total_ops": 5,
+        "bandwidth_saved": 3072
       }
     },
     {
@@ -7824,16 +8846,25 @@
       "to_phase": 56,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "load",
           "tile_id": 56000,
           "tile_type": "input",
-          "src_addr": 0,
+          "src_addr": 392,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 1920,
           "offset": 0
         },
         {
-          "op_type": "load",
+          "op_type": "zero",
+          "tile_id": 56000,
+          "tile_type": "input",
+          "src_addr": -1,
+          "dst_addr": 1920,
+          "size": 384,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 56002,
           "tile_type": "output",
           "src_addr": -1,
@@ -7854,10 +8885,15 @@
       "stats": {
         "loads": 1,
         "moves": 1,
-        "keeps": 1,
-        "load_bytes": 256,
+        "keeps": 0,
+        "allocs": 1,
+        "zeros": 1,
+        "load_bytes": 1920,
         "move_bytes": 2304,
-        "total_ops": 3,
+        "keep_bytes": 0,
+        "alloc_bytes": 256,
+        "zero_bytes": 384,
+        "total_ops": 4,
         "bandwidth_saved": 2304
       }
     },
@@ -7866,16 +8902,25 @@
       "to_phase": 57,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "move",
           "tile_id": 57000,
           "tile_type": "input",
           "src_addr": 0,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 768,
           "offset": 0
         },
         {
           "op_type": "load",
+          "tile_id": 57000,
+          "tile_type": "input",
+          "src_addr": 412,
+          "dst_addr": 768,
+          "size": 1536,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 57002,
           "tile_type": "output",
           "src_addr": -1,
@@ -7895,12 +8940,17 @@
       ],
       "stats": {
         "loads": 1,
-        "moves": 0,
-        "keeps": 2,
-        "load_bytes": 256,
-        "move_bytes": 0,
-        "total_ops": 3,
-        "bandwidth_saved": 0
+        "moves": 1,
+        "keeps": 1,
+        "allocs": 1,
+        "zeros": 0,
+        "load_bytes": 1536,
+        "move_bytes": 768,
+        "keep_bytes": 2304,
+        "alloc_bytes": 256,
+        "zero_bytes": 0,
+        "total_ops": 4,
+        "bandwidth_saved": 3072
       }
     },
     {
@@ -7908,16 +8958,25 @@
       "to_phase": 58,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "move",
           "tile_id": 58000,
           "tile_type": "input",
           "src_addr": 0,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 768,
           "offset": 0
         },
         {
           "op_type": "load",
+          "tile_id": 58000,
+          "tile_type": "input",
+          "src_addr": 428,
+          "dst_addr": 768,
+          "size": 1536,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 58002,
           "tile_type": "output",
           "src_addr": -1,
@@ -7937,12 +8996,17 @@
       ],
       "stats": {
         "loads": 1,
-        "moves": 0,
-        "keeps": 2,
-        "load_bytes": 256,
-        "move_bytes": 0,
-        "total_ops": 3,
-        "bandwidth_saved": 0
+        "moves": 1,
+        "keeps": 1,
+        "allocs": 1,
+        "zeros": 0,
+        "load_bytes": 1536,
+        "move_bytes": 768,
+        "keep_bytes": 2304,
+        "alloc_bytes": 256,
+        "zero_bytes": 0,
+        "total_ops": 4,
+        "bandwidth_saved": 3072
       }
     },
     {
@@ -7950,16 +9014,34 @@
       "to_phase": 59,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "move",
           "tile_id": 59000,
           "tile_type": "input",
           "src_addr": 0,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 768,
           "offset": 0
         },
         {
           "op_type": "load",
+          "tile_id": 59000,
+          "tile_type": "input",
+          "src_addr": 444,
+          "dst_addr": 768,
+          "size": 384,
+          "offset": 0
+        },
+        {
+          "op_type": "zero",
+          "tile_id": 59000,
+          "tile_type": "input",
+          "src_addr": -1,
+          "dst_addr": 1152,
+          "size": 1152,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 59002,
           "tile_type": "output",
           "src_addr": -1,
@@ -7979,12 +9061,17 @@
       ],
       "stats": {
         "loads": 1,
-        "moves": 1,
-        "keeps": 1,
-        "load_bytes": 128,
-        "move_bytes": 2304,
-        "total_ops": 3,
-        "bandwidth_saved": 2304
+        "moves": 2,
+        "keeps": 0,
+        "allocs": 1,
+        "zeros": 1,
+        "load_bytes": 384,
+        "move_bytes": 3072,
+        "keep_bytes": 0,
+        "alloc_bytes": 128,
+        "zero_bytes": 1152,
+        "total_ops": 5,
+        "bandwidth_saved": 3072
       }
     },
     {
@@ -7992,16 +9079,25 @@
       "to_phase": 60,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "load",
           "tile_id": 60000,
           "tile_type": "input",
-          "src_addr": 0,
+          "src_addr": 616,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 960,
           "offset": 0
         },
         {
-          "op_type": "load",
+          "op_type": "zero",
+          "tile_id": 60000,
+          "tile_type": "input",
+          "src_addr": -1,
+          "dst_addr": 960,
+          "size": 1344,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 60002,
           "tile_type": "output",
           "src_addr": -1,
@@ -8022,11 +9118,16 @@
       "stats": {
         "loads": 1,
         "moves": 0,
-        "keeps": 2,
-        "load_bytes": 128,
+        "keeps": 1,
+        "allocs": 1,
+        "zeros": 1,
+        "load_bytes": 960,
         "move_bytes": 0,
-        "total_ops": 3,
-        "bandwidth_saved": 0
+        "keep_bytes": 2304,
+        "alloc_bytes": 128,
+        "zero_bytes": 1344,
+        "total_ops": 4,
+        "bandwidth_saved": 2304
       }
     },
     {
@@ -8034,16 +9135,34 @@
       "to_phase": 61,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "move",
           "tile_id": 61000,
           "tile_type": "input",
           "src_addr": 0,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 768,
           "offset": 0
         },
         {
           "op_type": "load",
+          "tile_id": 61000,
+          "tile_type": "input",
+          "src_addr": 636,
+          "dst_addr": 768,
+          "size": 768,
+          "offset": 0
+        },
+        {
+          "op_type": "zero",
+          "tile_id": 61000,
+          "tile_type": "input",
+          "src_addr": -1,
+          "dst_addr": 1536,
+          "size": 768,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 61002,
           "tile_type": "output",
           "src_addr": -1,
@@ -8063,12 +9182,17 @@
       ],
       "stats": {
         "loads": 1,
-        "moves": 0,
-        "keeps": 2,
-        "load_bytes": 128,
-        "move_bytes": 0,
-        "total_ops": 3,
-        "bandwidth_saved": 0
+        "moves": 1,
+        "keeps": 1,
+        "allocs": 1,
+        "zeros": 1,
+        "load_bytes": 768,
+        "move_bytes": 768,
+        "keep_bytes": 2304,
+        "alloc_bytes": 128,
+        "zero_bytes": 768,
+        "total_ops": 5,
+        "bandwidth_saved": 3072
       }
     },
     {
@@ -8076,16 +9200,34 @@
       "to_phase": 62,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "move",
           "tile_id": 62000,
           "tile_type": "input",
           "src_addr": 0,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 768,
           "offset": 0
         },
         {
           "op_type": "load",
+          "tile_id": 62000,
+          "tile_type": "input",
+          "src_addr": 652,
+          "dst_addr": 768,
+          "size": 768,
+          "offset": 0
+        },
+        {
+          "op_type": "zero",
+          "tile_id": 62000,
+          "tile_type": "input",
+          "src_addr": -1,
+          "dst_addr": 1536,
+          "size": 768,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 62002,
           "tile_type": "output",
           "src_addr": -1,
@@ -8105,12 +9247,17 @@
       ],
       "stats": {
         "loads": 1,
-        "moves": 0,
-        "keeps": 2,
-        "load_bytes": 128,
-        "move_bytes": 0,
-        "total_ops": 3,
-        "bandwidth_saved": 0
+        "moves": 1,
+        "keeps": 1,
+        "allocs": 1,
+        "zeros": 1,
+        "load_bytes": 768,
+        "move_bytes": 768,
+        "keep_bytes": 2304,
+        "alloc_bytes": 128,
+        "zero_bytes": 768,
+        "total_ops": 5,
+        "bandwidth_saved": 3072
       }
     },
     {
@@ -8118,16 +9265,34 @@
       "to_phase": 63,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "move",
           "tile_id": 63000,
           "tile_type": "input",
           "src_addr": 0,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 768,
           "offset": 0
         },
         {
           "op_type": "load",
+          "tile_id": 63000,
+          "tile_type": "input",
+          "src_addr": 668,
+          "dst_addr": 768,
+          "size": 192,
+          "offset": 0
+        },
+        {
+          "op_type": "zero",
+          "tile_id": 63000,
+          "tile_type": "input",
+          "src_addr": -1,
+          "dst_addr": 960,
+          "size": 1344,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 63002,
           "tile_type": "output",
           "src_addr": -1,
@@ -8147,12 +9312,17 @@
       ],
       "stats": {
         "loads": 1,
-        "moves": 1,
-        "keeps": 1,
-        "load_bytes": 64,
-        "move_bytes": 2304,
-        "total_ops": 3,
-        "bandwidth_saved": 2304
+        "moves": 2,
+        "keeps": 0,
+        "allocs": 1,
+        "zeros": 1,
+        "load_bytes": 192,
+        "move_bytes": 3072,
+        "keep_bytes": 0,
+        "alloc_bytes": 64,
+        "zero_bytes": 1344,
+        "total_ops": 5,
+        "bandwidth_saved": 3072
       }
     },
     {
@@ -8160,16 +9330,25 @@
       "to_phase": 64,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "load",
           "tile_id": 64000,
           "tile_type": "input",
           "src_addr": 0,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 1600,
           "offset": 0
         },
         {
-          "op_type": "load",
+          "op_type": "zero",
+          "tile_id": 64000,
+          "tile_type": "input",
+          "src_addr": -1,
+          "dst_addr": 1600,
+          "size": 704,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 64002,
           "tile_type": "output",
           "src_addr": -1,
@@ -8178,23 +9357,28 @@
           "offset": 0
         },
         {
-          "op_type": "move",
+          "op_type": "load",
           "tile_id": 64001,
           "tile_type": "weight",
-          "src_addr": 2368,
+          "src_addr": 268444672,
           "dst_addr": 2560,
           "size": 2304,
-          "offset": 192
+          "offset": 0
         }
       ],
       "stats": {
-        "loads": 1,
-        "moves": 1,
-        "keeps": 1,
-        "load_bytes": 256,
-        "move_bytes": 2304,
-        "total_ops": 3,
-        "bandwidth_saved": 2304
+        "loads": 2,
+        "moves": 0,
+        "keeps": 0,
+        "allocs": 1,
+        "zeros": 1,
+        "load_bytes": 3904,
+        "move_bytes": 0,
+        "keep_bytes": 0,
+        "alloc_bytes": 256,
+        "zero_bytes": 704,
+        "total_ops": 4,
+        "bandwidth_saved": 0
       }
     },
     {
@@ -8202,16 +9386,34 @@
       "to_phase": 65,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "move",
           "tile_id": 65000,
           "tile_type": "input",
           "src_addr": 0,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 768,
           "offset": 0
         },
         {
           "op_type": "load",
+          "tile_id": 65000,
+          "tile_type": "input",
+          "src_addr": 20,
+          "dst_addr": 768,
+          "size": 1280,
+          "offset": 0
+        },
+        {
+          "op_type": "zero",
+          "tile_id": 65000,
+          "tile_type": "input",
+          "src_addr": -1,
+          "dst_addr": 2048,
+          "size": 256,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 65002,
           "tile_type": "output",
           "src_addr": -1,
@@ -8231,12 +9433,17 @@
       ],
       "stats": {
         "loads": 1,
-        "moves": 0,
-        "keeps": 2,
-        "load_bytes": 256,
-        "move_bytes": 0,
-        "total_ops": 3,
-        "bandwidth_saved": 0
+        "moves": 1,
+        "keeps": 1,
+        "allocs": 1,
+        "zeros": 1,
+        "load_bytes": 1280,
+        "move_bytes": 768,
+        "keep_bytes": 2304,
+        "alloc_bytes": 256,
+        "zero_bytes": 256,
+        "total_ops": 5,
+        "bandwidth_saved": 3072
       }
     },
     {
@@ -8244,16 +9451,34 @@
       "to_phase": 66,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "move",
           "tile_id": 66000,
           "tile_type": "input",
           "src_addr": 0,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 768,
           "offset": 0
         },
         {
           "op_type": "load",
+          "tile_id": 66000,
+          "tile_type": "input",
+          "src_addr": 36,
+          "dst_addr": 768,
+          "size": 1280,
+          "offset": 0
+        },
+        {
+          "op_type": "zero",
+          "tile_id": 66000,
+          "tile_type": "input",
+          "src_addr": -1,
+          "dst_addr": 2048,
+          "size": 256,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 66002,
           "tile_type": "output",
           "src_addr": -1,
@@ -8273,12 +9498,17 @@
       ],
       "stats": {
         "loads": 1,
-        "moves": 0,
-        "keeps": 2,
-        "load_bytes": 256,
-        "move_bytes": 0,
-        "total_ops": 3,
-        "bandwidth_saved": 0
+        "moves": 1,
+        "keeps": 1,
+        "allocs": 1,
+        "zeros": 1,
+        "load_bytes": 1280,
+        "move_bytes": 768,
+        "keep_bytes": 2304,
+        "alloc_bytes": 256,
+        "zero_bytes": 256,
+        "total_ops": 5,
+        "bandwidth_saved": 3072
       }
     },
     {
@@ -8286,16 +9516,34 @@
       "to_phase": 67,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "move",
           "tile_id": 67000,
           "tile_type": "input",
           "src_addr": 0,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 768,
           "offset": 0
         },
         {
           "op_type": "load",
+          "tile_id": 67000,
+          "tile_type": "input",
+          "src_addr": 52,
+          "dst_addr": 768,
+          "size": 320,
+          "offset": 0
+        },
+        {
+          "op_type": "zero",
+          "tile_id": 67000,
+          "tile_type": "input",
+          "src_addr": -1,
+          "dst_addr": 1088,
+          "size": 1216,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 67002,
           "tile_type": "output",
           "src_addr": -1,
@@ -8315,12 +9563,17 @@
       ],
       "stats": {
         "loads": 1,
-        "moves": 1,
-        "keeps": 1,
-        "load_bytes": 128,
-        "move_bytes": 2304,
-        "total_ops": 3,
-        "bandwidth_saved": 2304
+        "moves": 2,
+        "keeps": 0,
+        "allocs": 1,
+        "zeros": 1,
+        "load_bytes": 320,
+        "move_bytes": 3072,
+        "keep_bytes": 0,
+        "alloc_bytes": 128,
+        "zero_bytes": 1216,
+        "total_ops": 5,
+        "bandwidth_saved": 3072
       }
     },
     {
@@ -8328,16 +9581,25 @@
       "to_phase": 68,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "load",
           "tile_id": 68000,
           "tile_type": "input",
-          "src_addr": 0,
+          "src_addr": 168,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 1920,
           "offset": 0
         },
         {
-          "op_type": "load",
+          "op_type": "zero",
+          "tile_id": 68000,
+          "tile_type": "input",
+          "src_addr": -1,
+          "dst_addr": 1920,
+          "size": 384,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 68002,
           "tile_type": "output",
           "src_addr": -1,
@@ -8358,10 +9620,15 @@
       "stats": {
         "loads": 1,
         "moves": 1,
-        "keeps": 1,
-        "load_bytes": 256,
+        "keeps": 0,
+        "allocs": 1,
+        "zeros": 1,
+        "load_bytes": 1920,
         "move_bytes": 2304,
-        "total_ops": 3,
+        "keep_bytes": 0,
+        "alloc_bytes": 256,
+        "zero_bytes": 384,
+        "total_ops": 4,
         "bandwidth_saved": 2304
       }
     },
@@ -8370,16 +9637,25 @@
       "to_phase": 69,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "move",
           "tile_id": 69000,
           "tile_type": "input",
           "src_addr": 0,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 768,
           "offset": 0
         },
         {
           "op_type": "load",
+          "tile_id": 69000,
+          "tile_type": "input",
+          "src_addr": 188,
+          "dst_addr": 768,
+          "size": 1536,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 69002,
           "tile_type": "output",
           "src_addr": -1,
@@ -8399,12 +9675,17 @@
       ],
       "stats": {
         "loads": 1,
-        "moves": 0,
-        "keeps": 2,
-        "load_bytes": 256,
-        "move_bytes": 0,
-        "total_ops": 3,
-        "bandwidth_saved": 0
+        "moves": 1,
+        "keeps": 1,
+        "allocs": 1,
+        "zeros": 0,
+        "load_bytes": 1536,
+        "move_bytes": 768,
+        "keep_bytes": 2304,
+        "alloc_bytes": 256,
+        "zero_bytes": 0,
+        "total_ops": 4,
+        "bandwidth_saved": 3072
       }
     },
     {
@@ -8412,16 +9693,25 @@
       "to_phase": 70,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "move",
           "tile_id": 70000,
           "tile_type": "input",
           "src_addr": 0,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 768,
           "offset": 0
         },
         {
           "op_type": "load",
+          "tile_id": 70000,
+          "tile_type": "input",
+          "src_addr": 204,
+          "dst_addr": 768,
+          "size": 1536,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 70002,
           "tile_type": "output",
           "src_addr": -1,
@@ -8441,12 +9731,17 @@
       ],
       "stats": {
         "loads": 1,
-        "moves": 0,
-        "keeps": 2,
-        "load_bytes": 256,
-        "move_bytes": 0,
-        "total_ops": 3,
-        "bandwidth_saved": 0
+        "moves": 1,
+        "keeps": 1,
+        "allocs": 1,
+        "zeros": 0,
+        "load_bytes": 1536,
+        "move_bytes": 768,
+        "keep_bytes": 2304,
+        "alloc_bytes": 256,
+        "zero_bytes": 0,
+        "total_ops": 4,
+        "bandwidth_saved": 3072
       }
     },
     {
@@ -8454,16 +9749,34 @@
       "to_phase": 71,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "move",
           "tile_id": 71000,
           "tile_type": "input",
           "src_addr": 0,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 768,
           "offset": 0
         },
         {
           "op_type": "load",
+          "tile_id": 71000,
+          "tile_type": "input",
+          "src_addr": 220,
+          "dst_addr": 768,
+          "size": 384,
+          "offset": 0
+        },
+        {
+          "op_type": "zero",
+          "tile_id": 71000,
+          "tile_type": "input",
+          "src_addr": -1,
+          "dst_addr": 1152,
+          "size": 1152,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 71002,
           "tile_type": "output",
           "src_addr": -1,
@@ -8483,12 +9796,17 @@
       ],
       "stats": {
         "loads": 1,
-        "moves": 1,
-        "keeps": 1,
-        "load_bytes": 128,
-        "move_bytes": 2304,
-        "total_ops": 3,
-        "bandwidth_saved": 2304
+        "moves": 2,
+        "keeps": 0,
+        "allocs": 1,
+        "zeros": 1,
+        "load_bytes": 384,
+        "move_bytes": 3072,
+        "keep_bytes": 0,
+        "alloc_bytes": 128,
+        "zero_bytes": 1152,
+        "total_ops": 5,
+        "bandwidth_saved": 3072
       }
     },
     {
@@ -8496,16 +9814,25 @@
       "to_phase": 72,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "load",
           "tile_id": 72000,
           "tile_type": "input",
-          "src_addr": 0,
+          "src_addr": 392,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 1920,
           "offset": 0
         },
         {
-          "op_type": "load",
+          "op_type": "zero",
+          "tile_id": 72000,
+          "tile_type": "input",
+          "src_addr": -1,
+          "dst_addr": 1920,
+          "size": 384,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 72002,
           "tile_type": "output",
           "src_addr": -1,
@@ -8526,10 +9853,15 @@
       "stats": {
         "loads": 1,
         "moves": 1,
-        "keeps": 1,
-        "load_bytes": 256,
+        "keeps": 0,
+        "allocs": 1,
+        "zeros": 1,
+        "load_bytes": 1920,
         "move_bytes": 2304,
-        "total_ops": 3,
+        "keep_bytes": 0,
+        "alloc_bytes": 256,
+        "zero_bytes": 384,
+        "total_ops": 4,
         "bandwidth_saved": 2304
       }
     },
@@ -8538,16 +9870,25 @@
       "to_phase": 73,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "move",
           "tile_id": 73000,
           "tile_type": "input",
           "src_addr": 0,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 768,
           "offset": 0
         },
         {
           "op_type": "load",
+          "tile_id": 73000,
+          "tile_type": "input",
+          "src_addr": 412,
+          "dst_addr": 768,
+          "size": 1536,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 73002,
           "tile_type": "output",
           "src_addr": -1,
@@ -8567,12 +9908,17 @@
       ],
       "stats": {
         "loads": 1,
-        "moves": 0,
-        "keeps": 2,
-        "load_bytes": 256,
-        "move_bytes": 0,
-        "total_ops": 3,
-        "bandwidth_saved": 0
+        "moves": 1,
+        "keeps": 1,
+        "allocs": 1,
+        "zeros": 0,
+        "load_bytes": 1536,
+        "move_bytes": 768,
+        "keep_bytes": 2304,
+        "alloc_bytes": 256,
+        "zero_bytes": 0,
+        "total_ops": 4,
+        "bandwidth_saved": 3072
       }
     },
     {
@@ -8580,16 +9926,25 @@
       "to_phase": 74,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "move",
           "tile_id": 74000,
           "tile_type": "input",
           "src_addr": 0,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 768,
           "offset": 0
         },
         {
           "op_type": "load",
+          "tile_id": 74000,
+          "tile_type": "input",
+          "src_addr": 428,
+          "dst_addr": 768,
+          "size": 1536,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 74002,
           "tile_type": "output",
           "src_addr": -1,
@@ -8609,12 +9964,17 @@
       ],
       "stats": {
         "loads": 1,
-        "moves": 0,
-        "keeps": 2,
-        "load_bytes": 256,
-        "move_bytes": 0,
-        "total_ops": 3,
-        "bandwidth_saved": 0
+        "moves": 1,
+        "keeps": 1,
+        "allocs": 1,
+        "zeros": 0,
+        "load_bytes": 1536,
+        "move_bytes": 768,
+        "keep_bytes": 2304,
+        "alloc_bytes": 256,
+        "zero_bytes": 0,
+        "total_ops": 4,
+        "bandwidth_saved": 3072
       }
     },
     {
@@ -8622,16 +9982,34 @@
       "to_phase": 75,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "move",
           "tile_id": 75000,
           "tile_type": "input",
           "src_addr": 0,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 768,
           "offset": 0
         },
         {
           "op_type": "load",
+          "tile_id": 75000,
+          "tile_type": "input",
+          "src_addr": 444,
+          "dst_addr": 768,
+          "size": 384,
+          "offset": 0
+        },
+        {
+          "op_type": "zero",
+          "tile_id": 75000,
+          "tile_type": "input",
+          "src_addr": -1,
+          "dst_addr": 1152,
+          "size": 1152,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 75002,
           "tile_type": "output",
           "src_addr": -1,
@@ -8651,12 +10029,17 @@
       ],
       "stats": {
         "loads": 1,
-        "moves": 1,
-        "keeps": 1,
-        "load_bytes": 128,
-        "move_bytes": 2304,
-        "total_ops": 3,
-        "bandwidth_saved": 2304
+        "moves": 2,
+        "keeps": 0,
+        "allocs": 1,
+        "zeros": 1,
+        "load_bytes": 384,
+        "move_bytes": 3072,
+        "keep_bytes": 0,
+        "alloc_bytes": 128,
+        "zero_bytes": 1152,
+        "total_ops": 5,
+        "bandwidth_saved": 3072
       }
     },
     {
@@ -8664,16 +10047,25 @@
       "to_phase": 76,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "load",
           "tile_id": 76000,
           "tile_type": "input",
-          "src_addr": 0,
+          "src_addr": 616,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 960,
           "offset": 0
         },
         {
-          "op_type": "load",
+          "op_type": "zero",
+          "tile_id": 76000,
+          "tile_type": "input",
+          "src_addr": -1,
+          "dst_addr": 960,
+          "size": 1344,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 76002,
           "tile_type": "output",
           "src_addr": -1,
@@ -8694,11 +10086,16 @@
       "stats": {
         "loads": 1,
         "moves": 0,
-        "keeps": 2,
-        "load_bytes": 128,
+        "keeps": 1,
+        "allocs": 1,
+        "zeros": 1,
+        "load_bytes": 960,
         "move_bytes": 0,
-        "total_ops": 3,
-        "bandwidth_saved": 0
+        "keep_bytes": 2304,
+        "alloc_bytes": 128,
+        "zero_bytes": 1344,
+        "total_ops": 4,
+        "bandwidth_saved": 2304
       }
     },
     {
@@ -8706,16 +10103,34 @@
       "to_phase": 77,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "move",
           "tile_id": 77000,
           "tile_type": "input",
           "src_addr": 0,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 768,
           "offset": 0
         },
         {
           "op_type": "load",
+          "tile_id": 77000,
+          "tile_type": "input",
+          "src_addr": 636,
+          "dst_addr": 768,
+          "size": 768,
+          "offset": 0
+        },
+        {
+          "op_type": "zero",
+          "tile_id": 77000,
+          "tile_type": "input",
+          "src_addr": -1,
+          "dst_addr": 1536,
+          "size": 768,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 77002,
           "tile_type": "output",
           "src_addr": -1,
@@ -8735,12 +10150,17 @@
       ],
       "stats": {
         "loads": 1,
-        "moves": 0,
-        "keeps": 2,
-        "load_bytes": 128,
-        "move_bytes": 0,
-        "total_ops": 3,
-        "bandwidth_saved": 0
+        "moves": 1,
+        "keeps": 1,
+        "allocs": 1,
+        "zeros": 1,
+        "load_bytes": 768,
+        "move_bytes": 768,
+        "keep_bytes": 2304,
+        "alloc_bytes": 128,
+        "zero_bytes": 768,
+        "total_ops": 5,
+        "bandwidth_saved": 3072
       }
     },
     {
@@ -8748,16 +10168,34 @@
       "to_phase": 78,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "move",
           "tile_id": 78000,
           "tile_type": "input",
           "src_addr": 0,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 768,
           "offset": 0
         },
         {
           "op_type": "load",
+          "tile_id": 78000,
+          "tile_type": "input",
+          "src_addr": 652,
+          "dst_addr": 768,
+          "size": 768,
+          "offset": 0
+        },
+        {
+          "op_type": "zero",
+          "tile_id": 78000,
+          "tile_type": "input",
+          "src_addr": -1,
+          "dst_addr": 1536,
+          "size": 768,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 78002,
           "tile_type": "output",
           "src_addr": -1,
@@ -8777,12 +10215,17 @@
       ],
       "stats": {
         "loads": 1,
-        "moves": 0,
-        "keeps": 2,
-        "load_bytes": 128,
-        "move_bytes": 0,
-        "total_ops": 3,
-        "bandwidth_saved": 0
+        "moves": 1,
+        "keeps": 1,
+        "allocs": 1,
+        "zeros": 1,
+        "load_bytes": 768,
+        "move_bytes": 768,
+        "keep_bytes": 2304,
+        "alloc_bytes": 128,
+        "zero_bytes": 768,
+        "total_ops": 5,
+        "bandwidth_saved": 3072
       }
     },
     {
@@ -8790,16 +10233,34 @@
       "to_phase": 79,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "move",
           "tile_id": 79000,
           "tile_type": "input",
           "src_addr": 0,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 768,
           "offset": 0
         },
         {
           "op_type": "load",
+          "tile_id": 79000,
+          "tile_type": "input",
+          "src_addr": 668,
+          "dst_addr": 768,
+          "size": 192,
+          "offset": 0
+        },
+        {
+          "op_type": "zero",
+          "tile_id": 79000,
+          "tile_type": "input",
+          "src_addr": -1,
+          "dst_addr": 960,
+          "size": 1344,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 79002,
           "tile_type": "output",
           "src_addr": -1,
@@ -8819,12 +10280,17 @@
       ],
       "stats": {
         "loads": 1,
-        "moves": 1,
-        "keeps": 1,
-        "load_bytes": 64,
-        "move_bytes": 2304,
-        "total_ops": 3,
-        "bandwidth_saved": 2304
+        "moves": 2,
+        "keeps": 0,
+        "allocs": 1,
+        "zeros": 1,
+        "load_bytes": 192,
+        "move_bytes": 3072,
+        "keep_bytes": 0,
+        "alloc_bytes": 64,
+        "zero_bytes": 1344,
+        "total_ops": 5,
+        "bandwidth_saved": 3072
       }
     },
     {
@@ -8832,16 +10298,25 @@
       "to_phase": 80,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "load",
           "tile_id": 80000,
           "tile_type": "input",
           "src_addr": 0,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 1600,
           "offset": 0
         },
         {
-          "op_type": "load",
+          "op_type": "zero",
+          "tile_id": 80000,
+          "tile_type": "input",
+          "src_addr": -1,
+          "dst_addr": 1600,
+          "size": 704,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 80002,
           "tile_type": "output",
           "src_addr": -1,
@@ -8850,23 +10325,28 @@
           "offset": 0
         },
         {
-          "op_type": "move",
+          "op_type": "load",
           "tile_id": 80001,
           "tile_type": "weight",
-          "src_addr": 2368,
+          "src_addr": 268446976,
           "dst_addr": 2560,
           "size": 2304,
-          "offset": 192
+          "offset": 0
         }
       ],
       "stats": {
-        "loads": 1,
-        "moves": 1,
-        "keeps": 1,
-        "load_bytes": 256,
-        "move_bytes": 2304,
-        "total_ops": 3,
-        "bandwidth_saved": 2304
+        "loads": 2,
+        "moves": 0,
+        "keeps": 0,
+        "allocs": 1,
+        "zeros": 1,
+        "load_bytes": 3904,
+        "move_bytes": 0,
+        "keep_bytes": 0,
+        "alloc_bytes": 256,
+        "zero_bytes": 704,
+        "total_ops": 4,
+        "bandwidth_saved": 0
       }
     },
     {
@@ -8874,16 +10354,34 @@
       "to_phase": 81,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "move",
           "tile_id": 81000,
           "tile_type": "input",
           "src_addr": 0,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 768,
           "offset": 0
         },
         {
           "op_type": "load",
+          "tile_id": 81000,
+          "tile_type": "input",
+          "src_addr": 20,
+          "dst_addr": 768,
+          "size": 1280,
+          "offset": 0
+        },
+        {
+          "op_type": "zero",
+          "tile_id": 81000,
+          "tile_type": "input",
+          "src_addr": -1,
+          "dst_addr": 2048,
+          "size": 256,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 81002,
           "tile_type": "output",
           "src_addr": -1,
@@ -8903,12 +10401,17 @@
       ],
       "stats": {
         "loads": 1,
-        "moves": 0,
-        "keeps": 2,
-        "load_bytes": 256,
-        "move_bytes": 0,
-        "total_ops": 3,
-        "bandwidth_saved": 0
+        "moves": 1,
+        "keeps": 1,
+        "allocs": 1,
+        "zeros": 1,
+        "load_bytes": 1280,
+        "move_bytes": 768,
+        "keep_bytes": 2304,
+        "alloc_bytes": 256,
+        "zero_bytes": 256,
+        "total_ops": 5,
+        "bandwidth_saved": 3072
       }
     },
     {
@@ -8916,16 +10419,34 @@
       "to_phase": 82,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "move",
           "tile_id": 82000,
           "tile_type": "input",
           "src_addr": 0,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 768,
           "offset": 0
         },
         {
           "op_type": "load",
+          "tile_id": 82000,
+          "tile_type": "input",
+          "src_addr": 36,
+          "dst_addr": 768,
+          "size": 1280,
+          "offset": 0
+        },
+        {
+          "op_type": "zero",
+          "tile_id": 82000,
+          "tile_type": "input",
+          "src_addr": -1,
+          "dst_addr": 2048,
+          "size": 256,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 82002,
           "tile_type": "output",
           "src_addr": -1,
@@ -8945,12 +10466,17 @@
       ],
       "stats": {
         "loads": 1,
-        "moves": 0,
-        "keeps": 2,
-        "load_bytes": 256,
-        "move_bytes": 0,
-        "total_ops": 3,
-        "bandwidth_saved": 0
+        "moves": 1,
+        "keeps": 1,
+        "allocs": 1,
+        "zeros": 1,
+        "load_bytes": 1280,
+        "move_bytes": 768,
+        "keep_bytes": 2304,
+        "alloc_bytes": 256,
+        "zero_bytes": 256,
+        "total_ops": 5,
+        "bandwidth_saved": 3072
       }
     },
     {
@@ -8958,16 +10484,34 @@
       "to_phase": 83,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "move",
           "tile_id": 83000,
           "tile_type": "input",
           "src_addr": 0,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 768,
           "offset": 0
         },
         {
           "op_type": "load",
+          "tile_id": 83000,
+          "tile_type": "input",
+          "src_addr": 52,
+          "dst_addr": 768,
+          "size": 320,
+          "offset": 0
+        },
+        {
+          "op_type": "zero",
+          "tile_id": 83000,
+          "tile_type": "input",
+          "src_addr": -1,
+          "dst_addr": 1088,
+          "size": 1216,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 83002,
           "tile_type": "output",
           "src_addr": -1,
@@ -8987,12 +10531,17 @@
       ],
       "stats": {
         "loads": 1,
-        "moves": 1,
-        "keeps": 1,
-        "load_bytes": 128,
-        "move_bytes": 2304,
-        "total_ops": 3,
-        "bandwidth_saved": 2304
+        "moves": 2,
+        "keeps": 0,
+        "allocs": 1,
+        "zeros": 1,
+        "load_bytes": 320,
+        "move_bytes": 3072,
+        "keep_bytes": 0,
+        "alloc_bytes": 128,
+        "zero_bytes": 1216,
+        "total_ops": 5,
+        "bandwidth_saved": 3072
       }
     },
     {
@@ -9000,16 +10549,25 @@
       "to_phase": 84,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "load",
           "tile_id": 84000,
           "tile_type": "input",
-          "src_addr": 0,
+          "src_addr": 168,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 1920,
           "offset": 0
         },
         {
-          "op_type": "load",
+          "op_type": "zero",
+          "tile_id": 84000,
+          "tile_type": "input",
+          "src_addr": -1,
+          "dst_addr": 1920,
+          "size": 384,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 84002,
           "tile_type": "output",
           "src_addr": -1,
@@ -9030,10 +10588,15 @@
       "stats": {
         "loads": 1,
         "moves": 1,
-        "keeps": 1,
-        "load_bytes": 256,
+        "keeps": 0,
+        "allocs": 1,
+        "zeros": 1,
+        "load_bytes": 1920,
         "move_bytes": 2304,
-        "total_ops": 3,
+        "keep_bytes": 0,
+        "alloc_bytes": 256,
+        "zero_bytes": 384,
+        "total_ops": 4,
         "bandwidth_saved": 2304
       }
     },
@@ -9042,16 +10605,25 @@
       "to_phase": 85,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "move",
           "tile_id": 85000,
           "tile_type": "input",
           "src_addr": 0,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 768,
           "offset": 0
         },
         {
           "op_type": "load",
+          "tile_id": 85000,
+          "tile_type": "input",
+          "src_addr": 188,
+          "dst_addr": 768,
+          "size": 1536,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 85002,
           "tile_type": "output",
           "src_addr": -1,
@@ -9071,12 +10643,17 @@
       ],
       "stats": {
         "loads": 1,
-        "moves": 0,
-        "keeps": 2,
-        "load_bytes": 256,
-        "move_bytes": 0,
-        "total_ops": 3,
-        "bandwidth_saved": 0
+        "moves": 1,
+        "keeps": 1,
+        "allocs": 1,
+        "zeros": 0,
+        "load_bytes": 1536,
+        "move_bytes": 768,
+        "keep_bytes": 2304,
+        "alloc_bytes": 256,
+        "zero_bytes": 0,
+        "total_ops": 4,
+        "bandwidth_saved": 3072
       }
     },
     {
@@ -9084,16 +10661,25 @@
       "to_phase": 86,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "move",
           "tile_id": 86000,
           "tile_type": "input",
           "src_addr": 0,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 768,
           "offset": 0
         },
         {
           "op_type": "load",
+          "tile_id": 86000,
+          "tile_type": "input",
+          "src_addr": 204,
+          "dst_addr": 768,
+          "size": 1536,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 86002,
           "tile_type": "output",
           "src_addr": -1,
@@ -9113,12 +10699,17 @@
       ],
       "stats": {
         "loads": 1,
-        "moves": 0,
-        "keeps": 2,
-        "load_bytes": 256,
-        "move_bytes": 0,
-        "total_ops": 3,
-        "bandwidth_saved": 0
+        "moves": 1,
+        "keeps": 1,
+        "allocs": 1,
+        "zeros": 0,
+        "load_bytes": 1536,
+        "move_bytes": 768,
+        "keep_bytes": 2304,
+        "alloc_bytes": 256,
+        "zero_bytes": 0,
+        "total_ops": 4,
+        "bandwidth_saved": 3072
       }
     },
     {
@@ -9126,16 +10717,34 @@
       "to_phase": 87,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "move",
           "tile_id": 87000,
           "tile_type": "input",
           "src_addr": 0,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 768,
           "offset": 0
         },
         {
           "op_type": "load",
+          "tile_id": 87000,
+          "tile_type": "input",
+          "src_addr": 220,
+          "dst_addr": 768,
+          "size": 384,
+          "offset": 0
+        },
+        {
+          "op_type": "zero",
+          "tile_id": 87000,
+          "tile_type": "input",
+          "src_addr": -1,
+          "dst_addr": 1152,
+          "size": 1152,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 87002,
           "tile_type": "output",
           "src_addr": -1,
@@ -9155,12 +10764,17 @@
       ],
       "stats": {
         "loads": 1,
-        "moves": 1,
-        "keeps": 1,
-        "load_bytes": 128,
-        "move_bytes": 2304,
-        "total_ops": 3,
-        "bandwidth_saved": 2304
+        "moves": 2,
+        "keeps": 0,
+        "allocs": 1,
+        "zeros": 1,
+        "load_bytes": 384,
+        "move_bytes": 3072,
+        "keep_bytes": 0,
+        "alloc_bytes": 128,
+        "zero_bytes": 1152,
+        "total_ops": 5,
+        "bandwidth_saved": 3072
       }
     },
     {
@@ -9168,16 +10782,25 @@
       "to_phase": 88,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "load",
           "tile_id": 88000,
           "tile_type": "input",
-          "src_addr": 0,
+          "src_addr": 392,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 1920,
           "offset": 0
         },
         {
-          "op_type": "load",
+          "op_type": "zero",
+          "tile_id": 88000,
+          "tile_type": "input",
+          "src_addr": -1,
+          "dst_addr": 1920,
+          "size": 384,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 88002,
           "tile_type": "output",
           "src_addr": -1,
@@ -9198,10 +10821,15 @@
       "stats": {
         "loads": 1,
         "moves": 1,
-        "keeps": 1,
-        "load_bytes": 256,
+        "keeps": 0,
+        "allocs": 1,
+        "zeros": 1,
+        "load_bytes": 1920,
         "move_bytes": 2304,
-        "total_ops": 3,
+        "keep_bytes": 0,
+        "alloc_bytes": 256,
+        "zero_bytes": 384,
+        "total_ops": 4,
         "bandwidth_saved": 2304
       }
     },
@@ -9210,16 +10838,25 @@
       "to_phase": 89,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "move",
           "tile_id": 89000,
           "tile_type": "input",
           "src_addr": 0,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 768,
           "offset": 0
         },
         {
           "op_type": "load",
+          "tile_id": 89000,
+          "tile_type": "input",
+          "src_addr": 412,
+          "dst_addr": 768,
+          "size": 1536,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 89002,
           "tile_type": "output",
           "src_addr": -1,
@@ -9239,12 +10876,17 @@
       ],
       "stats": {
         "loads": 1,
-        "moves": 0,
-        "keeps": 2,
-        "load_bytes": 256,
-        "move_bytes": 0,
-        "total_ops": 3,
-        "bandwidth_saved": 0
+        "moves": 1,
+        "keeps": 1,
+        "allocs": 1,
+        "zeros": 0,
+        "load_bytes": 1536,
+        "move_bytes": 768,
+        "keep_bytes": 2304,
+        "alloc_bytes": 256,
+        "zero_bytes": 0,
+        "total_ops": 4,
+        "bandwidth_saved": 3072
       }
     },
     {
@@ -9252,16 +10894,25 @@
       "to_phase": 90,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "move",
           "tile_id": 90000,
           "tile_type": "input",
           "src_addr": 0,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 768,
           "offset": 0
         },
         {
           "op_type": "load",
+          "tile_id": 90000,
+          "tile_type": "input",
+          "src_addr": 428,
+          "dst_addr": 768,
+          "size": 1536,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 90002,
           "tile_type": "output",
           "src_addr": -1,
@@ -9281,12 +10932,17 @@
       ],
       "stats": {
         "loads": 1,
-        "moves": 0,
-        "keeps": 2,
-        "load_bytes": 256,
-        "move_bytes": 0,
-        "total_ops": 3,
-        "bandwidth_saved": 0
+        "moves": 1,
+        "keeps": 1,
+        "allocs": 1,
+        "zeros": 0,
+        "load_bytes": 1536,
+        "move_bytes": 768,
+        "keep_bytes": 2304,
+        "alloc_bytes": 256,
+        "zero_bytes": 0,
+        "total_ops": 4,
+        "bandwidth_saved": 3072
       }
     },
     {
@@ -9294,16 +10950,34 @@
       "to_phase": 91,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "move",
           "tile_id": 91000,
           "tile_type": "input",
           "src_addr": 0,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 768,
           "offset": 0
         },
         {
           "op_type": "load",
+          "tile_id": 91000,
+          "tile_type": "input",
+          "src_addr": 444,
+          "dst_addr": 768,
+          "size": 384,
+          "offset": 0
+        },
+        {
+          "op_type": "zero",
+          "tile_id": 91000,
+          "tile_type": "input",
+          "src_addr": -1,
+          "dst_addr": 1152,
+          "size": 1152,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 91002,
           "tile_type": "output",
           "src_addr": -1,
@@ -9323,12 +10997,17 @@
       ],
       "stats": {
         "loads": 1,
-        "moves": 1,
-        "keeps": 1,
-        "load_bytes": 128,
-        "move_bytes": 2304,
-        "total_ops": 3,
-        "bandwidth_saved": 2304
+        "moves": 2,
+        "keeps": 0,
+        "allocs": 1,
+        "zeros": 1,
+        "load_bytes": 384,
+        "move_bytes": 3072,
+        "keep_bytes": 0,
+        "alloc_bytes": 128,
+        "zero_bytes": 1152,
+        "total_ops": 5,
+        "bandwidth_saved": 3072
       }
     },
     {
@@ -9336,16 +11015,25 @@
       "to_phase": 92,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "load",
           "tile_id": 92000,
           "tile_type": "input",
-          "src_addr": 0,
+          "src_addr": 616,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 960,
           "offset": 0
         },
         {
-          "op_type": "load",
+          "op_type": "zero",
+          "tile_id": 92000,
+          "tile_type": "input",
+          "src_addr": -1,
+          "dst_addr": 960,
+          "size": 1344,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 92002,
           "tile_type": "output",
           "src_addr": -1,
@@ -9366,11 +11054,16 @@
       "stats": {
         "loads": 1,
         "moves": 0,
-        "keeps": 2,
-        "load_bytes": 128,
+        "keeps": 1,
+        "allocs": 1,
+        "zeros": 1,
+        "load_bytes": 960,
         "move_bytes": 0,
-        "total_ops": 3,
-        "bandwidth_saved": 0
+        "keep_bytes": 2304,
+        "alloc_bytes": 128,
+        "zero_bytes": 1344,
+        "total_ops": 4,
+        "bandwidth_saved": 2304
       }
     },
     {
@@ -9378,16 +11071,34 @@
       "to_phase": 93,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "move",
           "tile_id": 93000,
           "tile_type": "input",
           "src_addr": 0,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 768,
           "offset": 0
         },
         {
           "op_type": "load",
+          "tile_id": 93000,
+          "tile_type": "input",
+          "src_addr": 636,
+          "dst_addr": 768,
+          "size": 768,
+          "offset": 0
+        },
+        {
+          "op_type": "zero",
+          "tile_id": 93000,
+          "tile_type": "input",
+          "src_addr": -1,
+          "dst_addr": 1536,
+          "size": 768,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 93002,
           "tile_type": "output",
           "src_addr": -1,
@@ -9407,12 +11118,17 @@
       ],
       "stats": {
         "loads": 1,
-        "moves": 0,
-        "keeps": 2,
-        "load_bytes": 128,
-        "move_bytes": 0,
-        "total_ops": 3,
-        "bandwidth_saved": 0
+        "moves": 1,
+        "keeps": 1,
+        "allocs": 1,
+        "zeros": 1,
+        "load_bytes": 768,
+        "move_bytes": 768,
+        "keep_bytes": 2304,
+        "alloc_bytes": 128,
+        "zero_bytes": 768,
+        "total_ops": 5,
+        "bandwidth_saved": 3072
       }
     },
     {
@@ -9420,16 +11136,34 @@
       "to_phase": 94,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "move",
           "tile_id": 94000,
           "tile_type": "input",
           "src_addr": 0,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 768,
           "offset": 0
         },
         {
           "op_type": "load",
+          "tile_id": 94000,
+          "tile_type": "input",
+          "src_addr": 652,
+          "dst_addr": 768,
+          "size": 768,
+          "offset": 0
+        },
+        {
+          "op_type": "zero",
+          "tile_id": 94000,
+          "tile_type": "input",
+          "src_addr": -1,
+          "dst_addr": 1536,
+          "size": 768,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 94002,
           "tile_type": "output",
           "src_addr": -1,
@@ -9449,12 +11183,17 @@
       ],
       "stats": {
         "loads": 1,
-        "moves": 0,
-        "keeps": 2,
-        "load_bytes": 128,
-        "move_bytes": 0,
-        "total_ops": 3,
-        "bandwidth_saved": 0
+        "moves": 1,
+        "keeps": 1,
+        "allocs": 1,
+        "zeros": 1,
+        "load_bytes": 768,
+        "move_bytes": 768,
+        "keep_bytes": 2304,
+        "alloc_bytes": 128,
+        "zero_bytes": 768,
+        "total_ops": 5,
+        "bandwidth_saved": 3072
       }
     },
     {
@@ -9462,16 +11201,34 @@
       "to_phase": 95,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "move",
           "tile_id": 95000,
           "tile_type": "input",
           "src_addr": 0,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 768,
           "offset": 0
         },
         {
           "op_type": "load",
+          "tile_id": 95000,
+          "tile_type": "input",
+          "src_addr": 668,
+          "dst_addr": 768,
+          "size": 192,
+          "offset": 0
+        },
+        {
+          "op_type": "zero",
+          "tile_id": 95000,
+          "tile_type": "input",
+          "src_addr": -1,
+          "dst_addr": 960,
+          "size": 1344,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 95002,
           "tile_type": "output",
           "src_addr": -1,
@@ -9491,12 +11248,17 @@
       ],
       "stats": {
         "loads": 1,
-        "moves": 1,
-        "keeps": 1,
-        "load_bytes": 64,
-        "move_bytes": 2304,
-        "total_ops": 3,
-        "bandwidth_saved": 2304
+        "moves": 2,
+        "keeps": 0,
+        "allocs": 1,
+        "zeros": 1,
+        "load_bytes": 192,
+        "move_bytes": 3072,
+        "keep_bytes": 0,
+        "alloc_bytes": 64,
+        "zero_bytes": 1344,
+        "total_ops": 5,
+        "bandwidth_saved": 3072
       }
     },
     {
@@ -9504,16 +11266,25 @@
       "to_phase": 96,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "load",
           "tile_id": 96000,
           "tile_type": "input",
           "src_addr": 0,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 1600,
           "offset": 0
         },
         {
-          "op_type": "load",
+          "op_type": "zero",
+          "tile_id": 96000,
+          "tile_type": "input",
+          "src_addr": -1,
+          "dst_addr": 1600,
+          "size": 704,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 96002,
           "tile_type": "output",
           "src_addr": -1,
@@ -9522,23 +11293,28 @@
           "offset": 0
         },
         {
-          "op_type": "move",
+          "op_type": "load",
           "tile_id": 96001,
           "tile_type": "weight",
-          "src_addr": 2368,
+          "src_addr": 268449280,
           "dst_addr": 2560,
           "size": 2304,
-          "offset": 192
+          "offset": 0
         }
       ],
       "stats": {
-        "loads": 1,
-        "moves": 1,
-        "keeps": 1,
-        "load_bytes": 256,
-        "move_bytes": 2304,
-        "total_ops": 3,
-        "bandwidth_saved": 2304
+        "loads": 2,
+        "moves": 0,
+        "keeps": 0,
+        "allocs": 1,
+        "zeros": 1,
+        "load_bytes": 3904,
+        "move_bytes": 0,
+        "keep_bytes": 0,
+        "alloc_bytes": 256,
+        "zero_bytes": 704,
+        "total_ops": 4,
+        "bandwidth_saved": 0
       }
     },
     {
@@ -9546,16 +11322,34 @@
       "to_phase": 97,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "move",
           "tile_id": 97000,
           "tile_type": "input",
           "src_addr": 0,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 768,
           "offset": 0
         },
         {
           "op_type": "load",
+          "tile_id": 97000,
+          "tile_type": "input",
+          "src_addr": 20,
+          "dst_addr": 768,
+          "size": 1280,
+          "offset": 0
+        },
+        {
+          "op_type": "zero",
+          "tile_id": 97000,
+          "tile_type": "input",
+          "src_addr": -1,
+          "dst_addr": 2048,
+          "size": 256,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 97002,
           "tile_type": "output",
           "src_addr": -1,
@@ -9575,12 +11369,17 @@
       ],
       "stats": {
         "loads": 1,
-        "moves": 0,
-        "keeps": 2,
-        "load_bytes": 256,
-        "move_bytes": 0,
-        "total_ops": 3,
-        "bandwidth_saved": 0
+        "moves": 1,
+        "keeps": 1,
+        "allocs": 1,
+        "zeros": 1,
+        "load_bytes": 1280,
+        "move_bytes": 768,
+        "keep_bytes": 2304,
+        "alloc_bytes": 256,
+        "zero_bytes": 256,
+        "total_ops": 5,
+        "bandwidth_saved": 3072
       }
     },
     {
@@ -9588,16 +11387,34 @@
       "to_phase": 98,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "move",
           "tile_id": 98000,
           "tile_type": "input",
           "src_addr": 0,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 768,
           "offset": 0
         },
         {
           "op_type": "load",
+          "tile_id": 98000,
+          "tile_type": "input",
+          "src_addr": 36,
+          "dst_addr": 768,
+          "size": 1280,
+          "offset": 0
+        },
+        {
+          "op_type": "zero",
+          "tile_id": 98000,
+          "tile_type": "input",
+          "src_addr": -1,
+          "dst_addr": 2048,
+          "size": 256,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 98002,
           "tile_type": "output",
           "src_addr": -1,
@@ -9617,12 +11434,17 @@
       ],
       "stats": {
         "loads": 1,
-        "moves": 0,
-        "keeps": 2,
-        "load_bytes": 256,
-        "move_bytes": 0,
-        "total_ops": 3,
-        "bandwidth_saved": 0
+        "moves": 1,
+        "keeps": 1,
+        "allocs": 1,
+        "zeros": 1,
+        "load_bytes": 1280,
+        "move_bytes": 768,
+        "keep_bytes": 2304,
+        "alloc_bytes": 256,
+        "zero_bytes": 256,
+        "total_ops": 5,
+        "bandwidth_saved": 3072
       }
     },
     {
@@ -9630,16 +11452,34 @@
       "to_phase": 99,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "move",
           "tile_id": 99000,
           "tile_type": "input",
           "src_addr": 0,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 768,
           "offset": 0
         },
         {
           "op_type": "load",
+          "tile_id": 99000,
+          "tile_type": "input",
+          "src_addr": 52,
+          "dst_addr": 768,
+          "size": 320,
+          "offset": 0
+        },
+        {
+          "op_type": "zero",
+          "tile_id": 99000,
+          "tile_type": "input",
+          "src_addr": -1,
+          "dst_addr": 1088,
+          "size": 1216,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 99002,
           "tile_type": "output",
           "src_addr": -1,
@@ -9659,12 +11499,17 @@
       ],
       "stats": {
         "loads": 1,
-        "moves": 1,
-        "keeps": 1,
-        "load_bytes": 128,
-        "move_bytes": 2304,
-        "total_ops": 3,
-        "bandwidth_saved": 2304
+        "moves": 2,
+        "keeps": 0,
+        "allocs": 1,
+        "zeros": 1,
+        "load_bytes": 320,
+        "move_bytes": 3072,
+        "keep_bytes": 0,
+        "alloc_bytes": 128,
+        "zero_bytes": 1216,
+        "total_ops": 5,
+        "bandwidth_saved": 3072
       }
     },
     {
@@ -9672,16 +11517,25 @@
       "to_phase": 100,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "load",
           "tile_id": 100000,
           "tile_type": "input",
-          "src_addr": 0,
+          "src_addr": 168,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 1920,
           "offset": 0
         },
         {
-          "op_type": "load",
+          "op_type": "zero",
+          "tile_id": 100000,
+          "tile_type": "input",
+          "src_addr": -1,
+          "dst_addr": 1920,
+          "size": 384,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 100002,
           "tile_type": "output",
           "src_addr": -1,
@@ -9702,10 +11556,15 @@
       "stats": {
         "loads": 1,
         "moves": 1,
-        "keeps": 1,
-        "load_bytes": 256,
+        "keeps": 0,
+        "allocs": 1,
+        "zeros": 1,
+        "load_bytes": 1920,
         "move_bytes": 2304,
-        "total_ops": 3,
+        "keep_bytes": 0,
+        "alloc_bytes": 256,
+        "zero_bytes": 384,
+        "total_ops": 4,
         "bandwidth_saved": 2304
       }
     },
@@ -9714,16 +11573,25 @@
       "to_phase": 101,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "move",
           "tile_id": 101000,
           "tile_type": "input",
           "src_addr": 0,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 768,
           "offset": 0
         },
         {
           "op_type": "load",
+          "tile_id": 101000,
+          "tile_type": "input",
+          "src_addr": 188,
+          "dst_addr": 768,
+          "size": 1536,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 101002,
           "tile_type": "output",
           "src_addr": -1,
@@ -9743,12 +11611,17 @@
       ],
       "stats": {
         "loads": 1,
-        "moves": 0,
-        "keeps": 2,
-        "load_bytes": 256,
-        "move_bytes": 0,
-        "total_ops": 3,
-        "bandwidth_saved": 0
+        "moves": 1,
+        "keeps": 1,
+        "allocs": 1,
+        "zeros": 0,
+        "load_bytes": 1536,
+        "move_bytes": 768,
+        "keep_bytes": 2304,
+        "alloc_bytes": 256,
+        "zero_bytes": 0,
+        "total_ops": 4,
+        "bandwidth_saved": 3072
       }
     },
     {
@@ -9756,16 +11629,25 @@
       "to_phase": 102,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "move",
           "tile_id": 102000,
           "tile_type": "input",
           "src_addr": 0,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 768,
           "offset": 0
         },
         {
           "op_type": "load",
+          "tile_id": 102000,
+          "tile_type": "input",
+          "src_addr": 204,
+          "dst_addr": 768,
+          "size": 1536,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 102002,
           "tile_type": "output",
           "src_addr": -1,
@@ -9785,12 +11667,17 @@
       ],
       "stats": {
         "loads": 1,
-        "moves": 0,
-        "keeps": 2,
-        "load_bytes": 256,
-        "move_bytes": 0,
-        "total_ops": 3,
-        "bandwidth_saved": 0
+        "moves": 1,
+        "keeps": 1,
+        "allocs": 1,
+        "zeros": 0,
+        "load_bytes": 1536,
+        "move_bytes": 768,
+        "keep_bytes": 2304,
+        "alloc_bytes": 256,
+        "zero_bytes": 0,
+        "total_ops": 4,
+        "bandwidth_saved": 3072
       }
     },
     {
@@ -9798,16 +11685,34 @@
       "to_phase": 103,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "move",
           "tile_id": 103000,
           "tile_type": "input",
           "src_addr": 0,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 768,
           "offset": 0
         },
         {
           "op_type": "load",
+          "tile_id": 103000,
+          "tile_type": "input",
+          "src_addr": 220,
+          "dst_addr": 768,
+          "size": 384,
+          "offset": 0
+        },
+        {
+          "op_type": "zero",
+          "tile_id": 103000,
+          "tile_type": "input",
+          "src_addr": -1,
+          "dst_addr": 1152,
+          "size": 1152,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 103002,
           "tile_type": "output",
           "src_addr": -1,
@@ -9827,12 +11732,17 @@
       ],
       "stats": {
         "loads": 1,
-        "moves": 1,
-        "keeps": 1,
-        "load_bytes": 128,
-        "move_bytes": 2304,
-        "total_ops": 3,
-        "bandwidth_saved": 2304
+        "moves": 2,
+        "keeps": 0,
+        "allocs": 1,
+        "zeros": 1,
+        "load_bytes": 384,
+        "move_bytes": 3072,
+        "keep_bytes": 0,
+        "alloc_bytes": 128,
+        "zero_bytes": 1152,
+        "total_ops": 5,
+        "bandwidth_saved": 3072
       }
     },
     {
@@ -9840,16 +11750,25 @@
       "to_phase": 104,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "load",
           "tile_id": 104000,
           "tile_type": "input",
-          "src_addr": 0,
+          "src_addr": 392,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 1920,
           "offset": 0
         },
         {
-          "op_type": "load",
+          "op_type": "zero",
+          "tile_id": 104000,
+          "tile_type": "input",
+          "src_addr": -1,
+          "dst_addr": 1920,
+          "size": 384,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 104002,
           "tile_type": "output",
           "src_addr": -1,
@@ -9870,10 +11789,15 @@
       "stats": {
         "loads": 1,
         "moves": 1,
-        "keeps": 1,
-        "load_bytes": 256,
+        "keeps": 0,
+        "allocs": 1,
+        "zeros": 1,
+        "load_bytes": 1920,
         "move_bytes": 2304,
-        "total_ops": 3,
+        "keep_bytes": 0,
+        "alloc_bytes": 256,
+        "zero_bytes": 384,
+        "total_ops": 4,
         "bandwidth_saved": 2304
       }
     },
@@ -9882,16 +11806,25 @@
       "to_phase": 105,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "move",
           "tile_id": 105000,
           "tile_type": "input",
           "src_addr": 0,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 768,
           "offset": 0
         },
         {
           "op_type": "load",
+          "tile_id": 105000,
+          "tile_type": "input",
+          "src_addr": 412,
+          "dst_addr": 768,
+          "size": 1536,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 105002,
           "tile_type": "output",
           "src_addr": -1,
@@ -9911,12 +11844,17 @@
       ],
       "stats": {
         "loads": 1,
-        "moves": 0,
-        "keeps": 2,
-        "load_bytes": 256,
-        "move_bytes": 0,
-        "total_ops": 3,
-        "bandwidth_saved": 0
+        "moves": 1,
+        "keeps": 1,
+        "allocs": 1,
+        "zeros": 0,
+        "load_bytes": 1536,
+        "move_bytes": 768,
+        "keep_bytes": 2304,
+        "alloc_bytes": 256,
+        "zero_bytes": 0,
+        "total_ops": 4,
+        "bandwidth_saved": 3072
       }
     },
     {
@@ -9924,16 +11862,25 @@
       "to_phase": 106,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "move",
           "tile_id": 106000,
           "tile_type": "input",
           "src_addr": 0,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 768,
           "offset": 0
         },
         {
           "op_type": "load",
+          "tile_id": 106000,
+          "tile_type": "input",
+          "src_addr": 428,
+          "dst_addr": 768,
+          "size": 1536,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 106002,
           "tile_type": "output",
           "src_addr": -1,
@@ -9953,12 +11900,17 @@
       ],
       "stats": {
         "loads": 1,
-        "moves": 0,
-        "keeps": 2,
-        "load_bytes": 256,
-        "move_bytes": 0,
-        "total_ops": 3,
-        "bandwidth_saved": 0
+        "moves": 1,
+        "keeps": 1,
+        "allocs": 1,
+        "zeros": 0,
+        "load_bytes": 1536,
+        "move_bytes": 768,
+        "keep_bytes": 2304,
+        "alloc_bytes": 256,
+        "zero_bytes": 0,
+        "total_ops": 4,
+        "bandwidth_saved": 3072
       }
     },
     {
@@ -9966,16 +11918,34 @@
       "to_phase": 107,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "move",
           "tile_id": 107000,
           "tile_type": "input",
           "src_addr": 0,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 768,
           "offset": 0
         },
         {
           "op_type": "load",
+          "tile_id": 107000,
+          "tile_type": "input",
+          "src_addr": 444,
+          "dst_addr": 768,
+          "size": 384,
+          "offset": 0
+        },
+        {
+          "op_type": "zero",
+          "tile_id": 107000,
+          "tile_type": "input",
+          "src_addr": -1,
+          "dst_addr": 1152,
+          "size": 1152,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 107002,
           "tile_type": "output",
           "src_addr": -1,
@@ -9995,12 +11965,17 @@
       ],
       "stats": {
         "loads": 1,
-        "moves": 1,
-        "keeps": 1,
-        "load_bytes": 128,
-        "move_bytes": 2304,
-        "total_ops": 3,
-        "bandwidth_saved": 2304
+        "moves": 2,
+        "keeps": 0,
+        "allocs": 1,
+        "zeros": 1,
+        "load_bytes": 384,
+        "move_bytes": 3072,
+        "keep_bytes": 0,
+        "alloc_bytes": 128,
+        "zero_bytes": 1152,
+        "total_ops": 5,
+        "bandwidth_saved": 3072
       }
     },
     {
@@ -10008,16 +11983,25 @@
       "to_phase": 108,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "load",
           "tile_id": 108000,
           "tile_type": "input",
-          "src_addr": 0,
+          "src_addr": 616,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 960,
           "offset": 0
         },
         {
-          "op_type": "load",
+          "op_type": "zero",
+          "tile_id": 108000,
+          "tile_type": "input",
+          "src_addr": -1,
+          "dst_addr": 960,
+          "size": 1344,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 108002,
           "tile_type": "output",
           "src_addr": -1,
@@ -10038,11 +12022,16 @@
       "stats": {
         "loads": 1,
         "moves": 0,
-        "keeps": 2,
-        "load_bytes": 128,
+        "keeps": 1,
+        "allocs": 1,
+        "zeros": 1,
+        "load_bytes": 960,
         "move_bytes": 0,
-        "total_ops": 3,
-        "bandwidth_saved": 0
+        "keep_bytes": 2304,
+        "alloc_bytes": 128,
+        "zero_bytes": 1344,
+        "total_ops": 4,
+        "bandwidth_saved": 2304
       }
     },
     {
@@ -10050,16 +12039,34 @@
       "to_phase": 109,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "move",
           "tile_id": 109000,
           "tile_type": "input",
           "src_addr": 0,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 768,
           "offset": 0
         },
         {
           "op_type": "load",
+          "tile_id": 109000,
+          "tile_type": "input",
+          "src_addr": 636,
+          "dst_addr": 768,
+          "size": 768,
+          "offset": 0
+        },
+        {
+          "op_type": "zero",
+          "tile_id": 109000,
+          "tile_type": "input",
+          "src_addr": -1,
+          "dst_addr": 1536,
+          "size": 768,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 109002,
           "tile_type": "output",
           "src_addr": -1,
@@ -10079,12 +12086,17 @@
       ],
       "stats": {
         "loads": 1,
-        "moves": 0,
-        "keeps": 2,
-        "load_bytes": 128,
-        "move_bytes": 0,
-        "total_ops": 3,
-        "bandwidth_saved": 0
+        "moves": 1,
+        "keeps": 1,
+        "allocs": 1,
+        "zeros": 1,
+        "load_bytes": 768,
+        "move_bytes": 768,
+        "keep_bytes": 2304,
+        "alloc_bytes": 128,
+        "zero_bytes": 768,
+        "total_ops": 5,
+        "bandwidth_saved": 3072
       }
     },
     {
@@ -10092,16 +12104,34 @@
       "to_phase": 110,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "move",
           "tile_id": 110000,
           "tile_type": "input",
           "src_addr": 0,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 768,
           "offset": 0
         },
         {
           "op_type": "load",
+          "tile_id": 110000,
+          "tile_type": "input",
+          "src_addr": 652,
+          "dst_addr": 768,
+          "size": 768,
+          "offset": 0
+        },
+        {
+          "op_type": "zero",
+          "tile_id": 110000,
+          "tile_type": "input",
+          "src_addr": -1,
+          "dst_addr": 1536,
+          "size": 768,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 110002,
           "tile_type": "output",
           "src_addr": -1,
@@ -10121,12 +12151,17 @@
       ],
       "stats": {
         "loads": 1,
-        "moves": 0,
-        "keeps": 2,
-        "load_bytes": 128,
-        "move_bytes": 0,
-        "total_ops": 3,
-        "bandwidth_saved": 0
+        "moves": 1,
+        "keeps": 1,
+        "allocs": 1,
+        "zeros": 1,
+        "load_bytes": 768,
+        "move_bytes": 768,
+        "keep_bytes": 2304,
+        "alloc_bytes": 128,
+        "zero_bytes": 768,
+        "total_ops": 5,
+        "bandwidth_saved": 3072
       }
     },
     {
@@ -10134,16 +12169,34 @@
       "to_phase": 111,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "move",
           "tile_id": 111000,
           "tile_type": "input",
           "src_addr": 0,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 768,
           "offset": 0
         },
         {
           "op_type": "load",
+          "tile_id": 111000,
+          "tile_type": "input",
+          "src_addr": 668,
+          "dst_addr": 768,
+          "size": 192,
+          "offset": 0
+        },
+        {
+          "op_type": "zero",
+          "tile_id": 111000,
+          "tile_type": "input",
+          "src_addr": -1,
+          "dst_addr": 960,
+          "size": 1344,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 111002,
           "tile_type": "output",
           "src_addr": -1,
@@ -10163,12 +12216,17 @@
       ],
       "stats": {
         "loads": 1,
-        "moves": 1,
-        "keeps": 1,
-        "load_bytes": 64,
-        "move_bytes": 2304,
-        "total_ops": 3,
-        "bandwidth_saved": 2304
+        "moves": 2,
+        "keeps": 0,
+        "allocs": 1,
+        "zeros": 1,
+        "load_bytes": 192,
+        "move_bytes": 3072,
+        "keep_bytes": 0,
+        "alloc_bytes": 64,
+        "zero_bytes": 1344,
+        "total_ops": 5,
+        "bandwidth_saved": 3072
       }
     },
     {
@@ -10176,16 +12234,25 @@
       "to_phase": 112,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "load",
           "tile_id": 112000,
           "tile_type": "input",
           "src_addr": 0,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 1600,
           "offset": 0
         },
         {
-          "op_type": "load",
+          "op_type": "zero",
+          "tile_id": 112000,
+          "tile_type": "input",
+          "src_addr": -1,
+          "dst_addr": 1600,
+          "size": 704,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 112002,
           "tile_type": "output",
           "src_addr": -1,
@@ -10194,23 +12261,28 @@
           "offset": 0
         },
         {
-          "op_type": "move",
+          "op_type": "load",
           "tile_id": 112001,
           "tile_type": "weight",
-          "src_addr": 2368,
+          "src_addr": 268451584,
           "dst_addr": 2560,
           "size": 2304,
-          "offset": 192
+          "offset": 0
         }
       ],
       "stats": {
-        "loads": 1,
-        "moves": 1,
-        "keeps": 1,
-        "load_bytes": 256,
-        "move_bytes": 2304,
-        "total_ops": 3,
-        "bandwidth_saved": 2304
+        "loads": 2,
+        "moves": 0,
+        "keeps": 0,
+        "allocs": 1,
+        "zeros": 1,
+        "load_bytes": 3904,
+        "move_bytes": 0,
+        "keep_bytes": 0,
+        "alloc_bytes": 256,
+        "zero_bytes": 704,
+        "total_ops": 4,
+        "bandwidth_saved": 0
       }
     },
     {
@@ -10218,16 +12290,34 @@
       "to_phase": 113,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "move",
           "tile_id": 113000,
           "tile_type": "input",
           "src_addr": 0,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 768,
           "offset": 0
         },
         {
           "op_type": "load",
+          "tile_id": 113000,
+          "tile_type": "input",
+          "src_addr": 20,
+          "dst_addr": 768,
+          "size": 1280,
+          "offset": 0
+        },
+        {
+          "op_type": "zero",
+          "tile_id": 113000,
+          "tile_type": "input",
+          "src_addr": -1,
+          "dst_addr": 2048,
+          "size": 256,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 113002,
           "tile_type": "output",
           "src_addr": -1,
@@ -10247,12 +12337,17 @@
       ],
       "stats": {
         "loads": 1,
-        "moves": 0,
-        "keeps": 2,
-        "load_bytes": 256,
-        "move_bytes": 0,
-        "total_ops": 3,
-        "bandwidth_saved": 0
+        "moves": 1,
+        "keeps": 1,
+        "allocs": 1,
+        "zeros": 1,
+        "load_bytes": 1280,
+        "move_bytes": 768,
+        "keep_bytes": 2304,
+        "alloc_bytes": 256,
+        "zero_bytes": 256,
+        "total_ops": 5,
+        "bandwidth_saved": 3072
       }
     },
     {
@@ -10260,16 +12355,34 @@
       "to_phase": 114,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "move",
           "tile_id": 114000,
           "tile_type": "input",
           "src_addr": 0,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 768,
           "offset": 0
         },
         {
           "op_type": "load",
+          "tile_id": 114000,
+          "tile_type": "input",
+          "src_addr": 36,
+          "dst_addr": 768,
+          "size": 1280,
+          "offset": 0
+        },
+        {
+          "op_type": "zero",
+          "tile_id": 114000,
+          "tile_type": "input",
+          "src_addr": -1,
+          "dst_addr": 2048,
+          "size": 256,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 114002,
           "tile_type": "output",
           "src_addr": -1,
@@ -10289,12 +12402,17 @@
       ],
       "stats": {
         "loads": 1,
-        "moves": 0,
-        "keeps": 2,
-        "load_bytes": 256,
-        "move_bytes": 0,
-        "total_ops": 3,
-        "bandwidth_saved": 0
+        "moves": 1,
+        "keeps": 1,
+        "allocs": 1,
+        "zeros": 1,
+        "load_bytes": 1280,
+        "move_bytes": 768,
+        "keep_bytes": 2304,
+        "alloc_bytes": 256,
+        "zero_bytes": 256,
+        "total_ops": 5,
+        "bandwidth_saved": 3072
       }
     },
     {
@@ -10302,16 +12420,34 @@
       "to_phase": 115,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "move",
           "tile_id": 115000,
           "tile_type": "input",
           "src_addr": 0,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 768,
           "offset": 0
         },
         {
           "op_type": "load",
+          "tile_id": 115000,
+          "tile_type": "input",
+          "src_addr": 52,
+          "dst_addr": 768,
+          "size": 320,
+          "offset": 0
+        },
+        {
+          "op_type": "zero",
+          "tile_id": 115000,
+          "tile_type": "input",
+          "src_addr": -1,
+          "dst_addr": 1088,
+          "size": 1216,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 115002,
           "tile_type": "output",
           "src_addr": -1,
@@ -10331,12 +12467,17 @@
       ],
       "stats": {
         "loads": 1,
-        "moves": 1,
-        "keeps": 1,
-        "load_bytes": 128,
-        "move_bytes": 2304,
-        "total_ops": 3,
-        "bandwidth_saved": 2304
+        "moves": 2,
+        "keeps": 0,
+        "allocs": 1,
+        "zeros": 1,
+        "load_bytes": 320,
+        "move_bytes": 3072,
+        "keep_bytes": 0,
+        "alloc_bytes": 128,
+        "zero_bytes": 1216,
+        "total_ops": 5,
+        "bandwidth_saved": 3072
       }
     },
     {
@@ -10344,16 +12485,25 @@
       "to_phase": 116,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "load",
           "tile_id": 116000,
           "tile_type": "input",
-          "src_addr": 0,
+          "src_addr": 168,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 1920,
           "offset": 0
         },
         {
-          "op_type": "load",
+          "op_type": "zero",
+          "tile_id": 116000,
+          "tile_type": "input",
+          "src_addr": -1,
+          "dst_addr": 1920,
+          "size": 384,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 116002,
           "tile_type": "output",
           "src_addr": -1,
@@ -10374,10 +12524,15 @@
       "stats": {
         "loads": 1,
         "moves": 1,
-        "keeps": 1,
-        "load_bytes": 256,
+        "keeps": 0,
+        "allocs": 1,
+        "zeros": 1,
+        "load_bytes": 1920,
         "move_bytes": 2304,
-        "total_ops": 3,
+        "keep_bytes": 0,
+        "alloc_bytes": 256,
+        "zero_bytes": 384,
+        "total_ops": 4,
         "bandwidth_saved": 2304
       }
     },
@@ -10386,16 +12541,25 @@
       "to_phase": 117,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "move",
           "tile_id": 117000,
           "tile_type": "input",
           "src_addr": 0,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 768,
           "offset": 0
         },
         {
           "op_type": "load",
+          "tile_id": 117000,
+          "tile_type": "input",
+          "src_addr": 188,
+          "dst_addr": 768,
+          "size": 1536,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 117002,
           "tile_type": "output",
           "src_addr": -1,
@@ -10415,12 +12579,17 @@
       ],
       "stats": {
         "loads": 1,
-        "moves": 0,
-        "keeps": 2,
-        "load_bytes": 256,
-        "move_bytes": 0,
-        "total_ops": 3,
-        "bandwidth_saved": 0
+        "moves": 1,
+        "keeps": 1,
+        "allocs": 1,
+        "zeros": 0,
+        "load_bytes": 1536,
+        "move_bytes": 768,
+        "keep_bytes": 2304,
+        "alloc_bytes": 256,
+        "zero_bytes": 0,
+        "total_ops": 4,
+        "bandwidth_saved": 3072
       }
     },
     {
@@ -10428,16 +12597,25 @@
       "to_phase": 118,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "move",
           "tile_id": 118000,
           "tile_type": "input",
           "src_addr": 0,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 768,
           "offset": 0
         },
         {
           "op_type": "load",
+          "tile_id": 118000,
+          "tile_type": "input",
+          "src_addr": 204,
+          "dst_addr": 768,
+          "size": 1536,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 118002,
           "tile_type": "output",
           "src_addr": -1,
@@ -10457,12 +12635,17 @@
       ],
       "stats": {
         "loads": 1,
-        "moves": 0,
-        "keeps": 2,
-        "load_bytes": 256,
-        "move_bytes": 0,
-        "total_ops": 3,
-        "bandwidth_saved": 0
+        "moves": 1,
+        "keeps": 1,
+        "allocs": 1,
+        "zeros": 0,
+        "load_bytes": 1536,
+        "move_bytes": 768,
+        "keep_bytes": 2304,
+        "alloc_bytes": 256,
+        "zero_bytes": 0,
+        "total_ops": 4,
+        "bandwidth_saved": 3072
       }
     },
     {
@@ -10470,16 +12653,34 @@
       "to_phase": 119,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "move",
           "tile_id": 119000,
           "tile_type": "input",
           "src_addr": 0,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 768,
           "offset": 0
         },
         {
           "op_type": "load",
+          "tile_id": 119000,
+          "tile_type": "input",
+          "src_addr": 220,
+          "dst_addr": 768,
+          "size": 384,
+          "offset": 0
+        },
+        {
+          "op_type": "zero",
+          "tile_id": 119000,
+          "tile_type": "input",
+          "src_addr": -1,
+          "dst_addr": 1152,
+          "size": 1152,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 119002,
           "tile_type": "output",
           "src_addr": -1,
@@ -10499,12 +12700,17 @@
       ],
       "stats": {
         "loads": 1,
-        "moves": 1,
-        "keeps": 1,
-        "load_bytes": 128,
-        "move_bytes": 2304,
-        "total_ops": 3,
-        "bandwidth_saved": 2304
+        "moves": 2,
+        "keeps": 0,
+        "allocs": 1,
+        "zeros": 1,
+        "load_bytes": 384,
+        "move_bytes": 3072,
+        "keep_bytes": 0,
+        "alloc_bytes": 128,
+        "zero_bytes": 1152,
+        "total_ops": 5,
+        "bandwidth_saved": 3072
       }
     },
     {
@@ -10512,16 +12718,25 @@
       "to_phase": 120,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "load",
           "tile_id": 120000,
           "tile_type": "input",
-          "src_addr": 0,
+          "src_addr": 392,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 1920,
           "offset": 0
         },
         {
-          "op_type": "load",
+          "op_type": "zero",
+          "tile_id": 120000,
+          "tile_type": "input",
+          "src_addr": -1,
+          "dst_addr": 1920,
+          "size": 384,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 120002,
           "tile_type": "output",
           "src_addr": -1,
@@ -10542,10 +12757,15 @@
       "stats": {
         "loads": 1,
         "moves": 1,
-        "keeps": 1,
-        "load_bytes": 256,
+        "keeps": 0,
+        "allocs": 1,
+        "zeros": 1,
+        "load_bytes": 1920,
         "move_bytes": 2304,
-        "total_ops": 3,
+        "keep_bytes": 0,
+        "alloc_bytes": 256,
+        "zero_bytes": 384,
+        "total_ops": 4,
         "bandwidth_saved": 2304
       }
     },
@@ -10554,16 +12774,25 @@
       "to_phase": 121,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "move",
           "tile_id": 121000,
           "tile_type": "input",
           "src_addr": 0,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 768,
           "offset": 0
         },
         {
           "op_type": "load",
+          "tile_id": 121000,
+          "tile_type": "input",
+          "src_addr": 412,
+          "dst_addr": 768,
+          "size": 1536,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 121002,
           "tile_type": "output",
           "src_addr": -1,
@@ -10583,12 +12812,17 @@
       ],
       "stats": {
         "loads": 1,
-        "moves": 0,
-        "keeps": 2,
-        "load_bytes": 256,
-        "move_bytes": 0,
-        "total_ops": 3,
-        "bandwidth_saved": 0
+        "moves": 1,
+        "keeps": 1,
+        "allocs": 1,
+        "zeros": 0,
+        "load_bytes": 1536,
+        "move_bytes": 768,
+        "keep_bytes": 2304,
+        "alloc_bytes": 256,
+        "zero_bytes": 0,
+        "total_ops": 4,
+        "bandwidth_saved": 3072
       }
     },
     {
@@ -10596,16 +12830,25 @@
       "to_phase": 122,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "move",
           "tile_id": 122000,
           "tile_type": "input",
           "src_addr": 0,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 768,
           "offset": 0
         },
         {
           "op_type": "load",
+          "tile_id": 122000,
+          "tile_type": "input",
+          "src_addr": 428,
+          "dst_addr": 768,
+          "size": 1536,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 122002,
           "tile_type": "output",
           "src_addr": -1,
@@ -10625,12 +12868,17 @@
       ],
       "stats": {
         "loads": 1,
-        "moves": 0,
-        "keeps": 2,
-        "load_bytes": 256,
-        "move_bytes": 0,
-        "total_ops": 3,
-        "bandwidth_saved": 0
+        "moves": 1,
+        "keeps": 1,
+        "allocs": 1,
+        "zeros": 0,
+        "load_bytes": 1536,
+        "move_bytes": 768,
+        "keep_bytes": 2304,
+        "alloc_bytes": 256,
+        "zero_bytes": 0,
+        "total_ops": 4,
+        "bandwidth_saved": 3072
       }
     },
     {
@@ -10638,16 +12886,34 @@
       "to_phase": 123,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "move",
           "tile_id": 123000,
           "tile_type": "input",
           "src_addr": 0,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 768,
           "offset": 0
         },
         {
           "op_type": "load",
+          "tile_id": 123000,
+          "tile_type": "input",
+          "src_addr": 444,
+          "dst_addr": 768,
+          "size": 384,
+          "offset": 0
+        },
+        {
+          "op_type": "zero",
+          "tile_id": 123000,
+          "tile_type": "input",
+          "src_addr": -1,
+          "dst_addr": 1152,
+          "size": 1152,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 123002,
           "tile_type": "output",
           "src_addr": -1,
@@ -10667,12 +12933,17 @@
       ],
       "stats": {
         "loads": 1,
-        "moves": 1,
-        "keeps": 1,
-        "load_bytes": 128,
-        "move_bytes": 2304,
-        "total_ops": 3,
-        "bandwidth_saved": 2304
+        "moves": 2,
+        "keeps": 0,
+        "allocs": 1,
+        "zeros": 1,
+        "load_bytes": 384,
+        "move_bytes": 3072,
+        "keep_bytes": 0,
+        "alloc_bytes": 128,
+        "zero_bytes": 1152,
+        "total_ops": 5,
+        "bandwidth_saved": 3072
       }
     },
     {
@@ -10680,16 +12951,25 @@
       "to_phase": 124,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "load",
           "tile_id": 124000,
           "tile_type": "input",
-          "src_addr": 0,
+          "src_addr": 616,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 960,
           "offset": 0
         },
         {
-          "op_type": "load",
+          "op_type": "zero",
+          "tile_id": 124000,
+          "tile_type": "input",
+          "src_addr": -1,
+          "dst_addr": 960,
+          "size": 1344,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 124002,
           "tile_type": "output",
           "src_addr": -1,
@@ -10710,11 +12990,16 @@
       "stats": {
         "loads": 1,
         "moves": 0,
-        "keeps": 2,
-        "load_bytes": 128,
+        "keeps": 1,
+        "allocs": 1,
+        "zeros": 1,
+        "load_bytes": 960,
         "move_bytes": 0,
-        "total_ops": 3,
-        "bandwidth_saved": 0
+        "keep_bytes": 2304,
+        "alloc_bytes": 128,
+        "zero_bytes": 1344,
+        "total_ops": 4,
+        "bandwidth_saved": 2304
       }
     },
     {
@@ -10722,16 +13007,34 @@
       "to_phase": 125,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "move",
           "tile_id": 125000,
           "tile_type": "input",
           "src_addr": 0,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 768,
           "offset": 0
         },
         {
           "op_type": "load",
+          "tile_id": 125000,
+          "tile_type": "input",
+          "src_addr": 636,
+          "dst_addr": 768,
+          "size": 768,
+          "offset": 0
+        },
+        {
+          "op_type": "zero",
+          "tile_id": 125000,
+          "tile_type": "input",
+          "src_addr": -1,
+          "dst_addr": 1536,
+          "size": 768,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 125002,
           "tile_type": "output",
           "src_addr": -1,
@@ -10751,12 +13054,17 @@
       ],
       "stats": {
         "loads": 1,
-        "moves": 0,
-        "keeps": 2,
-        "load_bytes": 128,
-        "move_bytes": 0,
-        "total_ops": 3,
-        "bandwidth_saved": 0
+        "moves": 1,
+        "keeps": 1,
+        "allocs": 1,
+        "zeros": 1,
+        "load_bytes": 768,
+        "move_bytes": 768,
+        "keep_bytes": 2304,
+        "alloc_bytes": 128,
+        "zero_bytes": 768,
+        "total_ops": 5,
+        "bandwidth_saved": 3072
       }
     },
     {
@@ -10764,16 +13072,34 @@
       "to_phase": 126,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "move",
           "tile_id": 126000,
           "tile_type": "input",
           "src_addr": 0,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 768,
           "offset": 0
         },
         {
           "op_type": "load",
+          "tile_id": 126000,
+          "tile_type": "input",
+          "src_addr": 652,
+          "dst_addr": 768,
+          "size": 768,
+          "offset": 0
+        },
+        {
+          "op_type": "zero",
+          "tile_id": 126000,
+          "tile_type": "input",
+          "src_addr": -1,
+          "dst_addr": 1536,
+          "size": 768,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 126002,
           "tile_type": "output",
           "src_addr": -1,
@@ -10793,12 +13119,17 @@
       ],
       "stats": {
         "loads": 1,
-        "moves": 0,
-        "keeps": 2,
-        "load_bytes": 128,
-        "move_bytes": 0,
-        "total_ops": 3,
-        "bandwidth_saved": 0
+        "moves": 1,
+        "keeps": 1,
+        "allocs": 1,
+        "zeros": 1,
+        "load_bytes": 768,
+        "move_bytes": 768,
+        "keep_bytes": 2304,
+        "alloc_bytes": 128,
+        "zero_bytes": 768,
+        "total_ops": 5,
+        "bandwidth_saved": 3072
       }
     },
     {
@@ -10806,16 +13137,34 @@
       "to_phase": 127,
       "operations": [
         {
-          "op_type": "keep",
+          "op_type": "move",
           "tile_id": 127000,
           "tile_type": "input",
           "src_addr": 0,
           "dst_addr": 0,
-          "size": 2304,
+          "size": 768,
           "offset": 0
         },
         {
           "op_type": "load",
+          "tile_id": 127000,
+          "tile_type": "input",
+          "src_addr": 668,
+          "dst_addr": 768,
+          "size": 192,
+          "offset": 0
+        },
+        {
+          "op_type": "zero",
+          "tile_id": 127000,
+          "tile_type": "input",
+          "src_addr": -1,
+          "dst_addr": 960,
+          "size": 1344,
+          "offset": 0
+        },
+        {
+          "op_type": "alloc",
           "tile_id": 127002,
           "tile_type": "output",
           "src_addr": -1,
@@ -10835,13 +13184,662 @@
       ],
       "stats": {
         "loads": 1,
-        "moves": 1,
-        "keeps": 1,
-        "load_bytes": 64,
-        "move_bytes": 2304,
-        "total_ops": 3,
-        "bandwidth_saved": 2304
+        "moves": 2,
+        "keeps": 0,
+        "allocs": 1,
+        "zeros": 1,
+        "load_bytes": 192,
+        "move_bytes": 3072,
+        "keep_bytes": 0,
+        "alloc_bytes": 64,
+        "zero_bytes": 1344,
+        "total_ops": 5,
+        "bandwidth_saved": 3072
       }
     }
-  ]
+  ],
+  "phase_table": [
+    {
+      "phase_id": 1,
+      "base_index": 0,
+      "num_ops": 5
+    },
+    {
+      "phase_id": 2,
+      "base_index": 5,
+      "num_ops": 5
+    },
+    {
+      "phase_id": 3,
+      "base_index": 10,
+      "num_ops": 5
+    },
+    {
+      "phase_id": 4,
+      "base_index": 15,
+      "num_ops": 4
+    },
+    {
+      "phase_id": 5,
+      "base_index": 19,
+      "num_ops": 4
+    },
+    {
+      "phase_id": 6,
+      "base_index": 23,
+      "num_ops": 4
+    },
+    {
+      "phase_id": 7,
+      "base_index": 27,
+      "num_ops": 5
+    },
+    {
+      "phase_id": 8,
+      "base_index": 32,
+      "num_ops": 4
+    },
+    {
+      "phase_id": 9,
+      "base_index": 36,
+      "num_ops": 4
+    },
+    {
+      "phase_id": 10,
+      "base_index": 40,
+      "num_ops": 4
+    },
+    {
+      "phase_id": 11,
+      "base_index": 44,
+      "num_ops": 5
+    },
+    {
+      "phase_id": 12,
+      "base_index": 49,
+      "num_ops": 4
+    },
+    {
+      "phase_id": 13,
+      "base_index": 53,
+      "num_ops": 5
+    },
+    {
+      "phase_id": 14,
+      "base_index": 58,
+      "num_ops": 5
+    },
+    {
+      "phase_id": 15,
+      "base_index": 63,
+      "num_ops": 5
+    },
+    {
+      "phase_id": 16,
+      "base_index": 68,
+      "num_ops": 4
+    },
+    {
+      "phase_id": 17,
+      "base_index": 72,
+      "num_ops": 5
+    },
+    {
+      "phase_id": 18,
+      "base_index": 77,
+      "num_ops": 5
+    },
+    {
+      "phase_id": 19,
+      "base_index": 82,
+      "num_ops": 5
+    },
+    {
+      "phase_id": 20,
+      "base_index": 87,
+      "num_ops": 4
+    },
+    {
+      "phase_id": 21,
+      "base_index": 91,
+      "num_ops": 4
+    },
+    {
+      "phase_id": 22,
+      "base_index": 95,
+      "num_ops": 4
+    },
+    {
+      "phase_id": 23,
+      "base_index": 99,
+      "num_ops": 5
+    },
+    {
+      "phase_id": 24,
+      "base_index": 104,
+      "num_ops": 4
+    },
+    {
+      "phase_id": 25,
+      "base_index": 108,
+      "num_ops": 4
+    },
+    {
+      "phase_id": 26,
+      "base_index": 112,
+      "num_ops": 4
+    },
+    {
+      "phase_id": 27,
+      "base_index": 116,
+      "num_ops": 5
+    },
+    {
+      "phase_id": 28,
+      "base_index": 121,
+      "num_ops": 4
+    },
+    {
+      "phase_id": 29,
+      "base_index": 125,
+      "num_ops": 5
+    },
+    {
+      "phase_id": 30,
+      "base_index": 130,
+      "num_ops": 5
+    },
+    {
+      "phase_id": 31,
+      "base_index": 135,
+      "num_ops": 5
+    },
+    {
+      "phase_id": 32,
+      "base_index": 140,
+      "num_ops": 4
+    },
+    {
+      "phase_id": 33,
+      "base_index": 144,
+      "num_ops": 5
+    },
+    {
+      "phase_id": 34,
+      "base_index": 149,
+      "num_ops": 5
+    },
+    {
+      "phase_id": 35,
+      "base_index": 154,
+      "num_ops": 5
+    },
+    {
+      "phase_id": 36,
+      "base_index": 159,
+      "num_ops": 4
+    },
+    {
+      "phase_id": 37,
+      "base_index": 163,
+      "num_ops": 4
+    },
+    {
+      "phase_id": 38,
+      "base_index": 167,
+      "num_ops": 4
+    },
+    {
+      "phase_id": 39,
+      "base_index": 171,
+      "num_ops": 5
+    },
+    {
+      "phase_id": 40,
+      "base_index": 176,
+      "num_ops": 4
+    },
+    {
+      "phase_id": 41,
+      "base_index": 180,
+      "num_ops": 4
+    },
+    {
+      "phase_id": 42,
+      "base_index": 184,
+      "num_ops": 4
+    },
+    {
+      "phase_id": 43,
+      "base_index": 188,
+      "num_ops": 5
+    },
+    {
+      "phase_id": 44,
+      "base_index": 193,
+      "num_ops": 4
+    },
+    {
+      "phase_id": 45,
+      "base_index": 197,
+      "num_ops": 5
+    },
+    {
+      "phase_id": 46,
+      "base_index": 202,
+      "num_ops": 5
+    },
+    {
+      "phase_id": 47,
+      "base_index": 207,
+      "num_ops": 5
+    },
+    {
+      "phase_id": 48,
+      "base_index": 212,
+      "num_ops": 4
+    },
+    {
+      "phase_id": 49,
+      "base_index": 216,
+      "num_ops": 5
+    },
+    {
+      "phase_id": 50,
+      "base_index": 221,
+      "num_ops": 5
+    },
+    {
+      "phase_id": 51,
+      "base_index": 226,
+      "num_ops": 5
+    },
+    {
+      "phase_id": 52,
+      "base_index": 231,
+      "num_ops": 4
+    },
+    {
+      "phase_id": 53,
+      "base_index": 235,
+      "num_ops": 4
+    },
+    {
+      "phase_id": 54,
+      "base_index": 239,
+      "num_ops": 4
+    },
+    {
+      "phase_id": 55,
+      "base_index": 243,
+      "num_ops": 5
+    },
+    {
+      "phase_id": 56,
+      "base_index": 248,
+      "num_ops": 4
+    },
+    {
+      "phase_id": 57,
+      "base_index": 252,
+      "num_ops": 4
+    },
+    {
+      "phase_id": 58,
+      "base_index": 256,
+      "num_ops": 4
+    },
+    {
+      "phase_id": 59,
+      "base_index": 260,
+      "num_ops": 5
+    },
+    {
+      "phase_id": 60,
+      "base_index": 265,
+      "num_ops": 4
+    },
+    {
+      "phase_id": 61,
+      "base_index": 269,
+      "num_ops": 5
+    },
+    {
+      "phase_id": 62,
+      "base_index": 274,
+      "num_ops": 5
+    },
+    {
+      "phase_id": 63,
+      "base_index": 279,
+      "num_ops": 5
+    },
+    {
+      "phase_id": 64,
+      "base_index": 284,
+      "num_ops": 4
+    },
+    {
+      "phase_id": 65,
+      "base_index": 288,
+      "num_ops": 5
+    },
+    {
+      "phase_id": 66,
+      "base_index": 293,
+      "num_ops": 5
+    },
+    {
+      "phase_id": 67,
+      "base_index": 298,
+      "num_ops": 5
+    },
+    {
+      "phase_id": 68,
+      "base_index": 303,
+      "num_ops": 4
+    },
+    {
+      "phase_id": 69,
+      "base_index": 307,
+      "num_ops": 4
+    },
+    {
+      "phase_id": 70,
+      "base_index": 311,
+      "num_ops": 4
+    },
+    {
+      "phase_id": 71,
+      "base_index": 315,
+      "num_ops": 5
+    },
+    {
+      "phase_id": 72,
+      "base_index": 320,
+      "num_ops": 4
+    },
+    {
+      "phase_id": 73,
+      "base_index": 324,
+      "num_ops": 4
+    },
+    {
+      "phase_id": 74,
+      "base_index": 328,
+      "num_ops": 4
+    },
+    {
+      "phase_id": 75,
+      "base_index": 332,
+      "num_ops": 5
+    },
+    {
+      "phase_id": 76,
+      "base_index": 337,
+      "num_ops": 4
+    },
+    {
+      "phase_id": 77,
+      "base_index": 341,
+      "num_ops": 5
+    },
+    {
+      "phase_id": 78,
+      "base_index": 346,
+      "num_ops": 5
+    },
+    {
+      "phase_id": 79,
+      "base_index": 351,
+      "num_ops": 5
+    },
+    {
+      "phase_id": 80,
+      "base_index": 356,
+      "num_ops": 4
+    },
+    {
+      "phase_id": 81,
+      "base_index": 360,
+      "num_ops": 5
+    },
+    {
+      "phase_id": 82,
+      "base_index": 365,
+      "num_ops": 5
+    },
+    {
+      "phase_id": 83,
+      "base_index": 370,
+      "num_ops": 5
+    },
+    {
+      "phase_id": 84,
+      "base_index": 375,
+      "num_ops": 4
+    },
+    {
+      "phase_id": 85,
+      "base_index": 379,
+      "num_ops": 4
+    },
+    {
+      "phase_id": 86,
+      "base_index": 383,
+      "num_ops": 4
+    },
+    {
+      "phase_id": 87,
+      "base_index": 387,
+      "num_ops": 5
+    },
+    {
+      "phase_id": 88,
+      "base_index": 392,
+      "num_ops": 4
+    },
+    {
+      "phase_id": 89,
+      "base_index": 396,
+      "num_ops": 4
+    },
+    {
+      "phase_id": 90,
+      "base_index": 400,
+      "num_ops": 4
+    },
+    {
+      "phase_id": 91,
+      "base_index": 404,
+      "num_ops": 5
+    },
+    {
+      "phase_id": 92,
+      "base_index": 409,
+      "num_ops": 4
+    },
+    {
+      "phase_id": 93,
+      "base_index": 413,
+      "num_ops": 5
+    },
+    {
+      "phase_id": 94,
+      "base_index": 418,
+      "num_ops": 5
+    },
+    {
+      "phase_id": 95,
+      "base_index": 423,
+      "num_ops": 5
+    },
+    {
+      "phase_id": 96,
+      "base_index": 428,
+      "num_ops": 4
+    },
+    {
+      "phase_id": 97,
+      "base_index": 432,
+      "num_ops": 5
+    },
+    {
+      "phase_id": 98,
+      "base_index": 437,
+      "num_ops": 5
+    },
+    {
+      "phase_id": 99,
+      "base_index": 442,
+      "num_ops": 5
+    },
+    {
+      "phase_id": 100,
+      "base_index": 447,
+      "num_ops": 4
+    },
+    {
+      "phase_id": 101,
+      "base_index": 451,
+      "num_ops": 4
+    },
+    {
+      "phase_id": 102,
+      "base_index": 455,
+      "num_ops": 4
+    },
+    {
+      "phase_id": 103,
+      "base_index": 459,
+      "num_ops": 5
+    },
+    {
+      "phase_id": 104,
+      "base_index": 464,
+      "num_ops": 4
+    },
+    {
+      "phase_id": 105,
+      "base_index": 468,
+      "num_ops": 4
+    },
+    {
+      "phase_id": 106,
+      "base_index": 472,
+      "num_ops": 4
+    },
+    {
+      "phase_id": 107,
+      "base_index": 476,
+      "num_ops": 5
+    },
+    {
+      "phase_id": 108,
+      "base_index": 481,
+      "num_ops": 4
+    },
+    {
+      "phase_id": 109,
+      "base_index": 485,
+      "num_ops": 5
+    },
+    {
+      "phase_id": 110,
+      "base_index": 490,
+      "num_ops": 5
+    },
+    {
+      "phase_id": 111,
+      "base_index": 495,
+      "num_ops": 5
+    },
+    {
+      "phase_id": 112,
+      "base_index": 500,
+      "num_ops": 4
+    },
+    {
+      "phase_id": 113,
+      "base_index": 504,
+      "num_ops": 5
+    },
+    {
+      "phase_id": 114,
+      "base_index": 509,
+      "num_ops": 5
+    },
+    {
+      "phase_id": 115,
+      "base_index": 514,
+      "num_ops": 5
+    },
+    {
+      "phase_id": 116,
+      "base_index": 519,
+      "num_ops": 4
+    },
+    {
+      "phase_id": 117,
+      "base_index": 523,
+      "num_ops": 4
+    },
+    {
+      "phase_id": 118,
+      "base_index": 527,
+      "num_ops": 4
+    },
+    {
+      "phase_id": 119,
+      "base_index": 531,
+      "num_ops": 5
+    },
+    {
+      "phase_id": 120,
+      "base_index": 536,
+      "num_ops": 4
+    },
+    {
+      "phase_id": 121,
+      "base_index": 540,
+      "num_ops": 4
+    },
+    {
+      "phase_id": 122,
+      "base_index": 544,
+      "num_ops": 4
+    },
+    {
+      "phase_id": 123,
+      "base_index": 548,
+      "num_ops": 5
+    },
+    {
+      "phase_id": 124,
+      "base_index": 553,
+      "num_ops": 4
+    },
+    {
+      "phase_id": 125,
+      "base_index": 557,
+      "num_ops": 5
+    },
+    {
+      "phase_id": 126,
+      "base_index": 562,
+      "num_ops": 5
+    },
+    {
+      "phase_id": 127,
+      "base_index": 567,
+      "num_ops": 5
+    }
+  ],
+  "opcodes": {
+    "keep": 0,
+    "move": 1,
+    "load": 2,
+    "alloc": 3,
+    "zero": 4
+  }
 }

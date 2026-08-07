@@ -136,17 +136,35 @@ module paged_memory_backend #(
     end
 
     // Stats
+    //
+    // FIX (Member 3, memory subsystem): the previous version incremented the
+    // counters with non-blocking assignments *inside* the port loop:
+    //     for (i...) if (hit[i]) stats_page_hits <= stats_page_hits + 1;
+    // Every iteration schedules the same RHS (the value of the counter at the
+    // start of the cycle), so the last iteration wins and the counter advances
+    // by at most 1 per cycle no matter how many ports translated. With
+    // N_PORTS=4 that under-reported page hits and misses by up to 4x, which
+    // directly corrupts the PAGED-vs-STAMP translation-overhead comparison.
+    // Count the active ports combinationally first, then add once.
+    logic [$clog2(N_PORTS+1)-1:0] hit_count, miss_count;
+    always_comb begin
+        hit_count  = '0;
+        miss_count = '0;
+        for (int i = 0; i < N_PORTS; i++) begin
+            if (rd_en[i]) begin
+                if (hit[i]) hit_count  = hit_count  + 1'b1;
+                else        miss_count = miss_count + 1'b1;
+            end
+        end
+    end
+
     always_ff @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             stats_page_hits   <= '0;
             stats_page_misses <= '0;
         end else begin
-            for (int i = 0; i < N_PORTS; i++) begin
-                if (rd_en[i]) begin
-                    if (hit[i]) stats_page_hits   <= stats_page_hits   + 1;
-                    else        stats_page_misses <= stats_page_misses + 1;
-                end
-            end
+            stats_page_hits   <= stats_page_hits   + 32'(hit_count);
+            stats_page_misses <= stats_page_misses + 32'(miss_count);
         end
     end
 

@@ -35,6 +35,29 @@ class TileType(Enum):
     OUTPUT = "output" #(results)
     INTERMEDIATE = "intermediate" #(partial sum)
 
+
+# ---------------------------------------------------------------------------
+# Hardware opcode map — MUST stay in sync with the `case` in
+# stamp_based_memory_controller.sv.  The controller decodes
+# metadata_wr_data[119:112] with exactly these values.
+# ---------------------------------------------------------------------------
+OPCODE = {
+    "keep":  0,   # data already at the right on-chip address: no traffic
+    "move":  1,   # on-chip relocation: scratchpad read -> scratchpad write
+    "load":  2,   # off-chip DRAM burst -> scratchpad write
+    "alloc": 3,   # output slot reserved; compute writes it, no memory traffic
+    "zero":  4,   # zero-padding halo: scratchpad write of 0s, no DRAM read
+}
+
+# 128-bit metadata word layout consumed by the controller:
+#   [127:120] reserved (0)
+#   [119:112] op_type
+#   [111:96]  tile_id
+#   [95:64]   src_addr
+#   [63:32]   dst_addr
+#   [31:0]    size
+METADATA_WORD_BITS = 128
+
 #Represents one tile.
 @dataclass
 class Tile:
@@ -55,15 +78,23 @@ class Tile:
     dst_h:   int = -1   # Top-left output row  (OUTPUT tiles)
     dst_w:   int = -1   # Top-left output col  (OUTPUT tiles)
 
-    #Allows tiles to be compared in sets/dictionaries for exact data reuse
+    #Allows tiles to be compared in sets/dictionaries for exact data reuse.
+    # __hash__ and __eq__ MUST agree on the same key, otherwise two tiles that
+    # compare equal can land in different hash buckets and set/dict lookups
+    # (get_tile_address, get_tiles) silently miss.  tile_id already encodes the
+    # phase (phase_id * 1000 + slot), so (tile_id, tile_type) is unique on its
+    # own and phase_id must NOT be part of the hash key.
     def __hash__(self):
-        return hash((self.tile_id, self.tile_type, self.phase_id))
-    
+        return hash((self.tile_id, self.tile_type))
+
     #Needed when detecting reuse
     def __eq__(self, other):
-        return (self.tile_id == other.tile_id and 
+        if not isinstance(other, Tile):
+            return NotImplemented
+        return (self.tile_id == other.tile_id and
                 self.tile_type == other.tile_type)
-    
+
+
 # This OnChipLocation class represents where a specific tile of data is stored in on-chip memory (SRAM)
 @dataclass
 class OnChipLocation:
@@ -112,15 +143,19 @@ class MemoryStamp:
 @dataclass
 class DeltaOperation:
     """Represents a single operation to transition between stamps"""
-    op_type: str  # "load" (from DRAM), "move" (within SRAM), "keep" (unchanged)
+    # "load" (from DRAM), "move" (on-chip reuse, different address),
+    # "keep" (on-chip reuse, same address), "alloc" (output tile: produced
+    # by compute, never fetched from DRAM).
+    op_type: str
     tile: Tile
-    src_addr: int = -1  # For "move": on-chip source address; For "load": -1
+    src_addr: int = -1  # "move"/"keep": on-chip source addr; "load": real DRAM byte addr; "alloc": unused (-1)
     dst_addr: int = -1  # Destination on-chip address
     size: int = 0 # Data size in bytes
 
     #Example: load input tile from DRAM to addr 0
     #Example: move tile from addr 0 to addr 1024
     #Example: keep tile at addr 0 (src_addr and dst_addr are the same)
+    #Example: alloc output tile at addr 2048 (compute will write it, no DRAM read)
     
     def to_dict(self): # Convert to dictionary for JSON serialization
         #Python objects (like DeltaOperation) can't be directly saved to files - they need to be converted to a serializable format.
@@ -149,20 +184,41 @@ class StampDelta:
     
     def get_stats(self):
         """Get statistics about this delta"""
-        loads = sum(1 for op in self.operations if op.op_type == "load") # Tiles that must be loaded from off-chip DRAM (expensive)
-        moves = sum(1 for op in self.operations if op.op_type == "move") # Tiles moved within on-chip SRAM (cheap)
-        keeps = sum(1 for op in self.operations if op.op_type == "keep") # Tiles that stay in same location (free)
-        load_bytes = sum(op.size for op in self.operations if op.op_type == "load")  # Total bytes loaded from DRAM
-        move_bytes = sum(op.size for op in self.operations if op.op_type == "move")  # Total bytes moved within SRAM
-        
+        def _n(kind):
+            return sum(1 for op in self.operations if op.op_type == kind)
+
+        def _b(kind):
+            return sum(op.size for op in self.operations if op.op_type == kind)
+
+        loads = _n("load")    # Must be fetched from off-chip DRAM (expensive)
+        moves = _n("move")    # Reused within on-chip SRAM (cheap, different address)
+        keeps = _n("keep")    # Reused in the same location (free)
+        allocs = _n("alloc")  # Output slot; never read from DRAM
+        zeros = _n("zero")    # Zero-padding halo; written on-chip, never read from DRAM
+
+        load_bytes = _b("load")
+        move_bytes = _b("move")
+        keep_bytes = _b("keep")
+        alloc_bytes = _b("alloc")
+        zero_bytes = _b("zero")
+
         return {
             "loads": loads,
             "moves": moves,
             "keeps": keeps,
+            "allocs": allocs,
+            "zeros": zeros,
             "load_bytes": load_bytes,
             "move_bytes": move_bytes,
+            "keep_bytes": keep_bytes,
+            "alloc_bytes": alloc_bytes,
+            "zero_bytes": zero_bytes,
             "total_ops": len(self.operations),  # Total operations in this delta
-            "bandwidth_saved": move_bytes  # Bytes saved from off-chip access
+            # Bytes NOT re-fetched from off-chip DRAM thanks to on-chip reuse
+            # (both "moved" and "kept" data avoid a DRAM read).  Zero-padding
+            # is excluded: it was never off-chip data in either scheme, so
+            # counting it would inflate the apparent saving.
+            "bandwidth_saved": move_bytes + keep_bytes
         }
 
 #Main Compiler - This is the brain. It has four main methods that run in sequence.
@@ -172,18 +228,36 @@ class StampCompiler:
     """
     
     #Constructor
-    def __init__(self, on_chip_size: int, data_width: int = 4):
+    def __init__(self, on_chip_size: int, data_width: int = 4,
+                 input_base_addr: int = 0x0000_0000,
+                 weight_base_addr: int = 0x1000_0000,
+                 output_base_addr: int = 0x2000_0000):
         """
         Args:
             on_chip_size: Size of on-chip memory in bytes
             data_width: Width of each data element in bytes (default: 4 for fp32)
+            input_base_addr/weight_base_addr/output_base_addr: off-chip DRAM
+                base addresses for each tensor, assuming channel-major
+                (C, H, W) / (OC, IC, KH, KW) layouts. Used to compute real
+                "load" source addresses instead of a -1 placeholder.
         """
         #Example: 16KB SRAM ,fp32 = 4 bytes
         self.on_chip_size = on_chip_size
         self.data_width = data_width
+        self.input_base_addr = input_base_addr
+        self.weight_base_addr = weight_base_addr
+        self.output_base_addr = output_base_addr
         self.phases: List[List[Tile]] = []
         self.stamps: List[MemoryStamp] = []
         self.deltas: List[StampDelta] = []
+
+        # Full-tensor dimensions, recorded by create_conv_phases() and needed
+        # to turn a tile's (src_h, src_w) / src_oc into a real off-chip byte
+        # address. None until create_conv_phases() has run.
+        self._ic = self._ih = self._iw = None
+        self._kh = self._kw = None
+        self._oh = self._ow = None
+        self._bpe = data_width
         
     #Divides output space into rectangular tiles, then for each tile creates a phase 
     # a list of 3 Tile objects (input, weight, output) that the systolic array needs to compute that tile.    
@@ -201,8 +275,17 @@ class StampCompiler:
                 - kernel_height, kernel_width
                 - stride, padding
             systolic_array_size: (height, width) of systolic array
-            tile_strategy: "output_stationary", "weight_stationary", or "input_stationary"
+            tile_strategy: "output_stationary" (only supported value today)
         """
+        # The tiling loop below is output-stationary by construction (it walks
+        # the output space and derives the receptive field).  Accepting a WS/IS
+        # value and silently producing an OS schedule would misreport which
+        # dataflow the stamps belong to, so reject it explicitly.
+        if tile_strategy != "output_stationary":
+            raise NotImplementedError(
+                f"tile_strategy={tile_strategy!r} is not implemented; "
+                f"create_conv_phases() only generates output-stationary phases."
+            )
 
         # =====================================================================
         # Step 1: Read layer dimensions
@@ -222,6 +305,13 @@ class StampCompiler:
         # Multiplying element counts by data_width gives sizes in *bits*, not bytes.
         # Hardware memory interfaces expect bytes, so we convert once here and use
         bytes_per_element = self.data_width
+
+        # Stash full-tensor dims so compute_deltas() can derive real off-chip
+        # byte addresses for LOAD ops (input/weight) instead of a -1 placeholder.
+        self._ic, self._ih, self._iw = ic, ih, iw
+        self._kh, self._kw = kh, kw
+        self._oh, self._ow = oh, ow
+        self._bpe = bytes_per_element
 
         array_h, array_w = systolic_array_size
 
@@ -371,6 +461,15 @@ class StampCompiler:
         Args:
             allocation_strategy: "greedy" or "optimal"
         """
+        if allocation_strategy != "greedy":
+            # Previously any other value silently fell through the `if` below
+            # and appended an *empty* stamp for every phase, which then made
+            # compute_deltas() emit nothing and print "0 deltas" with no error.
+            raise ValueError(
+                f"Unsupported allocation_strategy {allocation_strategy!r}; "
+                f"only 'greedy' is implemented."
+            )
+
         for phase_id, phase_tiles in enumerate(self.phases):
             stamp = MemoryStamp(phase_id=phase_id)
             # Create an empty memory stamp for this phase
@@ -403,88 +502,240 @@ class StampCompiler:
     def compute_deltas(self):
         """
         Compute deltas between consecutive stamps to identify:
-        1. Tiles that can be kept (same location)
-        2. Tiles that can be moved (reused from previous phase)
-        3. Tiles that must be loaded from off-chip
+        1. Tiles/sub-regions that can be kept (same location, identical data)
+        2. Tiles/sub-regions that can be moved (identical data, on-chip reshuffle)
+        3. Data that must be loaded from off-chip (genuinely new/different)
+        4. Output tiles, which are always freshly allocated (produced by
+           compute, never fetched from DRAM)
+
+        Reuse is decided on tile *identity*, not merely tile *shape*:
+        - WEIGHT tiles are only reusable if they cover the same output-channel
+          slice (src_oc match) — same-shape weights from a different slice are
+          different filter data and must be reloaded.
+        - INPUT tiles are only reusable to the extent their spatial footprint
+          (src_h/src_w) actually overlaps the previous phase's footprint; the
+          overlapping region is a "move" (on-chip halo shift) and only the
+          non-overlapping remainder is a genuine "load".
         """
         for i in range(len(self.stamps) - 1):
             current_stamp = self.stamps[i]
             next_stamp = self.stamps[i + 1]
-            
+
             delta = StampDelta(from_phase=i, to_phase=i + 1)
-            
-            current_tiles = {loc.tile: loc.start_addr 
-                           for loc in current_stamp.locations}
-            next_tiles = {loc.tile: loc.start_addr 
-                         for loc in next_stamp.locations}
-            
-            # Find tiles that exist in both stamps
-            for next_tile, next_addr in next_tiles.items():
-                found_match = False
-                
-                # Check if this tile exists in current stamp
-                for curr_tile, curr_addr in current_tiles.items():
-                    # Check if tiles are the same (can be reused)
-                    if self._can_reuse_tile(curr_tile, next_tile):
-                        if curr_addr == next_addr:
-                            # Tile is in the same location - keep it
-                            op = DeltaOperation(
-                                op_type="keep",
-                                tile=next_tile,
-                                src_addr=curr_addr,
-                                dst_addr=next_addr,
-                                size=next_tile.size_bytes
-                            )
-                        else:
-                            # Tile can be moved from old location to new
-                            op = DeltaOperation(
-                                op_type="move",
-                                tile=next_tile,
-                                src_addr=curr_addr,
-                                dst_addr=next_addr,
-                                size=next_tile.size_bytes
-                            )
-                        delta.add_operation(op)
-                        found_match = True
-                        break
-                
-                # If no match found, must load from off-chip
-                if not found_match:
-                    op = DeltaOperation(
-                        op_type="load",
-                        tile=next_tile,
-                        dst_addr=next_addr,
-                        size=next_tile.size_bytes
-                    )
+
+            curr_by_type = {loc.tile.tile_type: (loc.tile, loc.start_addr)
+                             for loc in current_stamp.locations}
+
+            for loc in next_stamp.locations:
+                next_tile, next_addr = loc.tile, loc.start_addr
+                curr_tile, curr_addr = curr_by_type.get(
+                    next_tile.tile_type, (None, None))
+
+                if next_tile.tile_type == TileType.WEIGHT:
+                    ops = self._delta_weight(curr_tile, curr_addr, next_tile, next_addr)
+                elif next_tile.tile_type == TileType.INPUT:
+                    ops = self._delta_input(curr_tile, curr_addr, next_tile, next_addr)
+                elif next_tile.tile_type == TileType.OUTPUT:
+                    ops = [self._delta_output(next_tile, next_addr)]
+                else:
+                    # No reuse model defined for this tile type: conservatively
+                    # treat as a fresh load rather than silently dropping it.
+                    ops = [DeltaOperation(op_type="load", tile=next_tile,
+                                           src_addr=-1, dst_addr=next_addr,
+                                           size=next_tile.size_bytes)]
+
+                for op in ops:
                     delta.add_operation(op)
-            
+
             self.deltas.append(delta)
-        
+
         print(f"Computed {len(self.deltas)} deltas")
-        
-    def _can_reuse_tile(self, tile1: Tile, tile2: Tile) -> bool:
+
+    def _input_dram_addr(self, h: int, w: int) -> int:
         """
-        Determine if tile2 can reuse data from tile1
-        
-        This is a simplified heuristic. In reality, you'd check:
-        - If tiles overlap in the input/weight space
-        - If the data is actually the same
+        Byte address of element (channel 0, h, w) of the full input tensor,
+        assuming a channel-major (C, H, W) off-chip layout. h/w outside
+        [0, ih)/[0, iw) fall in the zero-padding halo — not a real DRAM
+        fetch — so -1 is returned as a "no DRAM traffic" sentinel.
         """
-        # For now, check if tiles have the same type and shape
-        # In a real implementation, you'd track data dependencies
-        if tile1.tile_type != tile2.tile_type:
-            return False
-        
-        # Weights can often be reused across spatial tiles
-        if tile1.tile_type == TileType.WEIGHT:
-            return tile1.shape == tile2.shape
-        
-        # Input tiles might overlap
-        if tile1.tile_type == TileType.INPUT:
-            # Check for spatial overlap (simplified)
-            return tile1.shape[0] == tile2.shape[0]  # Same channels
-        
-        return False
+        if h < 0 or w < 0 or h >= self._ih or w >= self._iw:
+            return -1
+        return self.input_base_addr + (h * self._iw + w) * self._bpe
+
+    def _clip_input_region(self, h0: int, w0: int, rows: int, cols: int):
+        """
+        Split an input-tile sub-region against the real tensor bounds.
+
+        A region near the border of a padded convolution straddles the
+        zero-padding halo: part of it is genuine tensor data that must come
+        from DRAM, the rest is implicit zeros that cost no off-chip traffic.
+        Charging the whole region as a DRAM "load" (and pointing it at the -1
+        sentinel when merely the *top-left corner* lands in padding, as the
+        earlier revision did) both overstated off-chip bytes and produced an
+        unusable source address for the hardware controller.
+
+        Returns (src_addr, real_bytes, pad_bytes):
+            src_addr   -- DRAM byte address of the first in-bounds element,
+                          or -1 when the region is entirely padding
+            real_bytes -- bytes that genuinely come from DRAM
+            pad_bytes  -- bytes that are implicit zeros (zero-fill on-chip)
+        """
+        ic = self._ic
+        full_bytes = ic * rows * cols * self._bpe
+
+        # Intersect the region with the real tensor extent.
+        ch0, ch1 = max(h0, 0), min(h0 + rows, self._ih)
+        cw0, cw1 = max(w0, 0), min(w0 + cols, self._iw)
+        real_rows = max(0, ch1 - ch0)
+        real_cols = max(0, cw1 - cw0)
+
+        real_bytes = ic * real_rows * real_cols * self._bpe
+        pad_bytes = full_bytes - real_bytes
+
+        src = self._input_dram_addr(ch0, cw0) if real_bytes > 0 else -1
+        return src, real_bytes, pad_bytes
+
+    def _input_load_ops(self, tile: Tile, dst_addr: int,
+                        h0: int, w0: int, rows: int, cols: int
+                        ) -> List[DeltaOperation]:
+        """Emit the DRAM-load / zero-fill pair for one input sub-region."""
+        src, real_bytes, pad_bytes = self._clip_input_region(h0, w0, rows, cols)
+
+        ops: List[DeltaOperation] = []
+        if real_bytes > 0:
+            ops.append(DeltaOperation(op_type="load", tile=tile,
+                                      src_addr=src, dst_addr=dst_addr,
+                                      size=real_bytes))
+        if pad_bytes > 0:
+            # Implicit zero-padding: written on-chip, never read from DRAM.
+            ops.append(DeltaOperation(op_type="zero", tile=tile,
+                                      src_addr=-1,
+                                      dst_addr=dst_addr + real_bytes,
+                                      size=pad_bytes))
+        return ops
+
+    def _weight_dram_addr(self, src_oc: int) -> int:
+        """
+        Byte address of the first weight of output-channel slice src_oc,
+        assuming an (OC, IC, KH, KW) off-chip layout.
+        """
+        return (self.weight_base_addr
+                + src_oc * self._ic * self._kh * self._kw * self._bpe)
+
+    def _delta_weight(self, curr_tile, curr_addr, next_tile, next_addr) -> List[DeltaOperation]:
+        """A weight tile is reusable only if it is literally the same filter
+        data — same shape *and* same output-channel slice (src_oc)."""
+        same_data = (curr_tile is not None
+                     and curr_tile.shape == next_tile.shape
+                     and curr_tile.src_oc == next_tile.src_oc)
+
+        if same_data:
+            op_type = "keep" if curr_addr == next_addr else "move"
+            return [DeltaOperation(op_type=op_type, tile=next_tile,
+                                    src_addr=curr_addr, dst_addr=next_addr,
+                                    size=next_tile.size_bytes)]
+
+        # Different output-channel slice => genuinely different filter
+        # weights; must come from DRAM.
+        src = self._weight_dram_addr(next_tile.src_oc)
+        return [DeltaOperation(op_type="load", tile=next_tile,
+                                src_addr=src, dst_addr=next_addr,
+                                size=next_tile.size_bytes)]
+
+    def _input_row_col_overlap(self, prev: Tile, nxt: Tile):
+        """
+        Compute how much of `nxt`'s spatial footprint is already resident
+        on-chip from `prev`, restricted to the common output-stationary
+        sliding-window case: a pure row-shift or a pure column-shift between
+        consecutive phases. A simultaneous row+col shift (e.g. wrap-around
+        into a new output-channel slice) is not representable as a single
+        rectangle here and is conservatively treated as "no overlap" -> full
+        reload. This never *overstates* reuse, it only under-claims it in
+        that one edge case.
+
+        Returns (overlap_bytes, new_rect) where new_rect is the
+        (h0, w0, rows, cols) rectangle of genuinely-new input coordinates in
+        full-tensor space, or None when the footprint is unchanged. Returns
+        None overall if no usable overlap exists.
+        """
+        if prev is None or prev.shape != nxt.shape:
+            return None
+        # Note: -1 is a genuine (padding-adjacent) coordinate here, e.g.
+        # ih_start = oh_start*stride - padding == -1 when oh_start=0 and
+        # padding=1 — it is NOT the Tile-field "unset" sentinel for INPUT
+        # tiles, since create_conv_phases() always assigns src_h/src_w for
+        # them. Do not filter it out as if the field were missing.
+
+        ic, h, w = nxt.shape
+
+        if prev.src_h == nxt.src_h and prev.src_w == nxt.src_w:
+            return ic * h * w * self._bpe, None
+
+        if prev.src_h == nxt.src_h:
+            # Pure column shift.
+            col_ov_start = max(prev.src_w, nxt.src_w)
+            col_ov_end = min(prev.src_w + w, nxt.src_w + w)
+            if col_ov_end <= col_ov_start:
+                return None
+            ov_cols = col_ov_end - col_ov_start
+            new_cols = w - ov_cols
+            new_col_start = nxt.src_w if nxt.src_w < prev.src_w else col_ov_end
+            return (ic * h * ov_cols * self._bpe,
+                    (nxt.src_h, new_col_start, h, new_cols))
+
+        if prev.src_w == nxt.src_w:
+            # Pure row shift.
+            row_ov_start = max(prev.src_h, nxt.src_h)
+            row_ov_end = min(prev.src_h + h, nxt.src_h + h)
+            if row_ov_end <= row_ov_start:
+                return None
+            ov_rows = row_ov_end - row_ov_start
+            new_rows = h - ov_rows
+            new_row_start = nxt.src_h if nxt.src_h < prev.src_h else row_ov_end
+            return (ic * ov_rows * w * self._bpe,
+                    (new_row_start, nxt.src_w, new_rows, w))
+
+        return None  # both row and col shifted simultaneously
+
+    def _delta_input(self, curr_tile, curr_addr, next_tile, next_addr) -> List[DeltaOperation]:
+        overlap = self._input_row_col_overlap(curr_tile, next_tile)
+
+        if overlap is None:
+            # No usable overlap: the whole receptive field is (re)fetched,
+            # minus whatever part of it is zero-padding.
+            _ic, h, w = next_tile.shape
+            return self._input_load_ops(next_tile, next_addr,
+                                        next_tile.src_h, next_tile.src_w, h, w)
+
+        ov_bytes, new_rect = overlap
+
+        if new_rect is None:
+            # Identical footprint already resident (e.g. wrap-around lands on
+            # the same region a previous phase used).
+            op_type = "keep" if curr_addr == next_addr else "move"
+            return [DeltaOperation(op_type=op_type, tile=next_tile,
+                                    src_addr=curr_addr, dst_addr=next_addr,
+                                    size=ov_bytes)]
+
+        ops = []
+        if ov_bytes > 0:
+            # Halo overlap: the still-valid rows/cols are reused on-chip.
+            ops.append(DeltaOperation(op_type="move", tile=next_tile,
+                                       src_addr=curr_addr, dst_addr=next_addr,
+                                       size=ov_bytes))
+        # Only the non-overlapping halo is genuinely new; of that, only the
+        # in-bounds part is real off-chip traffic.
+        nh, nw, nrows, ncols = new_rect
+        ops.extend(self._input_load_ops(next_tile, next_addr + ov_bytes,
+                                        nh, nw, nrows, ncols))
+        return ops
+
+    def _delta_output(self, next_tile, next_addr) -> DeltaOperation:
+        """Outputs are produced by compute, never fetched from DRAM: allocate
+        the on-chip slot and let the array write back into it."""
+        return DeltaOperation(op_type="alloc", tile=next_tile,
+                               src_addr=-1, dst_addr=next_addr,
+                               size=next_tile.size_bytes)
     
     def generate_metadata(self, output_file: str):
         """
@@ -532,12 +783,97 @@ class StampCompiler:
             }
             metadata["deltas"].append(delta_data)
         
+        # Per-delta base index into the flattened delta-op stream.  The
+        # hardware controller starts a phase at `phase_base_addr` and runs
+        # `num_delta_ops` entries, so a testbench replaying the real compiler
+        # output needs this table -- without it every phase restarts at op 0
+        # and re-runs the first delta forever.
+        metadata["phase_table"] = self.phase_table()
+        metadata["opcodes"] = dict(OPCODE)
+
         # Write to file
         with open(output_file, 'w') as f:
             json.dump(metadata, f, indent=2)
-        
+
         print(f"Metadata written to {output_file}")
-        
+
+    def phase_table(self) -> List[Dict]:
+        """(phase, base_index, num_ops) for each delta, in stream order."""
+        table = []
+        base = 0
+        for delta in self.deltas:
+            n = len(delta.operations)
+            table.append({
+                "phase_id": delta.to_phase,
+                "base_index": base,
+                "num_ops": n,
+            })
+            base += n
+        return table
+
+    def flat_operations(self) -> List[DeltaOperation]:
+        """Every delta operation, flattened in phase order."""
+        return [op for delta in self.deltas for op in delta.operations]
+
+    @staticmethod
+    def _u32(value: int) -> int:
+        """Two's-complement 32-bit encoding (src_addr uses -1 as a sentinel)."""
+        return value & 0xFFFF_FFFF
+
+    def emit_delta_ops_hex(self, output_file: str,
+                           metadata_depth: int = 256) -> int:
+        """
+        Emit the flattened delta-op stream as 128-bit hex words for
+        $readmemh() into the controller's metadata RAM.
+
+        One line per operation, packed exactly as the controller decodes it
+        (see METADATA_WORD_BITS above).  Returns the number of ops written.
+
+        This closes the loop the project always described but never had: the
+        RTL testbench previously read a hand-maintained delta_ops.hex that had
+        drifted out of sync with the compiler, so the "end-to-end with real
+        compiler metadata" test was replaying a stale op mix.
+        """
+        ops = self.flat_operations()
+
+        if len(ops) > metadata_depth:
+            print(f"  WARNING: {len(ops)} delta ops exceed the controller's "
+                  f"METADATA_DEPTH={metadata_depth}. The hardware can only "
+                  f"hold the first {metadata_depth}; re-run the phases in "
+                  f"batches or raise METADATA_DEPTH.")
+
+        with open(output_file, 'w') as f:
+            for op in ops:
+                word = (
+                    (OPCODE[op.op_type] & 0xFF) << 112
+                    | (op.tile.tile_id & 0xFFFF) << 96
+                    | self._u32(op.src_addr) << 64
+                    | self._u32(op.dst_addr) << 32
+                    | self._u32(op.size)
+                )
+                f.write(f"{word:032x}\n")
+
+        print(f"Delta-op stream written to {output_file} ({len(ops)} ops)")
+        return len(ops)
+
+    def emit_phase_table_svh(self, output_file: str) -> None:
+        """
+        Emit a tiny SystemVerilog include so the testbench can walk the real
+        phase boundaries instead of hardcoding "3 ops per phase".
+        """
+        table = self.phase_table()
+        with open(output_file, 'w') as f:
+            f.write("// Auto-generated by stamp_compiler.py - do not edit.\n")
+            f.write(f"localparam int STAMP_NUM_PHASES = {len(table)};\n")
+            f.write(f"localparam int STAMP_TOTAL_OPS  = "
+                    f"{sum(t['num_ops'] for t in table)};\n")
+            f.write(f"localparam int STAMP_PHASE_BASE [0:{max(len(table)-1, 0)}] = '{{\n")
+            f.write("    " + ", ".join(str(t["base_index"]) for t in table) + "\n};\n")
+            f.write(f"localparam int STAMP_PHASE_NOPS [0:{max(len(table)-1, 0)}] = '{{\n")
+            f.write("    " + ", ".join(str(t["num_ops"]) for t in table) + "\n};\n")
+        print(f"Phase table written to {output_file} ({len(table)} phases)")
+
+
     def print_statistics(self):
         """Print statistics about the stamp-based allocation"""
         print("\n" + "="*80)
@@ -560,26 +896,44 @@ class StampCompiler:
         
         # Delta statistics
         if self.deltas:
-            total_loads = sum(d.get_stats()['loads'] for d in self.deltas)
-            total_moves = sum(d.get_stats()['moves'] for d in self.deltas)
-            total_keeps = sum(d.get_stats()['keeps'] for d in self.deltas)
-            total_load_bytes = sum(d.get_stats()['load_bytes'] for d in self.deltas)
-            total_move_bytes = sum(d.get_stats()['move_bytes'] for d in self.deltas)
-            total_bandwidth_saved = sum(d.get_stats()['bandwidth_saved'] for d in self.deltas)
-            
-            print(f"\nDelta Statistics:")
-            print(f"  Total load operations: {total_loads}")
-            print(f"  Total move operations: {total_moves}")
-            print(f"  Total keep operations: {total_keeps}")
-            print(f"  Total bytes loaded: {total_load_bytes:,}")
-            print(f"  Total bytes moved: {total_move_bytes:,}")
-            print(f"  Off-chip bandwidth saved: {total_bandwidth_saved:,} bytes")
-            
-            if total_load_bytes + total_move_bytes > 0:
-                savings_pct = (total_bandwidth_saved / 
-                             (total_load_bytes + total_move_bytes)) * 100
+            agg = [d.get_stats() for d in self.deltas]
+
+            def _tot(key):
+                return sum(s[key] for s in agg)
+
+            total_loads = _tot('loads')
+            total_moves = _tot('moves')
+            total_keeps = _tot('keeps')
+            total_allocs = _tot('allocs')
+            total_zeros = _tot('zeros')
+            total_load_bytes = _tot('load_bytes')
+            total_move_bytes = _tot('move_bytes')
+            total_keep_bytes = _tot('keep_bytes')
+            total_alloc_bytes = _tot('alloc_bytes')
+            total_zero_bytes = _tot('zero_bytes')
+            total_bandwidth_saved = _tot('bandwidth_saved')
+
+            print("\nDelta Statistics:")
+            print(f"  Total load operations:  {total_loads}")
+            print(f"  Total move operations:  {total_moves}")
+            print(f"  Total keep operations:  {total_keeps}")
+            print(f"  Total alloc operations: {total_allocs} (output tiles; not off-chip traffic)")
+            print(f"  Total zero operations:  {total_zeros} (padding halo; not off-chip traffic)")
+            print(f"  Total bytes loaded (from DRAM):        {total_load_bytes:,}")
+            print(f"  Total bytes moved (on-chip reuse):     {total_move_bytes:,}")
+            print(f"  Total bytes kept (same on-chip addr):  {total_keep_bytes:,}")
+            print(f"  Total bytes allocated (output, no DRAM read): {total_alloc_bytes:,}")
+            print(f"  Total bytes zero-filled (padding, no DRAM read): {total_zero_bytes:,}")
+            print(f"  Off-chip read bandwidth saved: {total_bandwidth_saved:,} bytes")
+
+            # Denominator = everything that was a *candidate* for a DRAM read
+            # (loaded + reused); output allocations never competed for
+            # off-chip read bandwidth in the first place, so they're excluded.
+            candidate_bytes = total_load_bytes + total_bandwidth_saved
+            if candidate_bytes > 0:
+                savings_pct = 100 * total_bandwidth_saved / candidate_bytes
                 print(f"  Bandwidth savings: {savings_pct:.1f}%")
-        
+
         print("="*80 + "\n")
 
 
@@ -618,7 +972,11 @@ def main():
     
     # Generate metadata
     compiler.generate_metadata("stamp_metadata.json")
-    
+
+    # Generate the hardware-facing artefacts consumed by the RTL testbench
+    compiler.emit_delta_ops_hex("delta_ops.hex")
+    compiler.emit_phase_table_svh("stamp_phase_table.svh")
+
     # Print statistics
     compiler.print_statistics()
 

@@ -64,31 +64,46 @@ def analyze_deltas(metadata: Dict):
     print("="*80)
     
     deltas = metadata['deltas']
-    
+
     # Overall statistics
     total_ops = sum(len(d['operations']) for d in deltas)
-    total_loads = sum(d['stats']['loads'] for d in deltas)
-    total_moves = sum(d['stats']['moves'] for d in deltas)
-    total_keeps = sum(d['stats']['keeps'] for d in deltas)
-    total_load_bytes = sum(d['stats']['load_bytes'] for d in deltas)
-    total_move_bytes = sum(d['stats']['move_bytes'] for d in deltas)
-    
-    print(f"\nOperation Counts:")
+    total_loads  = sum(d['stats']['loads']  for d in deltas)
+    total_moves  = sum(d['stats']['moves']  for d in deltas)
+    total_keeps  = sum(d['stats']['keeps']  for d in deltas)
+    total_allocs = sum(d['stats'].get('allocs', 0) for d in deltas)
+    total_zeros  = sum(d['stats'].get('zeros', 0)  for d in deltas)
+    total_load_bytes  = sum(d['stats']['load_bytes']  for d in deltas)
+    total_move_bytes  = sum(d['stats']['move_bytes']  for d in deltas)
+    total_keep_bytes  = sum(d['stats'].get('keep_bytes', 0)  for d in deltas)
+    total_alloc_bytes = sum(d['stats'].get('alloc_bytes', 0) for d in deltas)
+    total_zero_bytes  = sum(d['stats'].get('zero_bytes', 0)  for d in deltas)
+
+    print("\nOperation Counts:")
     print(f"  Total operations: {total_ops}")
     print(f"  Load operations:  {total_loads} ({100*total_loads/total_ops:.1f}%)")
     print(f"  Move operations:  {total_moves} ({100*total_moves/total_ops:.1f}%)")
     print(f"  Keep operations:  {total_keeps} ({100*total_keeps/total_ops:.1f}%)")
-    
-    print(f"\nData Movement:")
-    print(f"  Bytes loaded (from DRAM):     {total_load_bytes:,}")
-    print(f"  Bytes moved (on-chip):        {total_move_bytes:,}")
-    print(f"  Bytes kept (no movement):     calculated from keeps")
-    
-    if total_load_bytes + total_move_bytes > 0:
-        savings = 100 * total_move_bytes / (total_load_bytes + total_move_bytes)
+    print(f"  Alloc operations: {total_allocs} ({100*total_allocs/total_ops:.1f}%) "
+          f"[output tiles; not off-chip traffic]")
+    print(f"  Zero operations:  {total_zeros} ({100*total_zeros/total_ops:.1f}%) "
+          f"[padding halo; not off-chip traffic]")
+
+    print("\nData Movement:")
+    print(f"  Bytes loaded (from DRAM):        {total_load_bytes:,}")
+    print(f"  Bytes moved (on-chip reuse):      {total_move_bytes:,}")
+    print(f"  Bytes kept (same on-chip addr):   {total_keep_bytes:,}")
+    print(f"  Bytes allocated (output, no DRAM read): {total_alloc_bytes:,}")
+    print(f"  Bytes zero-filled (padding, no DRAM read): {total_zero_bytes:,}")
+
+    # Output allocations never competed for off-chip read bandwidth, so they
+    # are excluded from the savings denominator.
+    candidate_bytes = total_load_bytes + total_move_bytes + total_keep_bytes
+    if candidate_bytes > 0:
+        savings = 100 * (total_move_bytes + total_keep_bytes) / candidate_bytes
         print(f"\nBandwidth Efficiency:")
         print(f"  Off-chip bandwidth saved: {savings:.1f}%")
-        print(f"  (Moving {total_move_bytes:,} bytes on-chip instead of loading from DRAM)")
+        print(f"  (Reusing {total_move_bytes + total_keep_bytes:,} bytes on-chip "
+              f"instead of re-reading them from DRAM)")
 
 
 def analyze_reuse_patterns(metadata: Dict):
@@ -146,6 +161,7 @@ def estimate_performance(metadata: Dict):
     # Assume realistic cycle counts
     CYCLES_PER_KEEP = 0  # No operation
     CYCLES_PER_MOVE_WORD = 2  # Read + Write
+    CYCLES_PER_ZERO_WORD = 1  # Write only (padding halo)
     CYCLES_PER_LOAD_WORD = 10  # DRAM latency
     WORD_SIZE = metadata['data_width']
     
@@ -163,18 +179,28 @@ def estimate_performance(metadata: Dict):
                 words = op['size'] // WORD_SIZE
                 total_cycles += words * CYCLES_PER_LOAD_WORD
                 total_dram_accesses += words
-    
+            elif op['op_type'] == 'zero':
+                # Padding halo: one scratchpad write per word, no DRAM read.
+                # Half the cost of a move (write only, no read).
+                total_cycles += (op['size'] // WORD_SIZE) * CYCLES_PER_ZERO_WORD
+            # 'alloc' (output tiles): produced by compute, no DRAM read and
+            # no on-chip reuse move — write-back cost is not modelled here.
+
     num_phases = metadata['num_phases']
     avg_cycles_per_phase = total_cycles / num_phases if num_phases > 0 else 0
-    
+
     print(f"\nEstimated Memory Management Overhead:")
     print(f"  Total cycles: {total_cycles:,}")
     print(f"  Average per phase: {avg_cycles_per_phase:.0f} cycles")
     print(f"  DRAM accesses: {total_dram_accesses:,} words")
-    
-    # Compare to naive approach (always load everything)
+
+    # Compare to naive approach (always reload input+weight every phase).
+    # Output tiles are excluded: they are never a DRAM *read* in either the
+    # naive or stamp-based scheme, so including them would inflate the
+    # apparent savings with bytes that were never off-chip traffic.
     stamps = metadata['stamps']
-    naive_bytes = sum(s['total_size'] for s in stamps)
+    naive_bytes = sum(t['size'] for s in stamps for t in s['tiles']
+                       if t['tile_type'] != 'output')
     naive_words = naive_bytes // WORD_SIZE
     naive_cycles = naive_words * CYCLES_PER_LOAD_WORD
     
@@ -200,19 +226,26 @@ def generate_summary(metadata: Dict, output_file: str):
         
         # Key metrics
         deltas = metadata['deltas']
-        total_loads = sum(d['stats']['loads'] for d in deltas)
-        total_moves = sum(d['stats']['moves'] for d in deltas)
-        total_keeps = sum(d['stats']['keeps'] for d in deltas)
+        total_loads  = sum(d['stats']['loads']  for d in deltas)
+        total_moves  = sum(d['stats']['moves']  for d in deltas)
+        total_keeps  = sum(d['stats']['keeps']  for d in deltas)
+        total_allocs = sum(d['stats'].get('allocs', 0) for d in deltas)
+        total_zeros = sum(d['stats'].get('zeros', 0) for d in deltas)
         total_load_bytes = sum(d['stats']['load_bytes'] for d in deltas)
         total_move_bytes = sum(d['stats']['move_bytes'] for d in deltas)
-        
-        f.write(f"Key Metrics:\n")
-        f.write(f"  Operations: {total_loads} loads, {total_moves} moves, {total_keeps} keeps\n")
-        f.write(f"  Bytes loaded: {total_load_bytes:,}\n")
-        f.write(f"  Bytes moved: {total_move_bytes:,}\n")
-        
-        if total_load_bytes + total_move_bytes > 0:
-            savings = 100 * total_move_bytes / (total_load_bytes + total_move_bytes)
+        total_keep_bytes = sum(d['stats'].get('keep_bytes', 0) for d in deltas)
+
+        f.write("Key Metrics:\n")
+        f.write(f"  Operations: {total_loads} loads, {total_moves} moves, "
+                f"{total_keeps} keeps, {total_allocs} allocs (outputs), "
+                f"{total_zeros} zeros (padding)\n")
+        f.write(f"  Bytes loaded (from DRAM):      {total_load_bytes:,}\n")
+        f.write(f"  Bytes moved (on-chip reuse):   {total_move_bytes:,}\n")
+        f.write(f"  Bytes kept (same addr):        {total_keep_bytes:,}\n")
+
+        candidate_bytes = total_load_bytes + total_move_bytes + total_keep_bytes
+        if candidate_bytes > 0:
+            savings = 100 * (total_move_bytes + total_keep_bytes) / candidate_bytes
             f.write(f"  Bandwidth savings: {savings:.1f}%\n")
         
         f.write("\nSummary: The stamp-based approach achieves significant bandwidth\n")

@@ -1,0 +1,1307 @@
+
+****** Vivado v2025.2 (64-bit)
+  **** SW Build 6299465 on Fri Nov 14 12:34:56 MST 2025
+  **** IP Build 6300035 on Fri Nov 14 10:48:45 MST 2025
+  **** SharedData Build 6298862 on Thu Nov 13 04:50:51 MST 2025
+  **** Start of session at: Fri Aug  7 00:58:02 2026
+    ** Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+    ** Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
+
+source ../synth_area.tcl
+# set rtl_dir [lindex $argv 0]
+# set out_dir [lindex $argv 1]
+# set part    "xczu7ev-ffvc1156-2-e"   
+# file mkdir $out_dir
+# set csv [open $out_dir/area_results.csv w]
+# puts $csv "config,scheme,knob,knob_value,luts,ffs,brams,dsps,lutram,wns_ns,fmax_mhz"
+# set period 10.0
+# proc util_field {rpt label} {
+#     foreach line [split $rpt "\n"] {
+#         if {![string match "|*" $line]} { continue }
+#         set cols [split $line "|"]
+#         if {[llength $cols] < 3} { continue }
+#         set name [string trim [lindex $cols 1]]
+#         set name [string trimright $name "*"]
+#         set name [string trim $name]
+#         if {$name eq $label} {
+#             set v [string trim [lindex $cols 2]]
+#             if {[string is integer -strict $v]} { return $v }
+#             # Some rows report fractional usage; round to nearest integer.
+#             if {[string is double -strict $v]} { return [expr {int($v + 0.5)}] }
+#         }
+#     }
+#     return 0
+# }
+# proc run_one {csv part period rtl_dir out_dir name scheme knob knob_value top files generics} {
+#     puts "\n=========================================================="
+#     puts "  Synthesising $name  (top = $top)"
+#     puts "=========================================================="
+# 
+#     create_project -in_memory -part $part
+# 
+#     foreach f $files {
+#         set path [file join $rtl_dir $f]
+#         if {![file exists $path]} {
+#             # Allow files to live in the synth/ harness folder too.
+#             set path [file join $out_dir/.. $f]
+#         }
+#         if {[string match "*.v" $f]} {
+#             read_verilog $path
+#         } else {
+#             read_verilog -sv $path
+#         }
+#     }
+# 
+#     set gen_args {}
+#     foreach {g v} $generics { lappend gen_args "$g=$v" }
+# 
+#     if {[llength $gen_args] > 0} {
+#         synth_design -top $top -part $part -mode out_of_context \
+#                      -generic $gen_args -no_iobuf
+#     } else {
+#         synth_design -top $top -part $part -mode out_of_context -no_iobuf
+#     }
+# 
+#     # Constrain a clock so timing numbers mean something.
+#     if {[llength [get_ports -quiet clk]] > 0} {
+#         create_clock -name clk -period $period [get_ports clk]
+#     }
+#     opt_design -quiet
+# 
+#     # Read the utilization report rather than filtering on PRIMITIVE_GROUP.
+#     # On UltraScale+ that property only returns coarse buckets (CLB / REGISTER
+#     # / OTHERS), so it cannot separate LUTs from LUTRAM or count BRAM tiles.
+#     # report_utilization is the authoritative source.
+#     set rpt [report_utilization -return_string]
+# 
+#     set luts   [util_field $rpt "CLB LUTs"]
+#     set ffs    [util_field $rpt "CLB Registers"]
+#     set brams  [util_field $rpt "Block RAM Tile"]
+#     set dsps   [util_field $rpt "DSPs"]
+#     set lutram [util_field $rpt "LUT as Memory"]
+# 
+#     set wns 0.0
+#     set fmax 0.0
+#     if {[llength [get_clocks -quiet]] > 0} {
+#         set tp [get_property SLACK [get_timing_paths -quiet -max_paths 1 -setup]]
+#         if {$tp ne ""} {
+#             set wns $tp
+#             set achieved [expr {$period - $wns}]
+#             if {$achieved > 0} { set fmax [expr {1000.0 / $achieved}] }
+#         }
+#     }
+# 
+#     puts $csv [format "%s,%s,%s,%s,%d,%d,%d,%d,%d,%.3f,%.1f" \
+#                $name $scheme $knob $knob_value $luts $ffs $brams $dsps $lutram $wns $fmax]
+#     flush $csv
+# 
+#     puts "  -> LUT=$luts  FF=$ffs  BRAM=$brams  LUTRAM=$lutram  WNS=${wns}ns  Fmax=${fmax}MHz"
+#     close_project
+# }
+# foreach md {256 512 1024} {
+#     run_one $csv $part $period $rtl_dir $out_dir \
+#         "stamp_ctrl_m$md" "STAMP (static)" "metadata_depth" $md \
+#         stamp_based_memory_controller {memory/stamp_based_memory_controller.sv} \
+#         [list ADDR_WIDTH 32 DATA_WIDTH 32 SPAD_DEPTH 4096 METADATA_DEPTH $md]
+# }
+
+==========================================================
+  Synthesising stamp_ctrl_m256  (top = stamp_based_memory_controller)
+==========================================================
+Command: synth_design -top stamp_based_memory_controller -part xczu7ev-ffvc1156-2-e -mode out_of_context -generic {ADDR_WIDTH=32 DATA_WIDTH=32 SPAD_DEPTH=4096 METADATA_DEPTH=256} -no_iobuf
+Starting synth_design
+Attempting to get a license for feature 'Synthesis' and/or device 'xczu7ev'
+INFO: [Common 17-349] Got license for feature 'Synthesis' and/or device 'xczu7ev'
+INFO: [Synth 8-7079] Multithreading enabled for synth_design using a maximum of 7 processes.
+INFO: [Synth 8-7078] Launching helper process for spawning children vivado processes
+INFO: [Synth 8-7075] Helper process launched with PID 13986
+---------------------------------------------------------------------------------
+Starting Synthesize : Time (s): cpu = 00:00:04 ; elapsed = 00:00:04 . Memory (MB): peak = 2064.141 ; gain = 456.047 ; free physical = 10382 ; free virtual = 14266
+---------------------------------------------------------------------------------
+INFO: [Synth 8-6157] synthesizing module 'stamp_based_memory_controller' [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:3]
+	Parameter ADDR_WIDTH bound to: 32'sb00000000000000000000000000100000 
+	Parameter DATA_WIDTH bound to: 32'sb00000000000000000000000000100000 
+	Parameter SPAD_DEPTH bound to: 32'sb00000000000000000001000000000000 
+	Parameter METADATA_DEPTH bound to: 32'sb00000000000000000000000100000000 
+INFO: [Synth 8-155] case statement is not full and has no default [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:140]
+INFO: [Synth 8-155] case statement is not full and has no default [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:323]
+INFO: [Synth 8-6155] done synthesizing module 'stamp_based_memory_controller' (0#1) [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:3]
+WARNING: [Synth 8-11357] Potential Runtime issue for 3D-RAM or RAM from Record/Structs for RAM  metadata_ram_reg with 30720 registers
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[0][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[1][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[2][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[3][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[4][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[5][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[6][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[7][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[8][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[9][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[10][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[11][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[12][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[13][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[14][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[15][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[16][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[17][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[18][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[19][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[20][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[21][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[22][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[23][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[24][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[25][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[26][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[27][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[28][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[29][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[30][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[31][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[32][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[33][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[34][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[35][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[36][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[37][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[38][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[39][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[40][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[41][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[42][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[43][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[44][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[45][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[46][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[47][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[48][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[49][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[50][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[51][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[52][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[53][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[54][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[55][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[56][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[57][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[58][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[59][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[60][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[61][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[62][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[63][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[64][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[65][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[66][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[67][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[68][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[69][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[70][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[71][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[72][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[73][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[74][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[75][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[76][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[77][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[78][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[79][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[80][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[81][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[82][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[83][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[84][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[85][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[86][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[87][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[88][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[89][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[90][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[91][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[92][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[93][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[94][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[95][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[96][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[97][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[98][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[99][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+INFO: [Common 17-14] Message 'Synth 8-6014' appears 100 times and further instances of the messages will be disabled. Use the Tcl command set_msg_config to change the current settings.
+WARNING: [Synth 8-7129] Port metadata_wr_data[127] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[126] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[125] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[124] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[123] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[122] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[121] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[120] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[111] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[110] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[109] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[108] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[107] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[106] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[105] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[104] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[103] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[102] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[101] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[100] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[99] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[98] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[97] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[96] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port phase_id[15] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port phase_id[14] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port phase_id[13] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port phase_id[12] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port phase_id[11] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port phase_id[10] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port phase_id[9] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port phase_id[8] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port phase_id[7] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port phase_id[6] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port phase_id[5] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port phase_id[4] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port phase_id[3] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port phase_id[2] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port phase_id[1] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port phase_id[0] in module stamp_based_memory_controller is either unconnected or has no load
+---------------------------------------------------------------------------------
+Finished Synthesize : Time (s): cpu = 00:00:06 ; elapsed = 00:00:07 . Memory (MB): peak = 2220.109 ; gain = 612.016 ; free physical = 10326 ; free virtual = 14215
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Constraint Validation : Time (s): cpu = 00:00:07 ; elapsed = 00:00:08 . Memory (MB): peak = 2220.109 ; gain = 612.016 ; free physical = 10266 ; free virtual = 14207
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Loading Part and Timing Information
+---------------------------------------------------------------------------------
+Loading part: xczu7ev-ffvc1156-2-e
+INFO: [Synth 8-6742] Reading net delay rules and data
+INFO: [Device 21-403] Loading part xczu7ev-ffvc1156-2-e
+---------------------------------------------------------------------------------
+Finished Loading Part and Timing Information : Time (s): cpu = 00:00:07 ; elapsed = 00:00:08 . Memory (MB): peak = 2220.109 ; gain = 612.016 ; free physical = 10265 ; free virtual = 14207
+---------------------------------------------------------------------------------
+INFO: [Synth 8-802] inferred FSM for state register 'state_reg' in module 'stamp_based_memory_controller'
+---------------------------------------------------------------------------------------------------
+                   State |                     New Encoding |                Previous Encoding 
+---------------------------------------------------------------------------------------------------
+                    IDLE |                              001 |                             0000
+              FETCH_META |                              011 |                             0001
+              PHASE_DONE |                              000 |                             1000
+               MOVE_READ |                              111 |                             0011
+              MOVE_WRITE |                              110 |                             0100
+                LOAD_REQ |                              100 |                             0101
+               LOAD_RECV |                              010 |                             0110
+              ZERO_WRITE |                              101 |                             0111
+---------------------------------------------------------------------------------------------------
+INFO: [Synth 8-3354] encoded FSM with state register 'state_reg' using encoding 'sequential' in module 'stamp_based_memory_controller'
+---------------------------------------------------------------------------------
+Finished RTL Optimization Phase 2 : Time (s): cpu = 00:00:12 ; elapsed = 00:00:10 . Memory (MB): peak = 2551.609 ; gain = 943.516 ; free physical = 9865 ; free virtual = 13841
+---------------------------------------------------------------------------------
+No constraint files found.
+---------------------------------------------------------------------------------
+Start RTL Component Statistics 
+---------------------------------------------------------------------------------
+Detailed RTL Component Info : 
++---Adders : 
+	   2 Input   32 Bit       Adders := 2     
+	   2 Input   16 Bit       Adders := 4     
++---Registers : 
+	               32 Bit    Registers := 770   
+	               16 Bit    Registers := 4     
+	                8 Bit    Registers := 256   
++---Muxes : 
+	   5 Input   32 Bit        Muxes := 1     
+	   8 Input   32 Bit        Muxes := 2     
+	   2 Input   32 Bit        Muxes := 1     
+	   8 Input   16 Bit        Muxes := 3     
+	   2 Input   16 Bit        Muxes := 1     
+	   5 Input   12 Bit        Muxes := 2     
+	   2 Input   12 Bit        Muxes := 1     
+	   8 Input    3 Bit        Muxes := 1     
+	   2 Input    3 Bit        Muxes := 6     
+	   6 Input    3 Bit        Muxes := 1     
+	   2 Input    1 Bit        Muxes := 8     
+	   6 Input    1 Bit        Muxes := 7     
+	   5 Input    1 Bit        Muxes := 2     
+	   8 Input    1 Bit        Muxes := 12    
+---------------------------------------------------------------------------------
+Finished RTL Component Statistics 
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Part Resource Summary
+---------------------------------------------------------------------------------
+Part Resources:
+DSPs: 1728 (col length:144)
+BRAMs: 624 (col length: RAMB18 144 RAMB36 72)
+---------------------------------------------------------------------------------
+Finished Part Resource Summary
+---------------------------------------------------------------------------------
+No constraint files found.
+---------------------------------------------------------------------------------
+Start Cross Boundary and Area Optimization
+---------------------------------------------------------------------------------
+WARNING: [Synth 8-7129] Port metadata_wr_data[127] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[126] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[125] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[124] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[123] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[122] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[121] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[120] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[111] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[110] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[109] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[108] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[107] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[106] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[105] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[104] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[103] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[102] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[101] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[100] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[99] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[98] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[97] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[96] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port phase_id[15] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port phase_id[14] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port phase_id[13] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port phase_id[12] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port phase_id[11] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port phase_id[10] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port phase_id[9] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port phase_id[8] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port phase_id[7] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port phase_id[6] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port phase_id[5] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port phase_id[4] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port phase_id[3] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port phase_id[2] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port phase_id[1] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port phase_id[0] in module stamp_based_memory_controller is either unconnected or has no load
+---------------------------------------------------------------------------------
+Finished Cross Boundary and Area Optimization : Time (s): cpu = 00:00:30 ; elapsed = 00:00:28 . Memory (MB): peak = 3187.305 ; gain = 1579.211 ; free physical = 9418 ; free virtual = 13415
+---------------------------------------------------------------------------------
+No constraint files found.
+---------------------------------------------------------------------------------
+Start Timing Optimization
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Timing Optimization : Time (s): cpu = 00:00:30 ; elapsed = 00:00:29 . Memory (MB): peak = 3187.305 ; gain = 1579.211 ; free physical = 9419 ; free virtual = 13417
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Technology Mapping
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Technology Mapping : Time (s): cpu = 00:00:33 ; elapsed = 00:00:32 . Memory (MB): peak = 3187.305 ; gain = 1579.211 ; free physical = 9443 ; free virtual = 13440
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start IO Insertion
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Flattening Before IO Insertion
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Flattening Before IO Insertion
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Final Netlist Cleanup
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Final Netlist Cleanup
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished IO Insertion : Time (s): cpu = 00:00:38 ; elapsed = 00:00:36 . Memory (MB): peak = 3213.117 ; gain = 1605.023 ; free physical = 9447 ; free virtual = 13451
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Renaming Generated Instances
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Renaming Generated Instances : Time (s): cpu = 00:00:38 ; elapsed = 00:00:36 . Memory (MB): peak = 3213.117 ; gain = 1605.023 ; free physical = 9447 ; free virtual = 13451
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Rebuilding User Hierarchy
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Rebuilding User Hierarchy : Time (s): cpu = 00:00:38 ; elapsed = 00:00:36 . Memory (MB): peak = 3213.117 ; gain = 1605.023 ; free physical = 9439 ; free virtual = 13444
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Renaming Generated Ports
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Renaming Generated Ports : Time (s): cpu = 00:00:38 ; elapsed = 00:00:36 . Memory (MB): peak = 3213.117 ; gain = 1605.023 ; free physical = 9439 ; free virtual = 13444
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Handling Custom Attributes
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Handling Custom Attributes : Time (s): cpu = 00:00:38 ; elapsed = 00:00:37 . Memory (MB): peak = 3213.117 ; gain = 1605.023 ; free physical = 9434 ; free virtual = 13441
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Renaming Generated Nets
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Renaming Generated Nets : Time (s): cpu = 00:00:38 ; elapsed = 00:00:37 . Memory (MB): peak = 3213.117 ; gain = 1605.023 ; free physical = 9434 ; free virtual = 13441
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Writing Synthesis Report
+---------------------------------------------------------------------------------
+
+Report BlackBoxes: 
++-+--------------+----------+
+| |BlackBox name |Instances |
++-+--------------+----------+
++-+--------------+----------+
+
+Report Cell Usage: 
++------+-------+------+
+|      |Cell   |Count |
++------+-------+------+
+|1     |CARRY8 |    45|
+|2     |LUT1   |     9|
+|3     |LUT2   |   131|
+|4     |LUT3   |    52|
+|5     |LUT4   |    83|
+|6     |LUT5   |   146|
+|7     |LUT6   |  6073|
+|8     |MUXF7  |  2877|
+|9     |MUXF8  |  1437|
+|10    |FDCE   |   437|
+|11    |FDPE   |     1|
+|12    |FDRE   | 21760|
++------+-------+------+
+
+Report Instance Areas: 
++------+---------+-------+------+
+|      |Instance |Module |Cells |
++------+---------+-------+------+
+|1     |top      |       | 33051|
++------+---------+-------+------+
+---------------------------------------------------------------------------------
+Finished Writing Synthesis Report : Time (s): cpu = 00:00:38 ; elapsed = 00:00:37 . Memory (MB): peak = 3213.117 ; gain = 1605.023 ; free physical = 9434 ; free virtual = 13441
+---------------------------------------------------------------------------------
+Synthesis finished with 0 errors, 0 critical warnings and 342 warnings.
+Synthesis Optimization Runtime : Time (s): cpu = 00:00:38 ; elapsed = 00:00:37 . Memory (MB): peak = 3213.117 ; gain = 1605.023 ; free physical = 9434 ; free virtual = 13441
+Synthesis Optimization Complete : Time (s): cpu = 00:00:38 ; elapsed = 00:00:37 . Memory (MB): peak = 3213.125 ; gain = 1605.023 ; free physical = 9434 ; free virtual = 13441
+INFO: [Project 1-571] Translating synthesized netlist
+Netlist sorting complete. Time (s): cpu = 00:00:00.31 ; elapsed = 00:00:00.3 . Memory (MB): peak = 3247.836 ; gain = 0.000 ; free physical = 9519 ; free virtual = 13546
+INFO: [Netlist 29-17] Analyzing 4359 Unisim elements for replacement
+INFO: [Netlist 29-28] Unisim Transformation completed in 0 CPU seconds
+WARNING: [Netlist 29-101] Netlist 'stamp_based_memory_controller' is not ideal for floorplanning, since the cellview 'stamp_based_memory_controller' contains a large number of primitives.  Please consider enabling hierarchy in synthesis if you want to do floorplanning.
+INFO: [Project 1-570] Preparing netlist for logic optimization
+INFO: [Opt 31-138] Pushed 0 inverter(s) to 0 load pin(s).
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 3385.199 ; gain = 0.000 ; free physical = 9425 ; free virtual = 13463
+INFO: [Project 1-111] Unisim Transformation Summary:
+No Unisim elements were transformed.
+
+Synth Design complete | Checksum: 1b84e622
+INFO: [Common 17-83] Releasing license: Synthesis
+20 Infos, 182 Warnings, 0 Critical Warnings and 0 Errors encountered.
+synth_design completed successfully
+synth_design: Time (s): cpu = 00:00:49 ; elapsed = 00:00:44 . Memory (MB): peak = 3385.234 ; gain = 1777.141 ; free physical = 9428 ; free virtual = 13467
+INFO: [Common 17-2834] synth_design peak Physical Memory [PSS] (MB): overall = 2798.379; main = 2767.455; forked = 342.607
+INFO: [Common 17-2834] synth_design peak Virtual Memory [VSS] (MB): overall = 4173.871; main = 3385.203; forked = 986.562
+create_clock: Time (s): cpu = 00:00:05 ; elapsed = 00:00:05 . Memory (MB): peak = 3385.234 ; gain = 0.000 ; free physical = 9440 ; free virtual = 13477
+  -> LUT=6434  FF=22198  BRAM=0  LUTRAM=0  WNS=7.533ns  Fmax=405.3506282934739MHz
+
+==========================================================
+  Synthesising stamp_ctrl_m512  (top = stamp_based_memory_controller)
+==========================================================
+Command: synth_design -top stamp_based_memory_controller -part xczu7ev-ffvc1156-2-e -mode out_of_context -generic {ADDR_WIDTH=32 DATA_WIDTH=32 SPAD_DEPTH=4096 METADATA_DEPTH=512} -no_iobuf
+Starting synth_design
+Attempting to get a license for feature 'Synthesis' and/or device 'xczu7ev'
+INFO: [Common 17-349] Got license for feature 'Synthesis' and/or device 'xczu7ev'
+INFO: [Synth 8-7079] Multithreading enabled for synth_design using a maximum of 7 processes.
+---------------------------------------------------------------------------------
+Starting Synthesize : Time (s): cpu = 00:00:04 ; elapsed = 00:00:04 . Memory (MB): peak = 4509.777 ; gain = 0.000 ; free physical = 7826 ; free virtual = 12087
+---------------------------------------------------------------------------------
+INFO: [Synth 8-6157] synthesizing module 'stamp_based_memory_controller' [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:3]
+	Parameter ADDR_WIDTH bound to: 32'sb00000000000000000000000000100000 
+	Parameter DATA_WIDTH bound to: 32'sb00000000000000000000000000100000 
+	Parameter SPAD_DEPTH bound to: 32'sb00000000000000000001000000000000 
+	Parameter METADATA_DEPTH bound to: 32'sb00000000000000000000001000000000 
+INFO: [Synth 8-155] case statement is not full and has no default [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:140]
+INFO: [Synth 8-155] case statement is not full and has no default [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:323]
+INFO: [Synth 8-6155] done synthesizing module 'stamp_based_memory_controller' (0#1) [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:3]
+WARNING: [Synth 8-11357] Potential Runtime issue for 3D-RAM or RAM from Record/Structs for RAM  metadata_ram_reg with 61440 registers
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[0][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[1][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[2][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[3][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[4][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[5][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[6][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[7][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[8][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[9][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[10][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[11][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[12][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[13][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[14][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[15][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[16][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[17][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[18][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[19][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[20][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[21][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[22][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[23][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[24][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[25][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[26][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[27][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[28][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[29][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[30][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[31][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[32][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[33][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[34][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[35][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[36][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[37][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[38][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[39][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[40][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[41][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[42][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[43][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[44][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[45][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[46][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[47][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[48][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[49][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[50][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[51][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[52][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[53][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[54][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[55][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[56][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[57][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[58][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[59][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[60][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[61][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[62][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[63][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[64][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[65][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[66][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[67][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[68][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[69][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[70][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[71][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[72][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[73][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[74][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[75][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[76][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[77][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[78][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[79][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[80][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[81][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[82][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[83][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[84][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[85][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[86][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[87][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[88][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[89][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[90][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[91][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[92][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[93][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[94][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[95][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[96][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[97][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[98][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[99][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+INFO: [Common 17-14] Message 'Synth 8-6014' appears 100 times and further instances of the messages will be disabled. Use the Tcl command set_msg_config to change the current settings.
+WARNING: [Synth 8-7129] Port metadata_wr_data[127] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[126] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[125] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[124] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[123] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[122] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[121] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[120] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[111] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[110] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[109] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[108] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[107] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[106] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[105] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[104] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[103] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[102] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[101] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[100] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[99] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[98] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[97] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[96] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port phase_id[15] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port phase_id[14] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port phase_id[13] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port phase_id[12] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port phase_id[11] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port phase_id[10] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port phase_id[9] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port phase_id[8] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port phase_id[7] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port phase_id[6] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port phase_id[5] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port phase_id[4] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port phase_id[3] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port phase_id[2] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port phase_id[1] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port phase_id[0] in module stamp_based_memory_controller is either unconnected or has no load
+---------------------------------------------------------------------------------
+Finished Synthesize : Time (s): cpu = 00:00:08 ; elapsed = 00:00:08 . Memory (MB): peak = 4509.777 ; gain = 0.000 ; free physical = 7886 ; free virtual = 12157
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Constraint Validation : Time (s): cpu = 00:00:08 ; elapsed = 00:00:09 . Memory (MB): peak = 4509.777 ; gain = 0.000 ; free physical = 7909 ; free virtual = 12179
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Loading Part and Timing Information
+---------------------------------------------------------------------------------
+Loading part: xczu7ev-ffvc1156-2-e
+INFO: [Synth 8-6742] Reading net delay rules and data
+---------------------------------------------------------------------------------
+Finished Loading Part and Timing Information : Time (s): cpu = 00:00:08 ; elapsed = 00:00:09 . Memory (MB): peak = 4509.777 ; gain = 0.000 ; free physical = 7909 ; free virtual = 12179
+---------------------------------------------------------------------------------
+INFO: [Synth 8-802] inferred FSM for state register 'state_reg' in module 'stamp_based_memory_controller'
+---------------------------------------------------------------------------------------------------
+                   State |                     New Encoding |                Previous Encoding 
+---------------------------------------------------------------------------------------------------
+                    IDLE |                              001 |                             0000
+              FETCH_META |                              011 |                             0001
+              PHASE_DONE |                              000 |                             1000
+               MOVE_READ |                              111 |                             0011
+              MOVE_WRITE |                              110 |                             0100
+                LOAD_REQ |                              100 |                             0101
+               LOAD_RECV |                              010 |                             0110
+              ZERO_WRITE |                              101 |                             0111
+---------------------------------------------------------------------------------------------------
+INFO: [Synth 8-3354] encoded FSM with state register 'state_reg' using encoding 'sequential' in module 'stamp_based_memory_controller'
+---------------------------------------------------------------------------------
+Finished RTL Optimization Phase 2 : Time (s): cpu = 00:00:12 ; elapsed = 00:00:12 . Memory (MB): peak = 4509.777 ; gain = 0.000 ; free physical = 7925 ; free virtual = 12189
+---------------------------------------------------------------------------------
+No constraint files found.
+---------------------------------------------------------------------------------
+Start RTL Component Statistics 
+---------------------------------------------------------------------------------
+Detailed RTL Component Info : 
++---Adders : 
+	   2 Input   32 Bit       Adders := 2     
+	   2 Input   16 Bit       Adders := 4     
++---Registers : 
+	               32 Bit    Registers := 1538  
+	               16 Bit    Registers := 4     
+	                8 Bit    Registers := 512   
++---Muxes : 
+	   5 Input   32 Bit        Muxes := 1     
+	   8 Input   32 Bit        Muxes := 2     
+	   2 Input   32 Bit        Muxes := 1     
+	   2 Input   16 Bit        Muxes := 1     
+	   8 Input   16 Bit        Muxes := 3     
+	   5 Input   12 Bit        Muxes := 2     
+	   2 Input   12 Bit        Muxes := 1     
+	   8 Input    3 Bit        Muxes := 1     
+	   2 Input    3 Bit        Muxes := 6     
+	   6 Input    3 Bit        Muxes := 1     
+	   2 Input    1 Bit        Muxes := 8     
+	   6 Input    1 Bit        Muxes := 7     
+	   5 Input    1 Bit        Muxes := 2     
+	   8 Input    1 Bit        Muxes := 12    
+---------------------------------------------------------------------------------
+Finished RTL Component Statistics 
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Part Resource Summary
+---------------------------------------------------------------------------------
+Part Resources:
+DSPs: 1728 (col length:144)
+BRAMs: 624 (col length: RAMB18 144 RAMB36 72)
+---------------------------------------------------------------------------------
+Finished Part Resource Summary
+---------------------------------------------------------------------------------
+No constraint files found.
+---------------------------------------------------------------------------------
+Start Cross Boundary and Area Optimization
+---------------------------------------------------------------------------------
+WARNING: [Synth 8-7129] Port metadata_wr_data[127] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[126] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[125] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[124] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[123] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[122] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[121] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[120] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[111] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[110] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[109] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[108] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[107] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[106] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[105] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[104] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[103] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[102] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[101] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[100] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[99] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[98] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[97] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[96] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port phase_id[15] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port phase_id[14] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port phase_id[13] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port phase_id[12] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port phase_id[11] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port phase_id[10] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port phase_id[9] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port phase_id[8] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port phase_id[7] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port phase_id[6] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port phase_id[5] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port phase_id[4] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port phase_id[3] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port phase_id[2] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port phase_id[1] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port phase_id[0] in module stamp_based_memory_controller is either unconnected or has no load
+---------------------------------------------------------------------------------
+Finished Cross Boundary and Area Optimization : Time (s): cpu = 00:00:38 ; elapsed = 00:00:39 . Memory (MB): peak = 4509.777 ; gain = 0.000 ; free physical = 8044 ; free virtual = 12307
+---------------------------------------------------------------------------------
+No constraint files found.
+---------------------------------------------------------------------------------
+Start Timing Optimization
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Timing Optimization : Time (s): cpu = 00:00:38 ; elapsed = 00:00:39 . Memory (MB): peak = 4509.777 ; gain = 0.000 ; free physical = 8044 ; free virtual = 12306
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Technology Mapping
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Technology Mapping : Time (s): cpu = 00:00:45 ; elapsed = 00:00:46 . Memory (MB): peak = 4509.777 ; gain = 0.000 ; free physical = 8035 ; free virtual = 12305
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start IO Insertion
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Flattening Before IO Insertion
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Flattening Before IO Insertion
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Final Netlist Cleanup
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Final Netlist Cleanup
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished IO Insertion : Time (s): cpu = 00:00:50 ; elapsed = 00:00:51 . Memory (MB): peak = 4509.777 ; gain = 0.000 ; free physical = 8044 ; free virtual = 12310
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Renaming Generated Instances
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Renaming Generated Instances : Time (s): cpu = 00:00:50 ; elapsed = 00:00:51 . Memory (MB): peak = 4509.777 ; gain = 0.000 ; free physical = 8044 ; free virtual = 12310
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Rebuilding User Hierarchy
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Rebuilding User Hierarchy : Time (s): cpu = 00:00:50 ; elapsed = 00:00:51 . Memory (MB): peak = 4509.777 ; gain = 0.000 ; free physical = 8043 ; free virtual = 12310
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Renaming Generated Ports
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Renaming Generated Ports : Time (s): cpu = 00:00:50 ; elapsed = 00:00:51 . Memory (MB): peak = 4509.777 ; gain = 0.000 ; free physical = 8043 ; free virtual = 12310
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Handling Custom Attributes
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Handling Custom Attributes : Time (s): cpu = 00:00:51 ; elapsed = 00:00:52 . Memory (MB): peak = 4509.777 ; gain = 0.000 ; free physical = 8043 ; free virtual = 12310
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Renaming Generated Nets
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Renaming Generated Nets : Time (s): cpu = 00:00:51 ; elapsed = 00:00:52 . Memory (MB): peak = 4509.777 ; gain = 0.000 ; free physical = 8043 ; free virtual = 12310
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Writing Synthesis Report
+---------------------------------------------------------------------------------
+
+Report BlackBoxes: 
++-+--------------+----------+
+| |BlackBox name |Instances |
++-+--------------+----------+
++-+--------------+----------+
+
+Report Cell Usage: 
++------+-------+------+
+|      |Cell   |Count |
++------+-------+------+
+|1     |CARRY8 |    45|
+|2     |LUT1   |     9|
+|3     |LUT2   |   142|
+|4     |LUT3   |    63|
+|5     |LUT4   |   219|
+|6     |LUT5   |   233|
+|7     |LUT6   | 11965|
+|8     |MUXF7  |  5780|
+|9     |MUXF8  |  2736|
+|10    |FDCE   |   417|
+|11    |FDPE   |     1|
+|12    |FDRE   | 43520|
++------+-------+------+
+---------------------------------------------------------------------------------
+Finished Writing Synthesis Report : Time (s): cpu = 00:00:51 ; elapsed = 00:00:52 . Memory (MB): peak = 4509.777 ; gain = 0.000 ; free physical = 8043 ; free virtual = 12310
+---------------------------------------------------------------------------------
+Synthesis finished with 0 errors, 0 critical warnings and 598 warnings.
+Synthesis Optimization Runtime : Time (s): cpu = 00:00:51 ; elapsed = 00:00:52 . Memory (MB): peak = 4509.777 ; gain = 0.000 ; free physical = 8041 ; free virtual = 12307
+Synthesis Optimization Complete : Time (s): cpu = 00:00:51 ; elapsed = 00:00:52 . Memory (MB): peak = 4509.777 ; gain = 0.000 ; free physical = 8041 ; free virtual = 12307
+INFO: [Project 1-571] Translating synthesized netlist
+Netlist sorting complete. Time (s): cpu = 00:00:00.46 ; elapsed = 00:00:00.47 . Memory (MB): peak = 4509.777 ; gain = 0.000 ; free physical = 8205 ; free virtual = 12471
+INFO: [Netlist 29-17] Analyzing 8561 Unisim elements for replacement
+INFO: [Netlist 29-28] Unisim Transformation completed in 0 CPU seconds
+WARNING: [Netlist 29-101] Netlist 'stamp_based_memory_controller' is not ideal for floorplanning, since the cellview 'stamp_based_memory_controller' contains a large number of primitives.  Please consider enabling hierarchy in synthesis if you want to do floorplanning.
+INFO: [Project 1-570] Preparing netlist for logic optimization
+INFO: [Opt 31-138] Pushed 0 inverter(s) to 0 load pin(s).
+Netlist sorting complete. Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00.01 . Memory (MB): peak = 4509.777 ; gain = 0.000 ; free physical = 8150 ; free virtual = 12421
+INFO: [Project 1-111] Unisim Transformation Summary:
+No Unisim elements were transformed.
+
+Synth Design complete | Checksum: 3bf7ab0b
+INFO: [Common 17-83] Releasing license: Synthesis
+17 Infos, 182 Warnings, 0 Critical Warnings and 0 Errors encountered.
+synth_design completed successfully
+synth_design: Time (s): cpu = 00:01:04 ; elapsed = 00:01:02 . Memory (MB): peak = 4509.777 ; gain = 0.000 ; free physical = 8152 ; free virtual = 12423
+INFO: [Common 17-2834] synth_design peak Physical Memory [PSS] (MB): overall = 3904.049; main = 3720.702; forked = 342.118
+INFO: [Common 17-2834] synth_design peak Virtual Memory [VSS] (MB): overall = 5422.656; main = 4436.094; forked = 986.562
+create_clock: Time (s): cpu = 00:00:05 ; elapsed = 00:00:05 . Memory (MB): peak = 4509.777 ; gain = 0.000 ; free physical = 8188 ; free virtual = 12456
+  -> LUT=12574  FF=43938  BRAM=0  LUTRAM=0  WNS=7.237ns  Fmax=361.92544335866813MHz
+
+==========================================================
+  Synthesising stamp_ctrl_m1024  (top = stamp_based_memory_controller)
+==========================================================
+Command: synth_design -top stamp_based_memory_controller -part xczu7ev-ffvc1156-2-e -mode out_of_context -generic {ADDR_WIDTH=32 DATA_WIDTH=32 SPAD_DEPTH=4096 METADATA_DEPTH=1024} -no_iobuf
+Starting synth_design
+Attempting to get a license for feature 'Synthesis' and/or device 'xczu7ev'
+INFO: [Common 17-349] Got license for feature 'Synthesis' and/or device 'xczu7ev'
+INFO: [Synth 8-7079] Multithreading enabled for synth_design using a maximum of 7 processes.
+---------------------------------------------------------------------------------
+Starting Synthesize : Time (s): cpu = 00:00:04 ; elapsed = 00:00:04 . Memory (MB): peak = 4657.125 ; gain = 0.000 ; free physical = 7769 ; free virtual = 12049
+---------------------------------------------------------------------------------
+INFO: [Synth 8-6157] synthesizing module 'stamp_based_memory_controller' [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:3]
+	Parameter ADDR_WIDTH bound to: 32'sb00000000000000000000000000100000 
+	Parameter DATA_WIDTH bound to: 32'sb00000000000000000000000000100000 
+	Parameter SPAD_DEPTH bound to: 32'sb00000000000000000001000000000000 
+	Parameter METADATA_DEPTH bound to: 32'sb00000000000000000000010000000000 
+INFO: [Synth 8-155] case statement is not full and has no default [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:140]
+INFO: [Synth 8-155] case statement is not full and has no default [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:323]
+INFO: [Synth 8-6155] done synthesizing module 'stamp_based_memory_controller' (0#1) [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:3]
+WARNING: [Synth 8-11357] Potential Runtime issue for 3D-RAM or RAM from Record/Structs for RAM  metadata_ram_reg with 122880 registers
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[0][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[1][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[2][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[3][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[4][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[5][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[6][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[7][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[8][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[9][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[10][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[11][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[12][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[13][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[14][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[15][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[16][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[17][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[18][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[19][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[20][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[21][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[22][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[23][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[24][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[25][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[26][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[27][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[28][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[29][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[30][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[31][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[32][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[33][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[34][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[35][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[36][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[37][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[38][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[39][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[40][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[41][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[42][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[43][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[44][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[45][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[46][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[47][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[48][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[49][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[50][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[51][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[52][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[53][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[54][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[55][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[56][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[57][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[58][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[59][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[60][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[61][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[62][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[63][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[64][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[65][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[66][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[67][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[68][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[69][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[70][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[71][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[72][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[73][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[74][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[75][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[76][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[77][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[78][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[79][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[80][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[81][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[82][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[83][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[84][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[85][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[86][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[87][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[88][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[89][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[90][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[91][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[92][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[93][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[94][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[95][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[96][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[97][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[98][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+WARNING: [Synth 8-6014] Unused sequential element metadata_ram_reg[99][tile_id] was removed.  [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/stamp_based_memory_controller.sv:81]
+INFO: [Common 17-14] Message 'Synth 8-6014' appears 100 times and further instances of the messages will be disabled. Use the Tcl command set_msg_config to change the current settings.
+WARNING: [Synth 8-7129] Port metadata_wr_data[127] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[126] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[125] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[124] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[123] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[122] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[121] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[120] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[111] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[110] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[109] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[108] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[107] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[106] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[105] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[104] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[103] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[102] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[101] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[100] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[99] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[98] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[97] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[96] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port phase_id[15] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port phase_id[14] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port phase_id[13] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port phase_id[12] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port phase_id[11] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port phase_id[10] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port phase_id[9] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port phase_id[8] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port phase_id[7] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port phase_id[6] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port phase_id[5] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port phase_id[4] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port phase_id[3] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port phase_id[2] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port phase_id[1] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port phase_id[0] in module stamp_based_memory_controller is either unconnected or has no load
+---------------------------------------------------------------------------------
+Finished Synthesize : Time (s): cpu = 00:00:10 ; elapsed = 00:00:10 . Memory (MB): peak = 4657.125 ; gain = 0.000 ; free physical = 7753 ; free virtual = 12044
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Constraint Validation : Time (s): cpu = 00:00:11 ; elapsed = 00:00:11 . Memory (MB): peak = 4657.125 ; gain = 0.000 ; free physical = 7806 ; free virtual = 12090
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Loading Part and Timing Information
+---------------------------------------------------------------------------------
+Loading part: xczu7ev-ffvc1156-2-e
+INFO: [Synth 8-6742] Reading net delay rules and data
+---------------------------------------------------------------------------------
+Finished Loading Part and Timing Information : Time (s): cpu = 00:00:11 ; elapsed = 00:00:11 . Memory (MB): peak = 4657.125 ; gain = 0.000 ; free physical = 7806 ; free virtual = 12090
+---------------------------------------------------------------------------------
+INFO: [Synth 8-802] inferred FSM for state register 'state_reg' in module 'stamp_based_memory_controller'
+---------------------------------------------------------------------------------------------------
+                   State |                     New Encoding |                Previous Encoding 
+---------------------------------------------------------------------------------------------------
+                    IDLE |                              001 |                             0000
+              FETCH_META |                              011 |                             0001
+              PHASE_DONE |                              000 |                             1000
+               MOVE_READ |                              111 |                             0011
+              MOVE_WRITE |                              110 |                             0100
+                LOAD_REQ |                              100 |                             0101
+               LOAD_RECV |                              010 |                             0110
+              ZERO_WRITE |                              101 |                             0111
+---------------------------------------------------------------------------------------------------
+INFO: [Synth 8-3354] encoded FSM with state register 'state_reg' using encoding 'sequential' in module 'stamp_based_memory_controller'
+---------------------------------------------------------------------------------
+Finished RTL Optimization Phase 2 : Time (s): cpu = 00:00:18 ; elapsed = 00:00:19 . Memory (MB): peak = 4657.125 ; gain = 0.000 ; free physical = 7849 ; free virtual = 12141
+---------------------------------------------------------------------------------
+No constraint files found.
+---------------------------------------------------------------------------------
+Start RTL Component Statistics 
+---------------------------------------------------------------------------------
+Detailed RTL Component Info : 
++---Adders : 
+	   2 Input   32 Bit       Adders := 2     
+	   2 Input   16 Bit       Adders := 4     
++---Registers : 
+	               32 Bit    Registers := 3074  
+	               16 Bit    Registers := 4     
+	                8 Bit    Registers := 1024  
++---Muxes : 
+	   5 Input   32 Bit        Muxes := 1     
+	   8 Input   32 Bit        Muxes := 2     
+	   2 Input   32 Bit        Muxes := 1     
+	   8 Input   16 Bit        Muxes := 3     
+	   2 Input   16 Bit        Muxes := 1     
+	   5 Input   12 Bit        Muxes := 2     
+	   2 Input   12 Bit        Muxes := 1     
+	   8 Input    3 Bit        Muxes := 1     
+	   2 Input    3 Bit        Muxes := 6     
+	   6 Input    3 Bit        Muxes := 1     
+	   5 Input    1 Bit        Muxes := 2     
+	   8 Input    1 Bit        Muxes := 12    
+	   2 Input    1 Bit        Muxes := 8     
+	   6 Input    1 Bit        Muxes := 7     
+---------------------------------------------------------------------------------
+Finished RTL Component Statistics 
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Part Resource Summary
+---------------------------------------------------------------------------------
+Part Resources:
+DSPs: 1728 (col length:144)
+BRAMs: 624 (col length: RAMB18 144 RAMB36 72)
+---------------------------------------------------------------------------------
+Finished Part Resource Summary
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Cross Boundary and Area Optimization
+---------------------------------------------------------------------------------
+WARNING: [Synth 8-7129] Port metadata_wr_data[127] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[126] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[125] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[124] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[123] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[122] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[121] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[120] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[111] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[110] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[109] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[108] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[107] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[106] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[105] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[104] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[103] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[102] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[101] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[100] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[99] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[98] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[97] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port metadata_wr_data[96] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port phase_id[15] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port phase_id[14] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port phase_id[13] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port phase_id[12] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port phase_id[11] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port phase_id[10] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port phase_id[9] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port phase_id[8] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port phase_id[7] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port phase_id[6] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port phase_id[5] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port phase_id[4] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port phase_id[3] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port phase_id[2] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port phase_id[1] in module stamp_based_memory_controller is either unconnected or has no load
+WARNING: [Synth 8-7129] Port phase_id[0] in module stamp_based_memory_controller is either unconnected or has no load
+---------------------------------------------------------------------------------
+Finished Cross Boundary and Area Optimization : Time (s): cpu = 00:00:47 ; elapsed = 00:01:14 . Memory (MB): peak = 4657.125 ; gain = 0.000 ; free physical = 1420 ; free virtual = 5711
+---------------------------------------------------------------------------------
+No constraint files found.
+---------------------------------------------------------------------------------
+Start Timing Optimization
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Timing Optimization : Time (s): cpu = 00:02:18 ; elapsed = 00:01:30 . Memory (MB): peak = 4657.125 ; gain = 0.000 ; free physical = 2611 ; free virtual = 6922
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Technology Mapping
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Technology Mapping : Time (s): cpu = 00:02:29 ; elapsed = 00:01:47 . Memory (MB): peak = 4657.125 ; gain = 0.000 ; free physical = 166 ; free virtual = 3790
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start IO Insertion
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Flattening Before IO Insertion
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Flattening Before IO Insertion
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Final Netlist Cleanup
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Final Netlist Cleanup
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished IO Insertion : Time (s): cpu = 00:02:40 ; elapsed = 00:01:59 . Memory (MB): peak = 4657.125 ; gain = 0.000 ; free physical = 223 ; free virtual = 3777
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Renaming Generated Instances
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Renaming Generated Instances : Time (s): cpu = 00:02:41 ; elapsed = 00:01:59 . Memory (MB): peak = 4657.125 ; gain = 0.000 ; free physical = 223 ; free virtual = 3778
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Rebuilding User Hierarchy
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Rebuilding User Hierarchy : Time (s): cpu = 00:02:42 ; elapsed = 00:02:00 . Memory (MB): peak = 4657.125 ; gain = 0.000 ; free physical = 223 ; free virtual = 3780
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Renaming Generated Ports
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Renaming Generated Ports : Time (s): cpu = 00:02:42 ; elapsed = 00:02:01 . Memory (MB): peak = 4657.125 ; gain = 0.000 ; free physical = 223 ; free virtual = 3780
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Handling Custom Attributes
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Handling Custom Attributes : Time (s): cpu = 00:02:43 ; elapsed = 00:02:02 . Memory (MB): peak = 4657.125 ; gain = 0.000 ; free physical = 219 ; free virtual = 3783
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Renaming Generated Nets
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Renaming Generated Nets : Time (s): cpu = 00:02:43 ; elapsed = 00:02:02 . Memory (MB): peak = 4657.125 ; gain = 0.000 ; free physical = 222 ; free virtual = 3786
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Writing Synthesis Report
+---------------------------------------------------------------------------------
+
+Report BlackBoxes: 
++-+--------------+----------+
+| |BlackBox name |Instances |
++-+--------------+----------+
++-+--------------+----------+
+
+Report Cell Usage: 
++------+-------+------+
+|      |Cell   |Count |
++------+-------+------+
+|1     |CARRY8 |    45|
+|2     |LUT1   |     9|
+|3     |LUT2   |   135|
+|4     |LUT3   |    65|
+|5     |LUT4   |    79|
+|6     |LUT5   |   878|
+|7     |LUT6   | 23564|
+|8     |MUXF7  | 11560|
+|9     |MUXF8  |  5780|
+|10    |FDCE   |   427|
+|11    |FDPE   |     1|
+|12    |FDRE   | 87040|
++------+-------+------+
+---------------------------------------------------------------------------------
+Finished Writing Synthesis Report : Time (s): cpu = 00:02:43 ; elapsed = 00:02:02 . Memory (MB): peak = 4657.125 ; gain = 0.000 ; free physical = 222 ; free virtual = 3787
+---------------------------------------------------------------------------------
+Synthesis finished with 0 errors, 0 critical warnings and 1110 warnings.
+Synthesis Optimization Runtime : Time (s): cpu = 00:02:43 ; elapsed = 00:02:03 . Memory (MB): peak = 4657.125 ; gain = 0.000 ; free physical = 8860 ; free virtual = 12437
+Synthesis Optimization Complete : Time (s): cpu = 00:02:43 ; elapsed = 00:02:03 . Memory (MB): peak = 4657.125 ; gain = 0.000 ; free physical = 8858 ; free virtual = 12408
+INFO: [Project 1-571] Translating synthesized netlist
+Netlist sorting complete. Time (s): cpu = 00:00:00.93 ; elapsed = 00:00:00.93 . Memory (MB): peak = 4657.125 ; gain = 0.000 ; free physical = 8864 ; free virtual = 12413
+INFO: [Netlist 29-17] Analyzing 17385 Unisim elements for replacement
+INFO: [Netlist 29-28] Unisim Transformation completed in 0 CPU seconds
+WARNING: [Netlist 29-101] Netlist 'stamp_based_memory_controller' is not ideal for floorplanning, since the cellview 'stamp_based_memory_controller' contains a large number of primitives.  Please consider enabling hierarchy in synthesis if you want to do floorplanning.
+INFO: [Project 1-570] Preparing netlist for logic optimization
+INFO: [Opt 31-138] Pushed 0 inverter(s) to 0 load pin(s).
+Netlist sorting complete. Time (s): cpu = 00:00:00.02 ; elapsed = 00:00:00.02 . Memory (MB): peak = 4657.125 ; gain = 0.000 ; free physical = 8855 ; free virtual = 12419
+INFO: [Project 1-111] Unisim Transformation Summary:
+No Unisim elements were transformed.
+
+Synth Design complete | Checksum: 129cbbb1
+INFO: [Common 17-83] Releasing license: Synthesis
+17 Infos, 182 Warnings, 0 Critical Warnings and 0 Errors encountered.
+synth_design completed successfully
+synth_design: Time (s): cpu = 00:02:59 ; elapsed = 00:02:20 . Memory (MB): peak = 4657.125 ; gain = 0.000 ; free physical = 8858 ; free virtual = 12434
+INFO: [Common 17-2834] synth_design peak Physical Memory [PSS] (MB): overall = 10453.693; main = 3627.918; forked = 7112.875
+INFO: [Common 17-2834] synth_design peak Virtual Memory [VSS] (MB): overall = 19594.281; main = 4591.449; forked = 15010.836
+create_clock: Time (s): cpu = 00:00:05 ; elapsed = 00:00:05 . Memory (MB): peak = 4657.125 ; gain = 0.000 ; free physical = 8870 ; free virtual = 12449
+  -> LUT=24680  FF=87468  BRAM=0  LUTRAM=0  WNS=7.512ns  Fmax=401.9292604501607MHz
+# foreach np {128 256 512} {
+#     set vpn [expr {int(ceil(log($np)/log(2)))}]
+#     run_one $csv $part $period $rtl_dir $out_dir \
+#         "paged_mgmt_p$np" "PAGED (dynamic)" "num_pages" $np \
+#         paged_mgmt_wrap {memory/paged_table.v ../static_hash_and_tagless_memory/synth/paged_mgmt_wrap.sv} \
+#         [list N_PORTS 4 NUM_PAGES $np VPN_WIDTH $vpn PPN_WIDTH 20]
+# }
+
+==========================================================
+  Synthesising paged_mgmt_p128  (top = paged_mgmt_wrap)
+==========================================================
+ERROR: [Common 17-69] Command failed: File '/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/static_hash_and_tagless_memory/synth/static_hash_and_tagless_memory/synth/paged_mgmt_wrap.sv' does not exist
+INFO: [Common 17-206] Exiting Vivado at Fri Aug  7 01:04:17 2026...

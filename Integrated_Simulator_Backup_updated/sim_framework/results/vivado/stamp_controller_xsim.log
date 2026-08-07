@@ -1,0 +1,268 @@
+
+****** xsim v2025.2 (64-bit)
+  **** SW Build 6299465 on Fri Nov 14 12:34:56 MST 2025
+  **** IP Build 6300035 on Fri Nov 14 10:48:45 MST 2025
+  **** SharedData Build 6298862 on Thu Nov 13 04:50:51 MST 2025
+  **** Start of session at: Wed Aug  5 00:52:43 2026
+    ** Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+    ** Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
+
+source xsim.dir/tb_sim/xsim_script.tcl
+# xsim {tb_sim} -autoloadwcfg -runall
+Time resolution is 1 ps
+run -all
+============================================================
+  stamp_based_memory_controller - Testbench Start
+============================================================
+[26000] Reset de-asserted.
+
+--- TEST 1: Single KEEP Operation ---
+[76000] Phase 1 completed.
+PASS  stats_keeps = 0x00000001
+PASS  stats_moves = 0x00000000
+PASS  stats_loads = 0x00000000
+PASS  stats_bytes_moved = 0x00000000
+PASS  stats_bytes_loaded = 0x00000000
+[106000] Reset de-asserted.
+
+--- TEST 2: Single MOVE Operation (16 bytes) ---
+[106000] Scratchpad pre-filled with test pattern.
+[236000] Phase 2 completed.
+PASS  stats_moves = 0x00000001
+PASS  stats_bytes_moved = 0x00000010
+  Verifying scratchpad MOVE result...
+  PASS  MOVE word[0] = 0xdead0010
+  PASS  MOVE word[1] = 0xdead0011
+  PASS  MOVE word[2] = 0xdead0012
+  PASS  MOVE word[3] = 0xdead0013
+[266000] Reset de-asserted.
+
+--- TEST 3: Single LOAD Operation (32 bytes = 8 words) ---
+[426000] Phase 3 completed.
+PASS  stats_loads = 0x00000001
+PASS  stats_bytes_loaded = 0x00000020
+  Verifying scratchpad LOAD result...
+  PASS  LOAD word[0] = 0xa0000000
+  PASS  LOAD word[1] = 0xa0000001
+  PASS  LOAD word[2] = 0xa0000002
+  PASS  LOAD word[3] = 0xa0000003
+  PASS  LOAD word[4] = 0xa0000004
+  PASS  LOAD word[5] = 0xa0000005
+  PASS  LOAD word[6] = 0xa0000006
+  PASS  LOAD word[7] = 0xa0000007
+[456000] Reset de-asserted.
+
+--- TEST 4: Mixed Phase (KEEP + MOVE + LOAD) ---
+[676000] Phase 4 completed.
+PASS  stats_keeps (cumulative) = 0x00000001
+PASS  stats_moves (cumulative) = 0x00000001
+PASS  stats_loads (cumulative) = 0x00000001
+[706000] Reset de-asserted.
+
+--- TEST 5: Multiple Consecutive Phases ---
+[756000] Phase 10 completed.
+[806000] Phase 11 completed.
+[856000] Phase 12 completed.
+[906000] Phase 13 completed.
+PASS  stats_keeps after multi-phase = 0x00000004
+  Multiple phases completed successfully.
+[936000] Reset de-asserted.
+
+--- TEST 6: Reset Recovery ---
+PASS  Controller ready after reset recovery
+PASS  controller_busy de-asserted after reset
+
+--- TEST 7: Zero-Operation Phase ---
+[1056000] Phase 57005 completed.
+PASS  Zero-op phase completed without hang.
+[1086000] Reset de-asserted.
+
+--- TEST 8: controller_busy Signal ---
+PASS  controller_busy low in IDLE
+PASS  controller_busy asserted during operation
+PASS  controller_busy cleared after completion
+[1196000] Reset de-asserted.
+
+--- TEST 10: ALLOC Opcode (output tile, no traffic) ---
+[1246000] Phase 10 completed.
+PASS  stats_allocs = 0x00000001
+PASS  stats_bad_ops after ALLOC = 0x00000000
+PASS  ALLOC causes no DRAM read = 0x00000000
+PASS  ALLOC causes no on-chip move = 0x00000000
+[1276000] Reset de-asserted.
+
+--- TEST 11: ZERO Opcode (padding halo fill) ---
+[1276000] Scratchpad pre-filled with test pattern.
+[1366000] Phase 11 completed.
+PASS  stats_zeros = 0x00000001
+PASS  stats_bytes_zeroed = 0x00000010
+PASS  ZERO causes no DRAM read = 0x00000000
+PASS  stats_bad_ops after ZERO = 0x00000000
+PASS  padding region zero-filled in scratchpad
+[1396000] Reset de-asserted.
+
+--- TEST 12: Unknown Opcode Detection ---
+[1446000] Phase 12 completed.
+PASS  stats_bad_ops = 0x00000001
+[1476000] Reset de-asserted.
+
+--- TEST 13: phase_base_addr Selects Op Window ---
+[1546000] Phase 16 completed.
+PASS  base 0 runs the KEEP = 0x00000001
+PASS  base 0 skips the ALLOC = 0x00000000
+[1586000] Phase 17 completed.
+PASS  base 1 runs the ALLOC = 0x00000001
+PASS  base 1 does not re-run KEEP = 0x00000001
+[1616000] Reset de-asserted.
+
+--- TEST 9: Real Compiler Metadata from stamp_compiler.py ---
+[15156000] Phase 0 completed.
+[22986000] Phase 1 completed.
+[42296000] Phase 2 completed.
+[59716000] Phase 3 completed.
+[67536000] Phase 4 completed.
+[75356000] Phase 5 completed.
+[94666000] Phase 6 completed.
+[112086000] Phase 7 completed.
+[119906000] Phase 8 completed.
+[127726000] Phase 9 completed.
+[147036000] Phase 10 completed.
+[152896000] Phase 11 completed.
+[160686000] Phase 12 completed.
+[168476000] Phase 13 completed.
+[187786000] Phase 14 completed.
+[199556000] Phase 15 completed.
+[207386000] Phase 16 completed.
+[215216000] Phase 17 completed.
+[234526000] Phase 18 completed.
+[251946000] Phase 19 completed.
+[259766000] Phase 20 completed.
+[267586000] Phase 21 completed.
+[286896000] Phase 22 completed.
+[304316000] Phase 23 completed.
+[312136000] Phase 24 completed.
+[319956000] Phase 25 completed.
+[339266000] Phase 26 completed.
+[345126000] Phase 27 completed.
+[352916000] Phase 28 completed.
+[360706000] Phase 29 completed.
+[380016000] Phase 30 completed.
+[391786000] Phase 31 completed.
+[399616000] Phase 32 completed.
+[407446000] Phase 33 completed.
+[426756000] Phase 34 completed.
+[444176000] Phase 35 completed.
+[451996000] Phase 36 completed.
+[459816000] Phase 37 completed.
+[479126000] Phase 38 completed.
+[496546000] Phase 39 completed.
+[504366000] Phase 40 completed.
+[512186000] Phase 41 completed.
+[531496000] Phase 42 completed.
+[537356000] Phase 43 completed.
+[545146000] Phase 44 completed.
+[552936000] Phase 45 completed.
+[572246000] Phase 46 completed.
+[584016000] Phase 47 completed.
+[591846000] Phase 48 completed.
+[599676000] Phase 49 completed.
+[618986000] Phase 50 completed.
+[636406000] Phase 51 completed.
+[644226000] Phase 52 completed.
+[652046000] Phase 53 completed.
+[671356000] Phase 54 completed.
+[688776000] Phase 55 completed.
+[696596000] Phase 56 completed.
+[704416000] Phase 57 completed.
+[723726000] Phase 58 completed.
+[729586000] Phase 59 completed.
+[737376000] Phase 60 completed.
+[745166000] Phase 61 completed.
+[764476000] Phase 62 completed.
+[776246000] Phase 63 completed.
+[784076000] Phase 64 completed.
+[791906000] Phase 65 completed.
+[811216000] Phase 66 completed.
+[828636000] Phase 67 completed.
+[836456000] Phase 68 completed.
+[844276000] Phase 69 completed.
+[863586000] Phase 70 completed.
+[881006000] Phase 71 completed.
+[888826000] Phase 72 completed.
+[896646000] Phase 73 completed.
+[915956000] Phase 74 completed.
+[921816000] Phase 75 completed.
+[929606000] Phase 76 completed.
+[937396000] Phase 77 completed.
+[956706000] Phase 78 completed.
+[968476000] Phase 79 completed.
+[976306000] Phase 80 completed.
+[984136000] Phase 81 completed.
+[1003446000] Phase 82 completed.
+[1020866000] Phase 83 completed.
+[1028686000] Phase 84 completed.
+[1036506000] Phase 85 completed.
+[1055816000] Phase 86 completed.
+[1073236000] Phase 87 completed.
+[1081056000] Phase 88 completed.
+[1088876000] Phase 89 completed.
+[1108186000] Phase 90 completed.
+[1114046000] Phase 91 completed.
+[1121836000] Phase 92 completed.
+[1129626000] Phase 93 completed.
+[1148936000] Phase 94 completed.
+[1160706000] Phase 95 completed.
+[1168536000] Phase 96 completed.
+[1176366000] Phase 97 completed.
+[1195676000] Phase 98 completed.
+[1213096000] Phase 99 completed.
+[1220916000] Phase 100 completed.
+[1228736000] Phase 101 completed.
+[1248046000] Phase 102 completed.
+[1265466000] Phase 103 completed.
+[1273286000] Phase 104 completed.
+[1281106000] Phase 105 completed.
+[1300416000] Phase 106 completed.
+[1306276000] Phase 107 completed.
+[1314066000] Phase 108 completed.
+[1321856000] Phase 109 completed.
+[1341166000] Phase 110 completed.
+[1352936000] Phase 111 completed.
+[1360766000] Phase 112 completed.
+[1368596000] Phase 113 completed.
+[1387906000] Phase 114 completed.
+[1405326000] Phase 115 completed.
+[1413146000] Phase 116 completed.
+[1420966000] Phase 117 completed.
+[1440276000] Phase 118 completed.
+[1457696000] Phase 119 completed.
+[1465516000] Phase 120 completed.
+[1473336000] Phase 121 completed.
+[1492646000] Phase 122 completed.
+[1498506000] Phase 123 completed.
+[1506296000] Phase 124 completed.
+[1514086000] Phase 125 completed.
+[1533396000] Phase 126 completed.
+  phases replayed    = 127 / 127
+  delta ops executed = 572
+  stats_loads        = 134
+  stats_moves        = 144
+  stats_keeps        = 72
+  stats_allocs       = 127
+  stats_zeros        = 95
+  stats_bytes_loaded = 157888
+  stats_bytes_moved  = 184320
+  stats_bytes_zeroed = 77120
+  stats_bad_ops      = 0
+PASS  all compiler opcodes decoded by the controller
+PASS  controller accounted for all 572 delta ops
+
+============================================================
+  ALL TESTS COMPLETED SUCCESSFULLY!
+  No FAIL messages above = all test cases PASSED.
+  stamp_based_memory_controller is verified.
+============================================================
+$finish called at time : 1533445 ns : File "/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/static_hash_and_tagless_memory/.xsim_build/tb_stamp_based_memory_controller.sv" Line 840
+exit
+INFO: xsimkernel Simulation Memory Usage: 286044 KB (Peak: 334604 KB), Simulation CPU Usage: 1670 ms
+INFO: [Common 17-206] Exiting xsim at Wed Aug  5 00:52:47 2026...

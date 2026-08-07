@@ -1,0 +1,1149 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[margin=2.2cm]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{xcolor}
+\usepackage{fancyhdr}
+\usepackage{enumitem}
+\usepackage{tcolorbox}
+\usepackage[hidelinks]{hyperref}
+
+\definecolor{stampblue}{HTML}{1A3A5C}
+\definecolor{pagedteal}{HTML}{4D9C96}
+\definecolor{warnorange}{HTML}{C25E0C}
+\definecolor{lightgrey}{HTML}{F4F6F8}
+\definecolor{rulegrey}{HTML}{CCD4DD}
+
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{\small\textcolor{stampblue}{Memory Management Module --- Evaluation Answers}}
+\rhead{\small QuadraMind}
+\cfoot{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+\newcommand{\op}[1]{\textsc{#1}}
+\newcommand{\file}[1]{\texttt{\small #1}}
+
+\newtcolorbox{keybox}[1]{colback=lightgrey,colframe=stampblue,
+  boxrule=0.6pt,left=6pt,right=6pt,top=5pt,bottom=5pt,
+  title={\small\bfseries #1},fonttitle=\color{white}}
+
+\newtcolorbox{warnbox}[1]{colback=white,colframe=warnorange,
+  boxrule=0.8pt,left=6pt,right=6pt,top=5pt,bottom=5pt,
+  title={\small\bfseries #1},fonttitle=\color{white}}
+
+\title{\vspace{-1.7cm}
+  \textcolor{stampblue}{\Large\bfseries On-Chip Memory Management Module}\\[0.35em]
+  \large Final-Evaluation Answer Sheet\\[0.2em]
+  \normalsize Research problem, gap, novelty, contribution, artefacts,
+  methodology,\\ scheme comparison, results, limitations and validation}
+\author{\small Memory Subsystem --- QuadraMind DNN Accelerator Simulator}
+\date{\small 7 August 2026}
+
+\begin{document}
+\maketitle
+\thispagestyle{fancy}
+
+\begin{keybox}{One-paragraph summary --- if you get 60 seconds, say this}
+A DNN layer's working set does not fit in on-chip SRAM, so tiles must be
+staged in and out of a scratchpad. Conventional accelerators do this with a
+\emph{runtime} structure --- a page table or a cache tag array --- which costs
+a lookup on every access, fetches at page granularity, and places data at
+addresses the compiler cannot predict, so it cannot avoid bank conflicts. My
+module implements the alternative: because a DNN schedule is fully known at
+compile time, a compiler can pre-compute every scratchpad layout and emit only
+the \emph{differences} between consecutive layouts as a five-opcode delta
+stream, so no runtime tag or translation structure is needed at all. I built
+that compiler, the hardware that executes its stream, a banked scratchpad with
+cycle-exact conflict counters, and a page-table scheme to compare against ---
+and I measured both on identical RTL. Result: 73.2\,\% less off-chip read
+traffic than always-reload, and $42\times$ fewer bank conflicts than the paged
+scheme on the same layer. I also report where paged wins, and why.
+\end{keybox}
+
+\tableofcontents
+\vspace{0.4em}
+\hrule
+
+% =====================================================================
+\section{Research problem}
+
+\subsection{The problem in one sentence}
+
+\begin{keybox}{Research problem}
+For a systolic-array DNN accelerator, \textbf{how should the limited on-chip
+scratchpad be managed} --- who decides which tensor tiles occupy which physical
+addresses, and when --- so that off-chip DRAM traffic, address-translation
+overhead and SRAM bank conflicts are all minimised simultaneously?
+\end{keybox}
+
+\subsection{Why it matters --- the quantitative motivation}
+
+A single convolution layer with $C{=}16$ input channels, $K{=}32$ output
+channels, a $14\times14$ feature map and $3\times3$ kernels needs
+\[
+  \underbrace{C\,H\,W}_{\text{inputs}} +
+  \underbrace{K\,C\,K_h\,K_w}_{\text{weights}} +
+  \underbrace{K\,O_h\,O_w}_{\text{outputs}}
+  = 3136 + 4608 + 6272 = 14{,}016 \text{ elements}
+\]
+which at 4 bytes/element is \textbf{56\,KB against a 16\,KB scratchpad}. The
+tensors must be tiled, and the accelerator must continuously decide what stays
+resident. That single decision drives three costs:
+
+\begin{enumerate}[leftmargin=1.5em,itemsep=3pt]
+  \item \textbf{Off-chip traffic.} A DRAM byte costs roughly two orders of
+        magnitude more energy than an on-chip SRAM byte ($\approx$560\,pJ/B
+        versus a few pJ). Redundant re-fetches dominate the energy budget.
+  \item \textbf{Address-translation overhead.} Any runtime structure mapping
+        logical tile addresses to physical scratchpad locations charges a
+        lookup on \emph{every} access, replicated per read port.
+  \item \textbf{Bank conflicts.} The scratchpad is banked so several ports can
+        read per cycle. When two ports hit the same bank they serialise and
+        the array stalls.
+\end{enumerate}
+
+\subsection{The sub-questions this module answers}
+
+\begin{enumerate}[leftmargin=1.5em,itemsep=2pt]
+  \item Can a compiler eliminate the runtime tag/translation structure entirely,
+        and what does that cost instead?
+  \item How much off-chip read traffic does compile-time delta fetching avoid,
+        across layer shapes, scratchpad capacities and array sizes?
+  \item Static versus dynamic management --- what is the real trade in area,
+        clock frequency, cycles, traffic and conflicts?
+  \item Are bank conflicts a random phenomenon (in which case nothing can be
+        done) or a deterministic function of the access pattern (in which case
+        compile-time placement can control them)?
+\end{enumerate}
+
+% =====================================================================
+\section{Research gap}
+
+\begin{keybox}{Research gap}
+No existing DNN-accelerator simulator models off-chip traffic,
+address-translation cost and bank conflicts \emph{cycle-accurately in the same
+framework}, and none of them supports a compiler-assisted tagless management
+scheme at all. Every published comparison of memory-management schemes for
+accelerators is therefore either analytical or restricted to cache/page-table
+variants.
+\end{keybox}
+
+\subsection{What the existing tools do and do not do}
+
+\begin{center}
+\small
+\begin{tabular}{@{}lccc@{}}
+\toprule
+\textbf{Simulator} & \textbf{Off-chip traffic} & \textbf{Bank conflicts} &
+\textbf{Tagless / compiler-managed} \\
+\midrule
+SCALE-Sim            & analytical    & no  & no \\
+Timeloop / Accelergy & analytical    & no  & no \\
+CiMLoop              & analytical    & no  & no \\
+STONNE               & partly cycle-level & no  & no \\
+ONNXim               & cycle-level   & no  & no \\
+\midrule
+\textbf{This module} & \textbf{measured (RTL + AXI counters)} &
+\textbf{cycle-exact counters} & \textbf{yes, implemented in RTL} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{The three specific gaps}
+
+\begin{enumerate}[leftmargin=1.5em,itemsep=3pt]
+  \item \textbf{Gap in modelling fidelity.} Bank conflicts are almost always
+        either ignored or approximated with a closed-form birthday-problem
+        bound. That bound assumes \emph{uniformly random} addresses; real DNN
+        access patterns are highly structured, so the bound is wrong in both
+        directions --- consecutive access is conflict-free (far better than the
+        bound) and stride-$B$ access is fully serialised (far worse). Nobody
+        had measured which one real tile footprints produce.
+  \item \textbf{Gap in the design space.} The literature compares caches,
+        double buffers and scratchpads with \emph{runtime} allocation. The
+        compiler-assisted static tagless point --- no tag array, no page table,
+        placement fixed at compile time --- is discussed conceptually but has
+        not been implemented in RTL and measured against a dynamic scheme on
+        identical hardware.
+  \item \textbf{Gap in evidence.} Scheme comparisons in accelerator papers
+        typically quote normalised factors from prior work. There was no
+        artefact where the same layer, the same array, the same clock and the
+        same counters produce both schemes' numbers.
+\end{enumerate}
+
+\begin{warnbox}{Say this if asked ``isn't delta encoding old?''}
+Yes --- delta encoding itself is decades old. The gap is not the idea of a
+delta; it is (a) applying it to \emph{scratchpad layout} rather than to data
+values, (b) using it to remove the runtime translation structure completely,
+and (c) measuring the consequence cycle-accurately against a page table. It is
+the third that no prior simulator provides.
+\end{warnbox}
+
+% =====================================================================
+\section{Novelty}
+
+\begin{keybox}{The three novel claims}
+\textbf{N1 --- Delta-of-layouts, not delta-of-data.} The compiler computes
+the difference between consecutive \emph{scratchpad layouts} (which tile sits
+at which physical address in each phase) and emits it as a five-opcode stream.
+The unit of the delta is a tile placement, not a data value.\\[4pt]
+\textbf{N2 --- Tagless by construction.} Because a DNN's loop nest is fully
+known before execution, there is nothing to \emph{discover} at runtime, so
+there is nothing for a tag or a page table to record. The tag array,
+comparators and replacement policy are removed, not optimised.\\[4pt]
+\textbf{N3 --- Measured, not modelled.} Both schemes run on the same RTL, and
+every reported number comes from a hardware counter, an AXI responder or a
+Vivado synthesis report --- including the numbers that do \emph{not} favour my
+scheme.
+\end{keybox}
+
+\subsection{Supporting novelty}
+
+\begin{itemize}[leftmargin=1.5em,itemsep=3pt]
+  \item \textbf{The \op{zero} opcode.} Padded convolutions have receptive
+        fields extending past the tensor border. Those bytes are implicit
+        zeros: they must exist on-chip but must never be fetched from DRAM.
+        Giving them their own opcode --- rather than charging them as loads ---
+        reduced the reported load volume from 235{,}008\,B to 157{,}888\,B and
+        made the measurement honest rather than flattering.
+  \item \textbf{Bank conflicts made a first-class, controllable quantity.}
+        The banked scratchpad exposes cycle-exact conflict and stall-port-cycle
+        counters, and the measured sweep proves conflicts are a deterministic
+        function of the address pattern --- which is exactly what compile-time
+        placement controls. This converts ``bank conflicts'' from an assumed
+        overhead into a design variable.
+  \item \textbf{Three-way independent agreement} (compiler / software FSM
+        model / SystemVerilog RTL) as the correctness argument, rather than a
+        single golden vector.
+\end{itemize}
+
+% =====================================================================
+\section{My contribution}
+
+Concretely, what I built and what I measured.
+
+\subsection{Compiler side}
+
+\begin{itemize}[leftmargin=1.5em,itemsep=3pt]
+  \item \file{stamp\_compiler.py} (985 lines) --- decomposes a conv layer into
+        \emph{phases}, allocates a \emph{stamp} (a complete scratchpad layout)
+        per phase, computes the \emph{delta} between consecutive stamps, and
+        emits three artefacts: \file{delta\_ops.hex} (the hardware op stream),
+        \file{stamp\_phase\_table.svh} (phase base addresses) and
+        \file{stamp\_metadata.json} (the machine-readable schedule).
+  \item Classification rules based on tile \emph{identity} rather than shape:
+        weights are reusable only when the output-channel slice matches;
+        input reuse is computed from receptive-field overlap; a simultaneous
+        row-and-column shift conservatively falls back to a full reload, so
+        \textbf{measured reuse is a lower bound, never an overstatement}.
+  \item Padding clipping: the region is intersected with the real tensor
+        extent and split into \op{load} bytes and \op{zero} bytes.
+  \item \file{stamp\_analyzer.py} --- reuse and bandwidth analysis over the
+        emitted stream.
+\end{itemize}
+
+\subsection{Hardware side (RTL)}
+
+\begin{itemize}[leftmargin=1.5em,itemsep=3pt]
+  \item \file{stamp\_based\_memory\_controller.sv} --- a nine-state FSM that
+        reads the compiler's metadata word by word and executes it: issues AXI
+        bursts for \op{load}, on-chip read/write pairs for \op{move}, nothing
+        for \op{keep} and \op{alloc}, and write-only zero fills for \op{zero}.
+        Exposes \file{stats\_loads}, \file{stats\_moves}, \file{stats\_keeps},
+        \file{stats\_bytes\_loaded}, \file{stats\_bytes\_moved} and
+        \file{stats\_bad\_ops}.
+  \item \file{scratchpad\_ram.sv} --- dual-mode SRAM. \file{NUM\_BANKS==1} is a
+        flat, conflict-free baseline; \file{NUM\_BANKS}$\,\ge 2$ is low-order
+        interleaved with per-cycle conflict arbitration (lowest-indexed port
+        wins, losers get \file{rd\_valid=0} and retry) and three monitoring
+        outputs: \file{bank\_conflict\_detected},
+        \file{stats\_bank\_conflicts},
+        \file{stats\_bank\_conflict\_stall\_cycles}.
+  \item \file{paged\_memory\_backend.sv} + \file{paged\_table.v} --- the
+        dynamic comparison scheme: per-port page tables, VPN$\to$PPN
+        translation, hit/miss counters.
+  \item \file{mem\_backend\_wrap.sv} --- selects STAMP or PAGED by parameter
+        and propagates all counters to the top level.
+  \item \textbf{Plumbing fixes I made so the comparison is real:}
+        \file{NUM\_BANKS} is now a genuine top-level parameter (it was
+        hard-defaulted to 4 and never reached the simulator); the bank counters
+        were dangling at \file{u\_mem} and are now top ports; and external
+        \file{spad\_dbg\_*} read ports were added so the memory side can be
+        exercised independently of the array.
+  \item \textbf{PAGED page-table write bug (found and fixed).} The per-port PT
+        write was gated on \verb|p == 0| \emph{and} required \file{rd\_addr[0]}
+        to hold the target VPN, so ports 1--3 could never hit --- the paged
+        scheme was structurally crippled. Writes now broadcast to all port
+        tables. \textbf{The whole comparison was re-run against this corrected
+        baseline}, i.e. against a paged scheme working as well as it can.
+\end{itemize}
+
+\subsection{Model and evaluation side}
+
+\begin{itemize}[leftmargin=1.5em,itemsep=3pt]
+  \item \file{pysim/stamp\_ref.py} --- an independently written cycle-accurate
+        model of the controller FSM, used both as a cross-check and as the
+        engine for large sweeps where RTL simulation is too slow.
+  \item \file{scripts/sweep\_memory\_schemes.py} --- 6 layer shapes $\times$ 4
+        scratchpad capacities $\times$ 2 array sizes; each grid point is a real
+        compiler run, not an interpolation. 34 of 48 points fit; the other 14
+        are recorded as capacity failures rather than silently dropped.
+  \item \file{tb/golden/test\_scheme\_divergence.py} --- the STAMP-vs-PAGED
+        head-to-head on real layers with real tile footprints.
+  \item \file{tb/golden/test\_bank\_sweep.py} --- the four-pattern $\times$
+        five-bank-count conflict sweep.
+  \item \file{scripts/run\_full\_eval.py} $\to$ \file{exp4\_memory\_management}
+        and \file{exp4b\_stamp\_vs\_paged} --- turn the captured artefacts into
+        the report figures.
+  \item \textbf{De-hardcoding.} Following the supervisor's ``don't hardcode
+        anything'' instruction I removed the previous four-scheme comparison
+        entirely (see \S\ref{sec:superseded}) and replaced it with measured
+        static-vs-dynamic. I also removed the invented constants in the bank
+        conflict experiment (\file{WORKLOAD\_MEM\_INTENSITY},
+        \file{DATAFLOW\_PORT\_ACTIVITY}, and the clamps that pinned every conv
+        layer to exactly 0.18) and replaced them with quantities derived from
+        each layer's own geometry.
+\end{itemize}
+
+% =====================================================================
+\section{Artefacts}
+
+\subsection{Source artefacts (what I wrote)}
+
+\begin{center}
+\small
+\begin{longtable}{@{}p{7.2cm}p{8.4cm}@{}}
+\toprule
+\textbf{File} & \textbf{Role} \\
+\midrule
+\endhead
+\file{static\_hash\_and\_tagless\_memory/stamp\_compiler.py} & Phases, stamps, deltas; emits hex + phase table + metadata \\
+\file{.../stamp\_analyzer.py} & Reuse and bandwidth analysis \\
+\file{.../stamp\_based\_memory\_controller.sv} & 9-state delta-op sequencer \\
+\file{.../tb\_stamp\_based\_memory\_controller.sv} & 13-test directed testbench (48 assertions) \\
+\file{.../paged\_table.v}, \file{tb\_paged\_table.v} & Page table + its testbench \\
+\file{.../run\_vivado\_sim.sh} & One-command reproduction of the RTL evidence \\
+\file{.../synth/synth\_area.tcl} & Vivado out-of-context synthesis driver \\
+\file{sim\_framework/rtl/memory/scratchpad\_ram.sv} & Banked SRAM + conflict counters \\
+\file{.../rtl/memory/paged\_memory\_backend.sv} & Dynamic (page-table) backend \\
+\file{.../rtl/memory/stamp\_memory\_backend.sv} & Static (STAMP) backend \\
+\file{.../rtl/memory/mem\_backend\_wrap.sv} & Scheme selector + counter propagation \\
+\file{sim\_framework/pysim/stamp\_ref.py} & Cycle-accurate FSM software model \\
+\file{sim\_framework/tb/unit/test\_stamp\_controller.py} & 27 software tests \\
+\file{sim\_framework/tb/unit/test\_bank\_conflict.py} & 17 banking tests \\
+\file{sim\_framework/tb/golden/test\_scheme\_divergence.py} & STAMP vs PAGED on real layers \\
+\file{sim\_framework/tb/golden/test\_bank\_sweep.py} & Bank-conflict pattern sweep \\
+\file{sim\_framework/scripts/sweep\_memory\_schemes.py} & 34-point compiler sweep \\
+\file{sim\_framework/scripts/run\_full\_eval.py} & \file{exp3}, \file{exp4}, \file{exp4b} figure generation \\
+\file{.../docs/memory\_module\_theory.pdf} & Full theory + architecture document \\
+\bottomrule
+\end{longtable}
+\end{center}
+
+\subsection{Generated artefacts (the evidence)}
+
+\begin{center}
+\small
+\begin{longtable}{@{}p{8.0cm}p{7.6cm}@{}}
+\toprule
+\textbf{Artefact} & \textbf{What it holds} \\
+\midrule
+\endhead
+\file{static\_hash\_and\_tagless\_memory/delta\_ops.hex} & The compiler's op stream, read by RTL via \file{\$readmemh} \\
+\file{.../stamp\_phase\_table.svh} & Phase base addresses, \file{`include}d by RTL \\
+\file{.../stamp\_metadata.json} & Machine-readable schedule (drives the accounting figures) \\
+\file{.../stamp\_analysis\_summary.txt} & Reuse / bandwidth summary of the standalone run \\
+\file{.../synth/work/out/area\_results.csv} & \textbf{Vivado OOC synthesis}: LUTs, FFs, WNS, Fmax for 11 configurations \\
+\file{sim\_framework/results/golden\_check/raw/divergence\_*.json} & \textbf{Per-run RTL counters} for STAMP and PAGED (4 files) \\
+\file{.../results/golden\_check/raw/bank\_sweep\_b\{1,2,4,8,16\}.json} & \textbf{Cycle-exact} conflict/stall counters per pattern \\
+\file{.../results/exp4\_memory\_management/sweep\_stamp.csv} & 34 real compiler runs across the design grid \\
+\file{.../results/exp4\_memory\_management/capacity\_limits.csv} & The 14 grid points that do not fit, with the reason \\
+\file{.../results/exp4\_memory\_management/area\_measured.csv} & Copy of the synthesis table used by the figures \\
+\file{.../results/exp4b\_stamp\_vs\_paged/stamp\_vs\_paged.csv} & The head-to-head comparison table \\
+\file{.../results/exp4b\_stamp\_vs\_paged/bank\_conflict\_sweep.csv} & The 20-row bank sweep table \\
+\file{.../results/exp4b\_stamp\_vs\_paged/stamp\_delta\_accounting.csv} & Load / move / zero byte accounting \\
+\file{.../results/vivado/stamp\_controller\_xsim.log} & The xsim console log (48 assertions, 0 failures) \\
+\file{.../results/golden\_check/MEMBER2\_MEMORY\_GOLDEN\_REPORT.md} & The written golden-check report with honesty labels \\
+\bottomrule
+\end{longtable}
+\end{center}
+
+\subsection{Figures produced}
+
+\file{results/exp4\_memory\_management/figures/}: \file{area\_static\_vs\_dynamic.png},
+\file{area\_scaling.png}, \file{banking\_area\_cost.png},
+\file{offchip\_reduction\_sweep.png}, \file{metadata\_overhead.png}.
+
+\file{results/exp4b\_stamp\_vs\_paged/figures/}: \file{axi\_beats.png},
+\file{axi\_ar\_requests.png}, \file{bank\_conflicts.png},
+\file{stall\_port\_cycles.png}, \file{cycle\_breakdown.png},
+\file{bank\_stall\_port\_cycles.png}, \file{bank\_reads\_served.png},
+\file{stamp\_vs\_naive\_traffic.png}, \file{delta\_op\_mix.png}.
+
+% =====================================================================
+\section{Methodology}
+
+\subsection{Overall flow}
+
+\begin{center}
+\small
+\begin{tabular}{@{}rp{13.5cm}@{}}
+\toprule
+\textbf{Step} & \textbf{What happens} \\
+\midrule
+1 & \textbf{Compile.} \file{stamp\_compiler.py} takes a layer geometry and a
+    scratchpad size, builds the phase list, allocates a stamp per phase, and
+    computes deltas. Emits \file{delta\_ops.hex}, \file{stamp\_phase\_table.svh},
+    \file{stamp\_metadata.json}. \\
+2 & \textbf{Model.} \file{pysim/stamp\_ref.py} replays that op stream through a
+    cycle-accurate model of the controller FSM and returns cycles, bytes loaded,
+    bytes moved, bytes zeroed, AXI bursts. \\
+3 & \textbf{Simulate (RTL, xsim).} The SystemVerilog controller reads the
+    \emph{same} hex file via \file{\$readmemh} and executes all 127 phase
+    transitions / 572 operations under the directed testbench. \\
+4 & \textbf{Simulate (RTL, Verilator + cocotb).} The full accelerator top runs a
+    real layer end-to-end, once with \file{MEMORY=STAMP} and once with
+    \file{MEMORY=PAGED}, at \file{NUM\_BANKS} $\in \{1,2,4,8,16\}$, and dumps
+    every hardware counter to JSON. Correctness is checked against a
+    TensorFlow golden reference. \\
+5 & \textbf{Synthesise.} Vivado out-of-context synthesis of the stamp
+    controller, the paged manager and the banked scratchpad, swept over each
+    one's own capacity knob, yields LUT/FF/Fmax. \\
+6 & \textbf{Sweep.} \file{sweep\_memory\_schemes.py} runs steps 1--2 over the
+    full layer $\times$ capacity $\times$ array grid. \\
+7 & \textbf{Report.} \file{run\_full\_eval.py} reads only the artefacts from
+    steps 4--6 and produces the CSVs and figures. It contains no performance
+    constants. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Experimental configuration}
+
+\begin{center}
+\small
+\begin{tabular}{@{}ll@{}}
+\toprule
+\textbf{Parameter} & \textbf{Value} \\
+\midrule
+Layers (head-to-head)   & \file{tiny\_cnn} layer 0, \file{mnist\_cnn} layer 0 \\
+Dataflow / layout       & Output-stationary, $8\times8$ array, CHANNEL\_MAJOR \\
+Scratchpad read ports   & 4 \\
+Bank counts swept       & 1, 2, 4, 8, 16 \\
+Page size (PAGED)       & $2^{10}$ words = 4\,KB \\
+Metadata depth (STAMP)  & 256 / 512 / 1024 entries (1024 used for verification) \\
+Standalone compiler run & 16\,KB scratchpad, 4\,B elements, 128 phases \\
+Sweep grid              & 6 layer shapes $\times$ \{8,16,32,64\}\,KB $\times$ \{$4\times4$, $8\times8$\} \\
+Tools                   & Verilator 5.050 + cocotb 2.0.1, Vivado xsim 2025.2, TF 2.21 \\
+Correctness tolerance   & 5\,\% of full scale (achieved: 0.009--0.013\,\%) \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{The two conflict models, and which is authoritative}
+
+\begin{warnbox}{Be precise about this in the viva}
+There are two bank-conflict numbers in the report and they are not the same
+thing:
+\begin{itemize}[leftmargin=1.3em,itemsep=2pt]
+  \item \textbf{Experiment 3} uses the analytical birthday-problem bound,
+        $P_{\text{conflict}} = 1 - \prod_{k=0}^{P-1}\frac{B-k}{B}$, scaled by a
+        per-layer memory-active fraction derived from the layer's own MAC count
+        and byte demand. It is an \emph{estimate}, applied across 14 workloads
+        where RTL simulation of every layer would be prohibitive.
+  \item \textbf{Experiment 4b} uses \emph{cycle-exact hardware counters} from
+        the banked scratchpad. It is the authority.
+\end{itemize}
+The bound assumes uniform random addresses; real patterns are structured, so
+the measured values differ from the bound --- and that difference is itself one
+of my findings.
+\end{warnbox}
+
+% =====================================================================
+\section{Alternative memory management schemes --- the comparison}
+\label{sec:compare}
+
+\subsection{What is compared against what}
+
+Three comparison axes, all measured:
+
+\begin{center}
+\small
+\begin{tabular}{@{}p{2.6cm}p{5.2cm}p{7.4cm}@{}}
+\toprule
+\textbf{Axis} & \textbf{Alternatives} & \textbf{Where measured} \\
+\midrule
+Management policy & \textbf{STAMP} (static, tagless, compiler-assisted)
+                    vs \textbf{PAGED} (dynamic, hardware page table)
+                  & \file{exp4b} --- RTL counters; \file{exp4} --- Vivado area/Fmax \\
+Fetch policy      & \textbf{Delta fetch} vs \textbf{always-load}
+                    (a tag-based scheme that re-reads every input and weight
+                    tile every phase)
+                  & \file{exp4} sweep + \file{stamp\_delta\_accounting.csv} \\
+Memory organisation & \textbf{Banking degree} $B \in \{1,2,4,8,16\}$
+                    ($B{=}1$ = flat, conflict-free baseline)
+                  & \file{bank\_conflict\_sweep.csv} + \file{area\_results.csv} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{The two schemes, mechanically}
+
+\begin{center}
+\small
+\begin{tabular}{@{}p{3.5cm}p{5.8cm}p{5.9cm}@{}}
+\toprule
+ & \textbf{PAGED (dynamic)} & \textbf{STAMP (static)} \\
+\midrule
+Who decides placement & Hardware, at runtime & Compiler, ahead of time \\
+Runtime structure & Page table per port; VPN $\to$ PPN + valid bit & None --- direct addressing \\
+Lookup cost & Every access, every port & Zero \\
+Fetch granularity & Whole page (4\,KB) on a fault & Exactly the new bytes \\
+Bookkeeping storage & Table $=$ NUM\_PAGES $\times$ (PPN width $+$ 1) bits & Metadata RAM $=$ 128 bits per delta op \\
+Bank residency & Unpredictable to the compiler & Chosen by the compiler \\
+Latency determinism & Non-deterministic (faults) & Deterministic \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{The five delta operations (STAMP)}
+
+\begin{center}
+\small
+\begin{tabular}{@{}llll@{}}
+\toprule
+\textbf{Op} & \textbf{Opcode} & \textbf{Condition} & \textbf{Cost} \\
+\midrule
+\op{keep}  & 0 & identical data, identical address & 0 cycles, 0 bytes \\
+\op{move}  & 1 & identical data, different address & 2 cycles/word (rd+wr) \\
+\op{load}  & 2 & data not resident on-chip & \textbf{DRAM burst} \\
+\op{alloc} & 3 & output slot, written by compute & 0 cycles, 0 bytes \\
+\op{zero}  & 4 & zero-padding halo & 1 cycle/word (write only) \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent Only \op{load} costs off-chip bandwidth. The saving is
+$\sigma = R/(L+R)$ with $R = M+K$ the bytes resolved on-chip.
+
+\subsection{Superseded: the four-scheme comparison}
+\label{sec:superseded}
+
+\begin{warnbox}{If an examiner has seen the older charts}
+An earlier version of Experiment 4 compared four schemes --- Static, Double
+Buffer, Unified Buffer, Cache-Based. \textbf{Every number in it came from a
+hardcoded dictionary} (\file{MEMSCHEME\_MODEL}: area 1.18 / cycles 0.76, etc.)
+and invented formulas of the form $0.90 - 0.28\,m_f$. Two problems: nothing was
+measured, and those three scheme names appear nowhere in
+\file{evaluation\_requirements.pdf}, which asks for ``tradeoffs between static
+and dynamic memory management schemes''. On the supervisor's ``don't hardcode
+anything'' instruction (Aug 2026) the whole experiment was deleted and replaced
+with the measured static-vs-dynamic comparison. The old outputs are retained,
+clearly labelled, under \file{results/\{cloud,edge\}/\_superseded\_hardcoded\_exp4/}
+so the change is auditable. \textbf{Do not present those figures.}
+\end{warnbox}
+
+% =====================================================================
+\section{The compared values --- what they are, how they are captured}
+
+\subsection{Metric dictionary}
+
+\begin{center}
+\small
+\begin{longtable}{@{}p{4.3cm}p{5.0cm}p{6.2cm}@{}}
+\toprule
+\textbf{Value} & \textbf{What it means} & \textbf{Source / how captured} \\
+\midrule
+\endhead
+\file{stats\_bytes\_loaded} & Bytes actually fetched from DRAM by the memory backend & Hardware counter inside \file{stamp\_memory\_backend}, incremented per accepted AXI beat \\
+\file{axi\_ar\_requests} & AXI read-address handshakes issued & Counted by the cocotb AXI responder model \\
+\file{axi\_beats} & AXI data beats returned & Counted by the cocotb AXI responder model \\
+\file{stats\_bank\_conflicts} & Cycles in which $\ge 1$ port was denied its bank & Counter in \file{scratchpad\_ram.sv}, increments when \file{bank\_conflict\_detected} \\
+\file{stats\_bank\_conflict\_stall\_cycles} & Total \emph{port}-cycles stalled (sum over stalled ports) & Same block; adds the stalled-port count each conflict cycle \\
+\file{compute\_cycles} & Cycles the top FSM spends in compute for the whole layer & Free-running RTL cycle counter, sampled at layer end \\
+\file{program\_cycles} & Cycles spent writing the metadata / page table & Same counter, sampled around the programming phase \\
+\file{replay\_cycles} & Cycles of the 4-port footprint replay & Same counter, sampled around the replay \\
+\file{stats\_loads\_or\_hits}, \file{stats\_moves\_or\_misses}, \file{stats\_keeps} & STAMP: load/move/keep op counts. PAGED: page hits/misses & Backend counters; the wrapper reuses the same ports for both schemes \\
+\file{new\_words} / \file{reused\_words} & Word-touches classified new vs already resident & Host-side bookkeeping in the testbench, cross-checked against the HW counter \\
+\file{luts}, \file{ffs}, \file{wns\_ns}, \file{fmax\_mhz} & Post-synthesis resource and timing & Vivado out-of-context synthesis reports \\
+\file{reduction\_pct} & $1 - L/\text{naive}$, off-chip read traffic avoided & Compiler + FSM model over the sweep grid \\
+\file{metadata\_bytes} & On-chip RAM the delta stream needs & $16 \times$ (total delta ops) \\
+\bottomrule
+\end{longtable}
+\end{center}
+
+\subsection{The capture process, step by step}
+
+\paragraph{(a) RTL counters for the head-to-head (\file{divergence\_*.json}).}
+\begin{enumerate}[leftmargin=1.5em,itemsep=2pt]
+  \item \file{tb/golden/run\_golden.py} builds the design with Verilator,
+        passing \file{-GMEMORY=\{0,1\}} (STAMP/PAGED) and
+        \file{-GNUM\_BANKS=\textit{n}} as parameter overrides.
+  \item \file{test\_scheme\_divergence.py} walks the layer's OS tile sequence.
+        For \textbf{STAMP} it tracks which DRAM words are already resident and
+        programs the metadata table with \op{load} ops for contiguous runs of
+        new words and \op{keep} ops for contiguous runs of reused words; the
+        hardware engine then executes them during the stamp phase, issuing real
+        AXI bursts. For \textbf{PAGED} it replays the tile footprint's DRAM
+        addresses through the translation hardware, so unmapped pages MISS and
+        mapped pages HIT, then maps the faulted pages with \file{pt\_write}.
+  \item After each tile, the tile footprint is replayed on all four external
+        \file{spad\_dbg\_*} read ports, so the banked arbitration sees real DNN
+        address patterns.
+  \item At the end, every counter is read out and written to
+        \file{results/golden\_check/raw/divergence\_\{layer\}\_\{scheme\}\_b\{n\}.json},
+        together with the full output tensor and a pass/fail verdict against
+        the TensorFlow reference.
+\end{enumerate}
+
+\paragraph{(b) Bank sweep (\file{bank\_sweep\_b*.json}).}
+\file{test\_bank\_sweep.py} never starts the DUT FSM --- it measures the memory
+side alone. It drives the four external read ports with a fixed address pattern
+for a 200-cycle window and reads the hardware counters before and after:
+\begin{center}\small
+\begin{tabular}{@{}ll@{}}
+\toprule
+\textbf{Pattern} & \textbf{Port $p$ reads address} \\
+\midrule
+\file{same\_addr}   & 0 (all ports) \\
+\file{consecutive}  & $p$ \\
+\file{stride4}      & $4p$ \\
+\file{stride8}      & $8p$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+Repeated for $B \in \{1,2,4,8,16\}$ (five separate builds).
+
+\paragraph{(c) Area and Fmax (\file{area\_results.csv}).}
+\file{synth/synth\_area.tcl} runs Vivado out-of-context synthesis on each module
+in isolation (no I/O buffer insertion, so the numbers are the logic's own cost),
+sweeping the stamp controller over \file{METADATA\_DEPTH} $\in$ \{256,512,1024\},
+the paged manager over \file{NUM\_PAGES} $\in$ \{128,256,512\} and the
+scratchpad over \file{NUM\_BANKS} $\in$ \{1,2,4,8,16\}. The utilisation and
+timing reports are parsed into one CSV row per configuration.
+
+\paragraph{(d) Compiler sweep (\file{sweep\_stamp.csv}).}
+\file{scripts/sweep\_memory\_schemes.py} instantiates \file{StampCompiler} at
+each grid point, calls \file{create\_conv\_phases} $\to$
+\file{allocate\_stamps} $\to$ \file{compute\_deltas}, then replays the emitted
+ops through \file{pysim.stamp\_ref.run\_stream}. If \file{allocate\_stamps}
+raises (the phase does not fit), the point is recorded in
+\file{capacity\_limits.csv} instead of being dropped.
+
+\paragraph{(e) Standalone compiler-to-RTL evidence.}
+\file{run\_vivado\_sim.sh} runs the compiler, runs the analyzer, then compiles
+and simulates \file{tb\_stamp\_based\_memory\_controller.sv} in xsim against the
+generated \file{delta\_ops.hex}, and copies the console log into
+\file{results/vivado/}.
+
+\subsection{Reproduction commands}
+
+\begin{center}
+\small
+\begin{tabular}{@{}p{5.3cm}p{10.2cm}@{}}
+\toprule
+\textbf{To regenerate} & \textbf{Command} \\
+\midrule
+Compiler artefacts + xsim log & \file{./static\_hash\_and\_tagless\_memory/run\_vivado\_sim.sh} \\
+Area / Fmax CSV & \file{vivado -mode batch -source synth/synth\_area.tcl} \\
+Compiler sweep CSVs & \file{PYTHONPATH=. python scripts/sweep\_memory\_schemes.py} \\
+RTL head-to-head + bank sweep & \file{PYTHONPATH=. python tb/golden/run\_golden.py --memory \{STAMP,PAGED\} --num-banks \textit{n} --layer \ldots} \\
+Software test suites & \file{PYTHONPATH=. python -m pytest tb/unit/test\_stamp\_controller.py tb/unit/test\_bank\_conflict.py -v} \\
+All figures & \file{PYTHONPATH=. python scripts/run\_full\_eval.py} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+% =====================================================================
+\section{Comparison results}
+
+\subsection{R1 --- STAMP vs PAGED, measured RTL counters}
+
+Whole layer, OS $8\times8$, CHANNEL\_MAJOR, 4 banks. Source:
+\file{results/exp4b\_stamp\_vs\_paged/stamp\_vs\_paged.csv}.
+
+\begin{center}
+\small
+\begin{tabular}{@{}lrrrr@{}}
+\toprule
+\textbf{Metric} & \textbf{tiny STAMP} & \textbf{tiny PAGED} &
+                  \textbf{mnist STAMP} & \textbf{mnist PAGED} \\
+\midrule
+Correctness (max rel.\ err)   & PASS 0.013\,\% & PASS 0.013\,\% & PASS 0.009\,\% & PASS 0.009\,\% \\
+Bank-conflict events          & \textbf{2}   & 84    & \textbf{101}  & 232 \\
+Stalled port-cycles           & \textbf{4}   & 240   & \textbf{202}  & 488 \\
+Backend off-chip bytes        & 1{,}640 (meas.) & 8{,}192 (derived) & 3{,}448 (meas.) & 8{,}192 (derived) \\
+AXI read requests             & 157  & \textbf{138}   & 945   & \textbf{832} \\
+AXI beats                     & 2{,}246 & \textbf{1{,}836} & 11{,}470 & \textbf{10{,}608} \\
+Compute cycles                & 6{,}316 & 5{,}802 & 38{,}440 & 36{,}608 \\
+Metadata / PT programming cyc & 41   & 2     & 527   & 2 \\
+Replay cycles                 & 456  & 456   & 2{,}912 & 2{,}912 \\
+\op{load} / \op{keep} ops     & 19 / 22 & --- & 113 / 414 & --- \\
+Page hits / misses            & ---  & 1{,}470 / 294 & --- & 10{,}506 / 102 \\
+New / reused word-touches     & 410 / 1{,}354 & 410 / 1{,}354 & 862 / 9{,}746 & 862 / 9{,}746 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{keybox}{Headline}
+\textbf{Bank conflicts: $42\times$ fewer} (2 vs 84) on tiny, $2.3\times$ fewer
+on mnist. \textbf{Stalled port-cycles: $60\times$ fewer} (4 vs 240) on tiny.
+\textbf{Off-chip volume: $5.0\times$ less} on tiny (1{,}640\,B vs 8{,}192\,B)
+and $2.4\times$ less on mnist (3{,}448\,B vs 8{,}192\,B). STAMP's delta
+mechanism captured \textbf{76.8\,\%} (tiny) and \textbf{91.9\,\%} (mnist) of
+word-touches as on-chip reuse. \textbf{But PAGED transfers fewer AXI beats on
+these layers} --- and I report that.
+\end{keybox}
+
+\subsection{R2 --- Off-chip traffic vs the always-load baseline}
+
+Standalone 128-phase layer, 16\,KB scratchpad. Source:
+\file{stamp\_analysis\_summary.txt}, \file{stamp\_delta\_accounting.csv}.
+
+\begin{center}
+\small
+\begin{tabular}{@{}lrr@{}}
+\toprule
+\textbf{Quantity} & \textbf{Bytes} & \textbf{Share} \\
+\midrule
+Always-load baseline (inputs + weights, every phase) & 589{,}824 & 100.0\,\% \\
+STAMP scheme, actual DRAM reads                      & 157{,}888 & 26.8\,\% \\
+\midrule
+Resolved on-chip by \op{move} & 184{,}320 & --- \\
+Resolved on-chip by \op{keep} & 165{,}888 & --- \\
+Zero-filled padding (never off-chip) & 77{,}120 & --- \\
+\midrule
+\textbf{Off-chip read traffic reduction} & \multicolumn{2}{r}{\textbf{73.2\,\%}} \\
+Bandwidth saving $\sigma = R/(L{+}R)$    & \multicolumn{2}{r}{68.9\,\%} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent Op mix: 134 \op{load}, 144 \op{move}, 72 \op{keep}, 127 \op{alloc},
+95 \op{zero} $=$ 572 operations over 127 phase transitions.
+
+\subsection{R3 --- The design-space sweep (34 real compiler runs)}
+
+Source: \file{results/exp4\_memory\_management/sweep\_stamp.csv}.
+
+\begin{center}
+\small
+\begin{tabular}{@{}lrrr@{}}
+\toprule
+\textbf{Layer shape} & \textbf{Min red.} & \textbf{Mean red.} & \textbf{Max red.} \\
+\midrule
+early-conv $3\times3$   & 64.2\,\% & 66.1\,\% & 67.5\,\% \\
+mid-conv $3\times3$     & 59.8\,\% & 67.6\,\% & 72.9\,\% \\
+late-conv $3\times3$    & 55.9\,\% & 62.8\,\% & 66.3\,\% \\
+pointwise $1\times1$    & 32.3\,\% & 36.0\,\% & 37.9\,\% \\
+wide-spatial            & 54.9\,\% & 61.1\,\% & 67.3\,\% \\
+large-kernel $5\times5$ & 73.0\,\% & 73.4\,\% & 73.6\,\% \\
+\midrule
+\textbf{All 34 points}  & \textbf{32.3\,\%} & \textbf{60.6\,\%} & \textbf{73.6\,\%} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent Controller-cycle saving against a 10-cycle/word DRAM baseline ranges
+88.0--95.6\,\% (mean 91.4\,\%). 14 of the 48 grid points do not fit and are
+recorded with the reason in \file{capacity\_limits.csv}.
+
+\subsection{R4 --- Bank-conflict sensitivity (cycle-exact)}
+
+Stalled port-cycles over a 200-cycle window, 4 read ports. Source:
+\file{bank\_conflict\_sweep.csv}.
+
+\begin{center}
+\small
+\begin{tabular}{@{}lrrrrr@{}}
+\toprule
+\textbf{Access pattern} & \textbf{1 bank} & \textbf{2} & \textbf{4} & \textbf{8} & \textbf{16} \\
+\midrule
+All ports $\to$ same address & 0 & 600 & 600 & 600 & 600 \\
+Stride 4                     & 0 & 600 & 600 & 400 & \textbf{0} \\
+Stride 8                     & 0 & 600 & 600 & 600 & 400 \\
+Consecutive                  & 0 & 400 & \textbf{0} & \textbf{0} & \textbf{0} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent Reads served in the same window: 796 when conflict-free, 199 when
+fully serialised --- a $4\times$ throughput swing driven purely by the address
+pattern. With \emph{real} traffic (tiny L0, STAMP, whole layer) the conflict /
+stall counts were 438/876 at $B{=}2$, 2/4 at $B{=}4$ and $B{=}8$, and 0/0 at
+$B{=}16$.
+
+\subsection{R5 --- Area and frequency (Vivado OOC, ZCU104)}
+
+Source: \file{static\_hash\_and\_tagless\_memory/synth/work/out/area\_results.csv}.
+
+\begin{center}
+\small
+\begin{tabular}{@{}llrrrr@{}}
+\toprule
+\textbf{Config} & \textbf{Scheme} & \textbf{LUTs} & \textbf{FFs} & \textbf{WNS (ns)} & \textbf{Fmax (MHz)} \\
+\midrule
+\file{stamp\_ctrl\_m256}  & STAMP (static)  & 6{,}434  & 22{,}198 & 7.533 & 405.4 \\
+\file{stamp\_ctrl\_m512}  & STAMP (static)  & 12{,}574 & 43{,}938 & 7.237 & 361.9 \\
+\file{stamp\_ctrl\_m1024} & STAMP (static)  & 24{,}680 & 87{,}468 & 7.512 & 401.9 \\
+\file{paged\_mgmt\_p128}  & PAGED (dynamic) & 3{,}074  & 2{,}752  & 8.361 & 610.1 \\
+\file{paged\_mgmt\_p256}  & PAGED (dynamic) & 6{,}110  & 5{,}440  & 8.317 & 594.2 \\
+\file{paged\_mgmt\_p512}  & PAGED (dynamic) & 12{,}106 & 10{,}816 & 8.121 & 532.2 \\
+\midrule
+\file{scratchpad\_b1}     & Scratchpad      & 71{,}388 & 8{,}357 & 6.341 & 273.3 \\
+\file{scratchpad\_b2}     & Scratchpad      & 38{,}186 & 8{,}421 & 8.834 & 857.6 \\
+\file{scratchpad\_b4}     & Scratchpad      & 44{,}880 & 8{,}421 & 8.604 & 716.3 \\
+\file{scratchpad\_b8}     & Scratchpad      & 35{,}356 & 8{,}421 & 8.875 & 888.9 \\
+\file{scratchpad\_b16}    & Scratchpad      & 37{,}713 & 8{,}421 & 9.001 & 1001.0 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent At equal capacity (256 entries) STAMP uses $\approx$1.05$\times$ the
+LUTs but $4.1\times$ the registers of PAGED, and clocks 32\,\% slower
+(405 vs 594\,MHz). Both scale close to linearly with their capacity knob:
+STAMP 28.6\,k $\to$ 56.5\,k $\to$ 112.1\,k LUT+FF over $256\to512\to1024$;
+PAGED 5.8\,k $\to$ 11.6\,k $\to$ 22.9\,k over $128\to256\to512$.
+
+% =====================================================================
+\section{Why the results came out that way}
+
+\subsection{Why STAMP has $42\times$ fewer bank conflicts}
+
+The stamp compiler bump-allocates scratchpad slots, so a tile's words land in a
+\emph{dense, contiguous} region. When four ports replay that footprint they read
+stride-1 addresses, which under low-order interleaving map to four
+\emph{different} banks --- almost conflict-free at $B{=}4$. The page table
+preserves page-relative offsets, so a translated \file{paddr} keeps the original
+tensor's row stride; four ports reading four rows of a feature map hit
+$a$, $a{+}W$, $a{+}2W$, $a{+}3W$, and whenever $W \bmod B = 0$ all four land in
+the same bank. That is a genuine consequence of each scheme's placement policy,
+not an artefact. The bank sweep (R4) is the controlled proof: the same hardware
+gives 0 stalls for consecutive and 600 for stride-4 at $B{=}4$.
+
+\subsection{Why PAGED transfers fewer AXI beats (the result against me)}
+
+A page fault pulls a whole 4\,KB page. For these small test layers the working
+set is small enough that a handful of coarse page fetches happens to cover it
+efficiently, while STAMP issues many small delta bursts and pays more AXI
+request overhead (157 vs 138 AR handshakes). \textbf{My claim is not ``fewer
+bytes always''} --- it is fewer conflicts, no translation hardware, and
+deterministic placement. As layers grow, a page fault pulls far more data than
+the corresponding delta and the byte comparison inverts; the 73.2\,\% reduction
+against always-load in R2 is the regime-independent statement.
+
+\subsection{Why STAMP burns more compute cycles (6{,}316 vs 5{,}802)}
+
+Two reasons, and only one is real. (i) STAMP's real delta-load AXI time is
+\emph{inside} its compute cycle count ($+514$ cycles on tiny), whereas the paged
+backend has no DRAM path in RTL, so its implied page-fetch time is not charged
+anywhere. (ii) STAMP genuinely pays a metadata-programming cost (41 vs 2 cycles
+on tiny; 527 vs 2 on mnist). \textbf{The cycle comparison is asymmetric in
+PAGED's favour and I state so.}
+
+\subsection{Why pointwise $1\times1$ shows the least reduction (32--38\,\%)}
+
+Reuse in this scheme comes from receptive-field overlap between consecutive
+phases. A $1\times1$ kernel has no overlap --- the receptive field is a single
+pixel, so sliding the window produces an entirely new footprint. Only weight
+reuse remains. The scheme's benefit is therefore proportional to kernel extent,
+which is exactly why large-kernel $5\times5$ shows the most (73.0--73.6\,\%).
+This is a property of the workload, not a weakness of the implementation.
+
+\subsection{Why the flat scratchpad ($B{=}1$) costs the most LUTs and the worst Fmax}
+
+Counter-intuitive but correct: a flat array serving 4 concurrent read ports must
+be implemented as replicated/multiplexed distributed RAM, so it burns 71\,k LUTs
+and closes at only 273\,MHz. Splitting it into banks lets each bank serve one
+port through a narrow crossbar --- 35--45\,k LUTs and 716--1001\,MHz.
+\textbf{Banking is not purely a cost paid for parallelism; on this device it is
+also cheaper and faster.} The cost of banking is conflicts, not area.
+
+\subsection{Why measured conflict counts are far below the birthday bound}
+
+For $P{=}4$, $B{=}4$ the analytical bound predicts $P_{\text{conflict}} =
+90.6\,\%$ of cycles. The measured STAMP run shows 2 conflict events across the
+whole layer. The bound assumes uniformly random addresses; real footprints are
+consecutive, and consecutive addresses map to distinct banks \emph{by
+construction}. The gap between 90.6\,\% and $\approx$0 is precisely the value of
+compile-time placement --- and it is why Experiment 3's analytical numbers must
+be labelled as an estimate and Experiment 4b's as the authority.
+
+% =====================================================================
+\section{Limitations}
+
+\begin{enumerate}[leftmargin=1.6em,itemsep=5pt]
+  \item \textbf{Metadata RAM is the scaling limit.} Removing the tag array does
+        not make bookkeeping free --- it relocates it to a compile-time
+        instruction stream, $\text{bits} = 128 \times \sum_\phi
+        |\Delta_{\phi-1\to\phi}|$. For the measured 128-phase layer, 572 ops
+        $\times$ 16\,B $=$ 9{,}152\,B for a 16\,KB scratchpad --- about
+        \textbf{56\,\% of the scratchpad size}. Across the sweep grid it ranges
+        0.7\,KB to 51\,KB. The default \file{METADATA\_DEPTH} of 256 entries
+        holds only $\approx$45\,\% of that layer's stream, so verification uses
+        1024. \textbf{This is the honest headline trade-off.}
+  \item \textbf{Asymmetric off-chip metric.} STAMP's bytes are measured on the
+        real AXI port; PAGED's 8{,}192\,B is \emph{derived} (2 measured page
+        faults $\times$ 4\,KB) because the paged backend has no DRAM path in
+        RTL. The volume comparison is real; the cycle comparison favours PAGED.
+  \item \textbf{v1 wiring limit --- conflicts do not yet back-pressure compute.}
+        All conflicts, stalls, hits and misses are memory-side events. The array
+        currently reads via the \file{ext\_*} ports rather than through the
+        scratchpad, so a stall is counted but does not throttle the pipeline.
+        Full compute-coupling is future work.
+  \item \textbf{Replay stands in for the array's reads.} The 4-port replays use
+        real tile-footprint addresses and real RTL arbitration, but they model
+        the consumers rather than being them (consequence of item 3).
+  \item \textbf{Delta model handles only pure row or pure column shifts.} A
+        simultaneous row-and-column shift falls back to a full reload, so
+        reported reuse is a \textbf{lower bound}.
+  \item \textbf{No eviction or replacement policy in PAGED (v1).} Pages map once
+        and stay. Fine at these footprints ($\ll$ scratchpad); it matters for
+        larger networks and slightly flatters PAGED's miss count.
+  \item \textbf{Address-unit inconsistency (documented, open).} The stamp
+        datapath is byte-addressed (dst \verb|>>2| before the scratchpad); the
+        paged datapath passes \file{paddr} low bits to the word-addressed
+        scratchpad with no shift. The divergence experiment therefore runs PAGED
+        word-addressed with \file{PAGE\_SIZE\_BITS=10} for self-consistency.
+  \item \textbf{Two op-stream generators still exist.} The standalone
+        compiler$\to$RTL path is fully closed (\file{delta\_ops.hex} read by
+        \file{\$readmemh}), but the integrated cocotb test builds its own
+        load/keep stream rather than consuming that hex. Unifying them is the
+        next step.
+  \item \textbf{Scale of the head-to-head.} Two small layers (tiny\_cnn,
+        mnist\_cnn). They were sufficient to demonstrate divergence but are not
+        a full-network evaluation.
+  \item \textbf{Energy is derived}, from a per-byte DRAM constant, not from
+        switching-activity analysis.
+  \item \textbf{FPGA-relative area.} LUT/FF counts are ZCU104 out-of-context
+        synthesis, not ASIC $\mu m^2$; they are valid for relative comparison
+        between the two schemes, not as absolute silicon area.
+\end{enumerate}
+
+% =====================================================================
+\section{Future work}
+
+\begin{enumerate}[leftmargin=1.6em,itemsep=4pt]
+  \item \textbf{Compress the metadata stream.} The op mix is highly regular, so
+        run-length encoding of repeated delta patterns should cut the 128-bit
+        per-op cost substantially. Alternatives: stream the metadata in batches
+        from DRAM, or use a coarser phase granularity.
+  \item \textbf{Close the compute-coupling loop} so a bank-conflict stall
+        actually back-pressures the systolic array, making the conflict count a
+        \emph{performance} number rather than a memory-side event count.
+  \item \textbf{Unify the two op-stream generators} --- have the integrated
+        cocotb test consume \file{delta\_ops.hex} directly, closing the last gap
+        between the standalone and integrated paths.
+  \item \textbf{Conflict-aware allocation.} The bank sweep proves conflicts are
+        a deterministic function of the address pattern, so the allocator can be
+        extended to choose base addresses that guarantee concurrently-read
+        operands land in different banks --- turning $\approx$0 conflicts from
+        a happy consequence into a guarantee.
+  \item \textbf{Extend the delta model} to simultaneous row-and-column shifts,
+        which would raise reported reuse above the current lower bound.
+  \item \textbf{Add eviction/replacement to PAGED} so the dynamic baseline is
+        realistic at network scale.
+  \item \textbf{Full-network evaluation} (ResNet-50, MobileNet) instead of two
+        small layers, and larger layers where the STAMP-vs-PAGED byte comparison
+        is predicted to invert --- a directly falsifiable prediction.
+  \item \textbf{Multi-DNN scratchpad partitioning.} Because placement is static,
+        partitioning between concurrent DNNs is a compile-time decision with no
+        inter-DNN interference in a translation structure --- a structural
+        advantage over a shared page table, worth demonstrating.
+  \item \textbf{ASIC synthesis} for absolute area/energy, replacing the derived
+        per-byte DRAM energy constant with switching-activity analysis.
+\end{enumerate}
+
+% =====================================================================
+\section{How to evaluate the results, and why they are correct}
+
+\subsection{The correctness argument in one line}
+
+\begin{keybox}{Three-way independent agreement}
+The scheme is implemented \textbf{three times, independently} --- the Python
+compiler's own bookkeeping, a separately written cycle-accurate FSM model, and
+the SystemVerilog hardware --- and all three produce \textbf{identical} values
+for every tracked quantity across 572 operations. A disagreement in any cell
+would mean the compiler is describing hardware that does not exist.
+\end{keybox}
+
+\begin{center}
+\small
+\begin{tabular}{@{}lrrrl@{}}
+\toprule
+\textbf{Quantity} & \textbf{Compiler} & \textbf{FSM model} & \textbf{RTL (xsim)} & \\
+\midrule
+\op{load} operations   & 134 & 134 & 134 & identical \\
+\op{move} operations   & 144 & 144 & 144 & identical \\
+\op{keep} operations   & 72  & 72  & 72  & identical \\
+\op{alloc} operations  & 127 & 127 & 127 & identical \\
+\op{zero} operations   & 95  & 95  & 95  & identical \\
+Bytes from DRAM        & 157{,}888 & 157{,}888 & 157{,}888 & identical \\
+Bytes moved on-chip    & 184{,}320 & 184{,}320 & 184{,}320 & identical \\
+Bytes zero-filled      & 77{,}120  & 77{,}120  & 77{,}120  & identical \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent The three implementations are \file{stamp\_compiler.py},
+\file{pysim/stamp\_ref.py} and \file{stamp\_based\_memory\_controller.sv}. The
+RTL reads the compiler's \file{delta\_ops.hex} directly, replays all 127 phase
+transitions and 572 operations, and reports \file{stats\_bad\_ops = 0} ---
+proving every emitted opcode is one the hardware implements.
+
+\subsection{The seven independent validity checks}
+
+\begin{enumerate}[leftmargin=1.6em,itemsep=4pt]
+  \item \textbf{Functional correctness against TensorFlow.} Every STAMP and
+        PAGED run is checked against a TF 2.21 golden reference with a 5\,\%
+        of full-scale tolerance. Achieved: \textbf{0.013\,\%} (tiny) and
+        \textbf{0.009\,\%} (mnist) --- roughly $400\times$ inside tolerance. A
+        memory scheme that delivered wrong data would fail here first.
+  \item \textbf{Hardware counter vs host bookkeeping.}
+        \file{stats\_bytes\_loaded} equals \emph{exactly} $4 \times$ the
+        host-computed new-word count (410 words $\to$ 1{,}640\,B;
+        862 $\to$ 3{,}448\,B) on both layers. Two independent accountings of
+        the same quantity agree to the byte.
+  \item \textbf{AXI beat conservation.} Total AXI beats $=$ the layout
+        prefetcher's background traffic (identical in both schemes: 1{,}836 /
+        10{,}608) \textbf{plus exactly} the delta-load beats (410 / 862) in the
+        STAMP runs. The paged backend issues zero AXI by design. Nothing is
+        unaccounted for.
+  \item \textbf{Page-table conservation.} PAGED hits $+$ misses $=$ exactly the
+        replayed footprint touches (1{,}764 / 10{,}608).
+  \item \textbf{Bank sweep matches interleaving theory cell by cell.} Every one
+        of the 20 measured cells matches what $\text{bank}(a) = a \bmod B$ with
+        lowest-port-wins predicts. E.g.\ stride-4 at $B{=}4$: all four ports map
+        to bank 0, so 3 of 4 stall every cycle $\to$ $3 \times 200 = 600$
+        stalled port-cycles. Measured: 600. $B{=}1$ is 0 by construction and
+        measures 0.
+  \item \textbf{Directed and software test coverage.} 13 directed RTL tests
+        (reset, each opcode in isolation, mixed phases, back-to-back phases,
+        reset mid-operation, zero-op phases, busy handshaking, unknown-opcode
+        detection, phase base addressing, full stream replay) with 48 passing
+        assertions and zero failures; plus 27 software tests for the controller
+        and 17 for banking.
+  \item \textbf{Regression safety.} The full 19/19 golden regression was re-run
+        after \emph{each} change (plumbing, testbench work, PT-write fix): all
+        PASS every time, with the other members' results byte-identical (tiny OS
+        5{,}808 cycles / 0.013\,\%; WS $8\times8$ 153{,}738; mnist OS 36{,}712 /
+        0.009\,\%; all five schedulers \file{all\_pass}). The PT-write broadcast
+        cannot affect legacy runs because \file{pt\_write\_en} is never asserted
+        there --- confirmed by measurement, not just argument.
+\end{enumerate}
+
+\subsection{Internal consistency of the sweep}
+
+$6 \text{ layers} \times 4 \text{ capacities} \times 2 \text{ arrays} = 48$
+grid points; \file{sweep\_stamp.csv} holds 34 rows and
+\file{capacity\_limits.csv} holds 14 --- they sum exactly to 48, so no point was
+silently dropped. Each failure records \emph{why} (``Phase 0 doesn't fit in
+on-chip memory'').
+
+\subsection{What would falsify the claims}
+
+\begin{itemize}[leftmargin=1.5em,itemsep=3pt]
+  \item If the RTL counters diverged from the compiler's, the scheme would not
+        be implementable as described.
+  \item If the bank sweep showed conflicts \emph{independent} of the address
+        pattern, static placement could not help and the central argument
+        collapses.
+  \item If the off-chip traffic reduction vanished at larger tile sizes, the
+        reuse model would be wrong.
+\end{itemize}
+All three are directly testable with the harness as built --- which is itself
+part of the evidence.
+
+\subsection{Credibility markers to point at}
+
+\begin{itemize}[leftmargin=1.5em,itemsep=3pt]
+  \item \textbf{I report the results that go against me} --- PAGED's lower AXI
+        beat count, STAMP's higher cycle count, STAMP's $4\times$ register cost
+        and 32\,\% lower Fmax.
+  \item \textbf{I fixed the competitor's bug before comparing.} The paged
+        page-table write gate made ports 1--3 permanently miss; I found it,
+        fixed it, and re-ran the entire comparison against the corrected, i.e.\
+        stronger, baseline.
+  \item \textbf{I removed my own hardcoded numbers.} The previous four-scheme
+        comparison was deleted, not defended, and the superseded outputs are
+        kept clearly labelled so the change is auditable.
+  \item \textbf{Every figure is traceable} to a JSON, CSV or synthesis report
+        produced by a tool run, and \file{run\_full\_eval.py} contains no
+        performance constants at all.
+  \item \textbf{Conservative by construction} --- the delta model under-claims
+        reuse on diagonal shifts, and \op{zero} was added specifically to stop
+        padding inflating the reported saving.
+\end{itemize}
+
+% =====================================================================
+\section{Rapid-fire answers to likely examiner questions}
+
+\newcommand{\qa}[2]{\vspace{5pt}\noindent\textbf{\textcolor{stampblue}{Q.}
+  #1}\\[2pt]\textbf{A.} #2\vspace{2pt}}
+
+\qa{What exactly is novel? Delta compression is not new.}{
+Correct. The novelty is threefold: applying the delta to \emph{scratchpad
+layout} in a systolic-array accelerator rather than to data values; eliminating
+the runtime tag/translation structure entirely by exploiting a statically known
+DNN schedule; and --- what no prior simulator has --- measuring the result
+cycle-accurately in RTL against a page-table scheme on identical hardware.}
+
+\qa{Why not just use a bigger scratchpad?}{
+Orthogonal and cheaper. A larger scratchpad costs area and leakage; delta
+fetching costs a compile-time-sized metadata RAM. And no scratchpad is large
+enough for real layers --- the reuse problem persists at every size. The scheme
+raises the effective bandwidth of whatever scratchpad you have.}
+
+\qa{Your paged scheme moves fewer AXI beats. Doesn't that defeat your claim?}{
+On these layers, yes, and I report it. Page faulting pulls whole 4\,KB pages,
+which for a small working set is coarse but efficient. My claim is fewer bank
+conflicts ($42\times$), no translation hardware, and deterministic placement.
+For larger layers where a fault pulls far more than the delta, the byte
+comparison inverts --- a falsifiable prediction.}
+
+\qa{How do you know the compiler and the hardware agree?}{
+Three independent implementations produce identical values for all eight tracked
+quantities across 572 operations, and the RTL reads the compiler's hex file
+directly with \file{stats\_bad\_ops = 0}.}
+
+\qa{What does \op{zero} do and why does it exist?}{
+Padded convolutions have receptive fields extending past the tensor border.
+Those bytes are implicit zeros: present on-chip, never fetched. Before the
+opcode existed the compiler charged them as DRAM loads, overstating traffic by
+77{,}120\,B. Adding it reduced the reported load volume from 235{,}008 to
+157{,}888\,B --- it made the number \emph{worse for the story and truer}.}
+
+\qa{What is the hardware cost of your scheme?}{
+A nine-state FSM plus the metadata RAM. The tag array, comparators and
+replacement logic disappear. Measured at 256 entries: 6{,}434 LUTs / 22{,}198
+FFs at 405\,MHz, versus 6{,}110 / 5{,}440 at 594\,MHz for the paged manager ---
+so similar LUTs, $4\times$ the registers, 32\,\% lower Fmax. The metadata RAM
+(9{,}152\,B for the 128-phase layer) is the real cost and the main scaling limit.}
+
+\qa{Why do the two schemes differ so much in bank conflicts?}{
+The stamp compiler picks physical addresses at compile time and bump-allocates
+densely, so concurrent reads are stride-1 and land in different banks. The page
+table assigns physical pages at runtime and preserves page-relative offsets, so
+row-strided reads collide. The bank sweep proves conflicts are a deterministic
+function of the address pattern --- exactly what static placement controls.}
+
+\qa{Isn't your bank-conflict estimate in Experiment 3 just a formula?}{
+Yes, and it is labelled as such. It is a birthday-problem bound used to cover 14
+workloads where full RTL simulation is impractical. Experiment 4b is the
+authority --- cycle-exact counters. The measured values sit far below the bound
+because real access patterns are consecutive, not random, and that gap is itself
+a finding.}
+
+\qa{How would this behave on a multi-DNN workload?}{
+Each DNN gets its own stamp schedule and the scratchpad is partitioned at
+compile time. Because placement is static there is no inter-DNN interference in
+a translation structure --- an advantage over a shared page table needing
+multiple coexisting address spaces. Demonstrating it is future work.}
+
+\end{document}
