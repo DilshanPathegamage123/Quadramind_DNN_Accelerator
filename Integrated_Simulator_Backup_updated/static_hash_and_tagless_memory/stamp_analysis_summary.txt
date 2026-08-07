@@ -1,0 +1,19 @@
+STAMP-BASED MEMORY MANAGEMENT SUMMARY
+================================================================================
+
+Configuration:
+  On-chip memory: 16,384 bytes
+  Data width: 4 bytes
+  Number of phases: 128
+
+Key Metrics:
+  Operations: 134 loads, 144 moves, 72 keeps, 127 allocs (outputs), 95 zeros (padding)
+  Bytes loaded (from DRAM):      157,888
+  Bytes moved (on-chip reuse):   184,320
+  Bytes kept (same addr):        165,888
+  Bandwidth savings: 68.9%
+
+Summary: The stamp-based approach achieves significant bandwidth
+savings by reusing data through on-chip moves instead of always
+loading from off-chip DRAM. This reduces memory controller pressure
+and improves overall system performance.

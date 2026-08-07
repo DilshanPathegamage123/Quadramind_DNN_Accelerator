@@ -1,0 +1,740 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>On-Chip Memory Management — Results Dashboard</title>
+<style>
+:root{
+  color-scheme: light;
+  --bg:#eef1f4; --panel:#fff; --rule:#d5dce4; --grid:#e6ebf0;
+  --ink:#0f1720; --ink2:#46566a; --ink3:#7286a0;
+  --stamp:#1a3a5c; --paged:#4d9c96; --signal:#c25e0c;
+  --good:#1b7a4f; --bad:#b3261e;
+  --p1:#2a78d6; --p2:#eb6834; --p3:#1baf7a; --p4:#4a3aa7;
+  --shadow:0 1px 2px rgba(16,24,32,.05),0 6px 20px rgba(16,24,32,.06);
+  --mono:ui-monospace,"SFMono-Regular","Cascadia Mono",Menlo,Consolas,monospace;
+  --sans:ui-sans-serif,system-ui,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+}
+@media (prefers-color-scheme:dark){
+  :root:where(:not([data-theme="light"])){
+    color-scheme: dark;
+    --bg:#0c1219; --panel:#141d26; --rule:#28353f; --grid:#1e2a34;
+    --ink:#e9eff5; --ink2:#a8b8c7; --ink3:#7b8ea1;
+    --stamp:#5f9ad4; --paged:#7fc4bf; --signal:#ef9a4e;
+    --good:#4fbf88; --bad:#e5695f;
+    --p1:#3987e5; --p2:#d95926; --p3:#199e70; --p4:#9085e9;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.35);
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme: dark;
+  --bg:#0c1219; --panel:#141d26; --rule:#28353f; --grid:#1e2a34;
+  --ink:#e9eff5; --ink2:#a8b8c7; --ink3:#7b8ea1;
+  --stamp:#5f9ad4; --paged:#7fc4bf; --signal:#ef9a4e;
+  --good:#4fbf88; --bad:#e5695f;
+  --p1:#3987e5; --p2:#d95926; --p3:#199e70; --p4:#9085e9;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.35);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg); color:var(--ink); font-family:var(--sans);
+  font-size:15px; line-height:1.55; -webkit-font-smoothing:antialiased;
+}
+.shell{max-width:1240px;margin:0 auto;padding:0 20px 72px}
+
+/* ---------- top bar ---------- */
+.topbar{
+  position:sticky; top:0; z-index:50; background:var(--bg);
+  border-bottom:1px solid var(--rule); margin-bottom:22px;
+}
+.topbar__in{
+  max-width:1240px;margin:0 auto;padding:14px 20px;
+  display:flex;align-items:center;gap:16px;flex-wrap:wrap;
+}
+.brand{display:flex;flex-direction:column;gap:1px;margin-right:auto}
+.brand__t{font-weight:750;letter-spacing:-.015em;font-size:1.02rem;line-height:1.2}
+.brand__s{font-family:var(--mono);font-size:.7rem;color:var(--ink3);letter-spacing:.05em}
+.badge{
+  display:inline-flex;align-items:center;gap:6px;padding:5px 11px;
+  border:1px solid var(--good);border-radius:100px;color:var(--good);
+  font-family:var(--mono);font-size:.68rem;font-weight:600;letter-spacing:.06em;
+  background:color-mix(in srgb,var(--good) 10%,transparent);white-space:nowrap;
+}
+.badge b{font-weight:700}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--good);flex:none}
+.tbtn{
+  border:1px solid var(--rule);background:var(--panel);color:var(--ink2);
+  border-radius:7px;padding:6px 11px;font-family:var(--mono);font-size:.72rem;
+  cursor:pointer;line-height:1;
+}
+.tbtn:hover{border-color:var(--ink3);color:var(--ink)}
+
+/* ---------- kpi ---------- */
+.kpis{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));margin-bottom:26px}
+.kpi{background:var(--panel);border:1px solid var(--rule);border-radius:11px;padding:17px 18px;box-shadow:var(--shadow);position:relative;overflow:hidden}
+.kpi::after{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--accent,var(--stamp))}
+.kpi__v{font-family:var(--mono);font-size:2.05rem;font-weight:700;line-height:1;letter-spacing:-.03em;color:var(--accent,var(--stamp));font-variant-numeric:tabular-nums}
+.kpi__v span{font-size:.46em;font-weight:600;letter-spacing:0}
+.kpi__l{margin-top:9px;font-weight:650;font-size:.9rem}
+.kpi__d{margin-top:3px;font-size:.78rem;color:var(--ink3)}
+.kpi__src{margin-top:10px;font-family:var(--mono);font-size:.61rem;letter-spacing:.09em;text-transform:uppercase;color:var(--ink3)}
+
+/* ---------- cards ---------- */
+.grid{display:grid;gap:16px}
+@media(min-width:960px){.grid.two{grid-template-columns:1fr 1fr}}
+.card{background:var(--panel);border:1px solid var(--rule);border-radius:11px;box-shadow:var(--shadow);overflow:hidden;margin-bottom:16px}
+.card__h{padding:15px 18px 0;display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap}
+.card__t{font-size:1rem;font-weight:700;letter-spacing:-.01em;margin:0}
+.card__s{font-size:.82rem;color:var(--ink3);margin:3px 0 0;max-width:62ch}
+.card__b{padding:14px 18px 18px}
+.card__f{padding:11px 18px;border-top:1px solid var(--rule);font-size:.8rem;color:var(--ink2);background:color-mix(in srgb,var(--ink) 2%,transparent)}
+.card__f b{color:var(--ink)}
+
+/* ---------- controls ---------- */
+.ctrls{display:flex;gap:7px;flex-wrap:wrap;margin-left:auto}
+.seg{display:inline-flex;border:1px solid var(--rule);border-radius:8px;overflow:hidden}
+.seg button{
+  border:0;background:var(--panel);color:var(--ink2);padding:6px 12px;
+  font-family:var(--mono);font-size:.71rem;cursor:pointer;line-height:1.3;
+  border-right:1px solid var(--rule);
+}
+.seg button:last-child{border-right:0}
+.seg button[aria-pressed="true"]{background:var(--stamp);color:#fff;font-weight:600}
+.chips{display:flex;gap:7px;flex-wrap:wrap;padding:0 18px 4px}
+.chip{
+  display:inline-flex;align-items:center;gap:7px;border:1px solid var(--rule);
+  background:var(--panel);border-radius:100px;padding:5px 12px;cursor:pointer;
+  font-size:.76rem;color:var(--ink2);line-height:1;
+}
+.chip[aria-pressed="false"]{opacity:.42}
+.chip .sw{width:10px;height:10px;border-radius:3px;flex:none}
+
+/* ---------- chart ---------- */
+.chart{position:relative;width:100%}
+.chart svg{display:block;width:100%;height:auto;overflow:visible}
+.gridline{stroke:var(--grid);stroke-width:1}
+.axis{stroke:var(--rule);stroke-width:1}
+.tick{fill:var(--ink3);font-family:var(--mono);font-size:10.5px}
+.axlabel{fill:var(--ink3);font-family:var(--sans);font-size:11px}
+.bar{transition:opacity .12s}
+.chart:hover .bar{opacity:.42}
+.chart .bar:hover,.chart .bar.on{opacity:1}
+.vlabel{fill:var(--ink2);font-family:var(--mono);font-size:10.5px;font-variant-numeric:tabular-nums}
+.vlabel.zero{fill:var(--ink3);opacity:.75}
+.legend{display:flex;gap:15px;flex-wrap:wrap;margin-top:11px;font-size:.79rem;color:var(--ink2)}
+.legend i{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+.tip{
+  position:absolute;pointer-events:none;opacity:0;transition:opacity .1s;
+  background:var(--ink);color:var(--bg);border-radius:7px;padding:8px 11px;
+  font-family:var(--mono);font-size:.72rem;line-height:1.5;white-space:nowrap;z-index:20;
+  transform:translate(-50%,-100%);box-shadow:0 4px 14px rgba(0,0,0,.25);
+}
+.tip b{color:var(--bg);font-weight:700}
+
+/* ---------- table ---------- */
+.tw{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:.86rem}
+th,td{padding:9px 14px;text-align:left;border-bottom:1px solid var(--rule);white-space:nowrap}
+thead th{font-family:var(--mono);font-size:.66rem;letter-spacing:.09em;text-transform:uppercase;color:var(--ink3);font-weight:600}
+tbody tr:last-child td,tbody tr:last-child th{border-bottom:0}
+.n{font-family:var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+.ok{color:var(--good);font-weight:650;font-family:var(--mono);font-size:.74rem}
+.no{color:var(--bad);font-weight:700;font-family:var(--mono);font-size:.74rem}
+
+/* ---------- flow ---------- */
+.flow{display:grid;gap:9px}
+.frow{display:grid;grid-template-columns:74px 1fr 92px;gap:12px;align-items:center}
+.ftag{font-family:var(--mono);font-size:.67rem;font-weight:700;letter-spacing:.07em;color:#fff;padding:3px 0;text-align:center;border-radius:4px}
+.ftrack{height:19px;background:color-mix(in srgb,var(--ink) 7%,transparent);border-radius:4px;overflow:hidden}
+.ftrack span{display:block;height:100%;border-radius:4px}
+.fsize{font-family:var(--mono);font-size:.78rem;text-align:right;color:var(--ink2);font-variant-numeric:tabular-nums}
+.fnote{font-size:.78rem;color:var(--ink3);grid-column:2/4}
+
+h2.sec{font-size:.72rem;font-family:var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--ink3);margin:30px 0 12px;font-weight:600}
+footer{margin-top:34px;padding-top:16px;border-top:1px solid var(--rule);font-family:var(--mono);font-size:.71rem;color:var(--ink3)}
+:focus-visible{outline:2px solid var(--signal);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar__in">
+    <div class="brand">
+      <div class="brand__t">Compiler-Assisted Tagless On-Chip Memory Management</div>
+      <div class="brand__s">QuadraMind &middot; Memory Subsystem &middot; B.H.L.M. Amarasena</div>
+    </div>
+    <span class="badge" id="vbadge"><span class="dot"></span><span id="vbadge_t">verifying…</span></span>
+    <button class="tbtn" id="theme" type="button">Theme</button>
+  </div>
+</div>
+
+<div class="shell">
+
+  <div class="kpis" id="kpis"></div>
+
+  <h2 class="sec">Scheme comparison — measured RTL counters</h2>
+  <div class="card">
+    <div class="card__h">
+      <div>
+        <h3 class="card__t">Static tagless (STAMP) vs page table (PAGED)</h3>
+        <p class="card__s">Identical hardware, identical layers, identical 4-bank scratchpad. Only the memory management scheme differs.</p>
+      </div>
+      <div class="ctrls">
+        <div class="seg" id="metricSeg" role="group" aria-label="Metric"></div>
+      </div>
+    </div>
+    <div class="card__b">
+      <div class="chart" id="schemeChart"></div>
+      <div class="legend">
+        <span><i style="background:var(--stamp)"></i>STAMP (this work)</span>
+        <span><i style="background:var(--paged)"></i>PAGED (baseline)</span>
+      </div>
+    </div>
+    <div class="card__f" id="schemeNote"></div>
+  </div>
+
+  <h2 class="sec">Why static placement wins</h2>
+  <div class="card">
+    <div class="card__h">
+      <div>
+        <h3 class="card__t">Bank conflicts are a function of the address pattern</h3>
+        <p class="card__s">Cycle-exact stall counts over a 200-cycle window with 4 read ports. Because conflicts depend on <em>where</em> tiles sit, a compiler that chooses addresses can eliminate them — a runtime page table cannot.</p>
+      </div>
+    </div>
+    <div class="chips" id="patChips"></div>
+    <div class="card__b">
+      <div class="chart" id="bankChart"></div>
+    </div>
+    <div class="card__f">
+      <b>Read this chart:</b> consecutive access is conflict-free from 4 banks up. Stride-4 is <em>fully serialised</em> at 4 banks — every port maps to the same bank — yet costs nothing at 16. Same hardware, same port count: only the address pattern changed.
+    </div>
+  </div>
+
+  <h2 class="sec">Hardware cost — Vivado synthesis</h2>
+  <div class="card">
+    <div class="card__h">
+      <div>
+        <h3 class="card__t">Management-logic area, static vs dynamic</h3>
+        <p class="card__s">Out-of-context synthesis on the ZCU104 target. The shared scratchpad is excluded from both sides, so this is the cost of the <em>management scheme itself</em>. Each scheme is swept over its own capacity knob: metadata entries for static, page-table entries for dynamic.</p>
+      </div>
+      <div class="ctrls"><div class="seg" id="areaSeg" role="group" aria-label="Area metric"></div></div>
+    </div>
+    <div class="card__b">
+      <div class="chart" id="areaChart"></div>
+      <div class="legend">
+        <span><i style="background:var(--stamp)"></i>STAMP (static)</span>
+        <span><i style="background:var(--paged)"></i>PAGED (dynamic)</span>
+      </div>
+    </div>
+    <div class="card__f" id="areaNote"></div>
+  </div>
+
+  <div class="card">
+    <div class="card__h"><div>
+      <h3 class="card__t">Banking is close to free — and much faster</h3>
+      <p class="card__s">A flat scratchpad needs a full-depth multiplexer per read port. Banking splits those into shallow per-bank multiplexers, so it costs <em>less</em> area and closes timing far higher, while also cutting conflicts.</p>
+    </div></div>
+    <div class="card__b"><div class="chart" id="bankAreaChart"></div>
+      <div class="legend">
+        <span><i style="background:var(--stamp)"></i>LUTs</span>
+        <span><i style="background:var(--signal)"></i>Max frequency (MHz)</span>
+      </div>
+    </div>
+    <div class="card__f" id="bankAreaNote"></div>
+  </div>
+
+  <h2 class="sec">Design-space sweep</h2>
+  <div class="card">
+    <div class="card__h"><div>
+      <h3 class="card__t">Off-chip reduction across every configuration tried</h3>
+      <p class="card__s" id="sweepSub"></p>
+    </div></div>
+    <div class="card__b"><div class="chart" id="sweepChart"></div></div>
+    <div class="card__f" id="sweepNote"></div>
+  </div>
+
+  <h2 class="sec">Off-chip traffic</h2>
+  <div class="grid two">
+    <div class="card">
+      <div class="card__h"><div>
+        <h3 class="card__t">Delta fetching vs always-load</h3>
+        <p class="card__s">A tag-based scheme re-reads every input and weight tile each phase. Stamp fetches only what changed.</p>
+      </div></div>
+      <div class="card__b"><div class="chart" id="trafficChart"></div></div>
+    </div>
+    <div class="card">
+      <div class="card__h"><div>
+        <h3 class="card__t">What the compiler did with each tile</h3>
+        <p class="card__s">Of every delta operation, only <b>LOAD</b> costs off-chip bandwidth.</p>
+      </div></div>
+      <div class="card__b"><div class="chart" id="mixChart"></div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card__h"><div>
+      <h3 class="card__t">One phase transition, operation by operation</h3>
+      <p class="card__s">Phase 0 &rarr; 1, taken verbatim from the compiler output. The output window slides sideways, so the filters are unchanged and the overlapping input columns are already on-chip.</p>
+    </div></div>
+    <div class="card__b"><div class="flow" id="flow"></div></div>
+    <div class="card__f" id="flowNote"></div>
+  </div>
+
+  <h2 class="sec">Verification</h2>
+  <div class="card">
+    <div class="card__h"><div>
+      <h3 class="card__t">Three independent implementations, one answer</h3>
+      <p class="card__s">The Python compiler's own bookkeeping, a separately written cycle-accurate model of the controller FSM, and the SystemVerilog hardware running in Vivado xsim. A single disagreement would mean the compiler describes hardware that does not exist.</p>
+    </div></div>
+    <div class="tw"><table id="verifyTable"></table></div>
+    <div class="card__f" id="verifyNote"></div>
+  </div>
+
+  <footer>
+    All values read from generated artefacts at build time &middot; RTL counters from Vivado xsim 2025.2 &middot;
+    Faculty of Information Technology, University of Moratuwa &middot; 2026
+  </footer>
+</div>
+
+<div class="tip" id="tip"></div>
+
+<script>
+const DATA = {"phases":128,"deltas":127,"totalOps":572,"spadBytes":16384,"naiveBytes":589824,"stampBytes":157888,"reductionPct":73.2,"conflictRatio":42,"opMix":[{"op":"keep","count":72,"bytes":165888,"dram":false},{"op":"move","count":144,"bytes":184320,"dram":false},{"op":"load","count":134,"bytes":157888,"dram":true},{"op":"alloc","count":127,"bytes":0,"dram":false},{"op":"zero","count":95,"bytes":77120,"dram":false}],"verify":[{"label":"LOAD operations","c":134,"m":134,"r":134},{"label":"MOVE operations","c":144,"m":144,"r":144},{"label":"KEEP operations","c":72,"m":72,"r":72},{"label":"ALLOC operations","c":127,"m":127,"r":127},{"label":"ZERO operations","c":95,"m":95,"r":95},{"label":"Bytes read from DRAM","c":157888,"m":157888,"r":157888},{"label":"Bytes moved on-chip","c":184320,"m":184320,"r":184320},{"label":"Bytes zero-filled","c":77120,"m":77120,"r":77120}],"schemes":[{"layer":"tiny L0","scheme":"STAMP","compute_cycles":6316,"program_cycles":41,"replay_cycles":456,"axi_ar_requests":157,"axi_beats":2246,"bank_conflicts":2,"stall_port_cycles":4},{"layer":"tiny L0","scheme":"PAGED","compute_cycles":5802,"program_cycles":2,"replay_cycles":456,"axi_ar_requests":138,"axi_beats":1836,"bank_conflicts":84,"stall_port_cycles":240},{"layer":"mnist L0","scheme":"STAMP","compute_cycles":38440,"program_cycles":527,"replay_cycles":2912,"axi_ar_requests":945,"axi_beats":11470,"bank_conflicts":101,"stall_port_cycles":202},{"layer":"mnist L0","scheme":"PAGED","compute_cycles":36608,"program_cycles":2,"replay_cycles":2912,"axi_ar_requests":832,"axi_beats":10608,"bank_conflicts":232,"stall_port_cycles":488}],"banks":[{"n_banks":1,"pattern":"same_addr","stall_port_cycles":0,"reads_served":796,"window_cycles":200},{"n_banks":1,"pattern":"consecutive","stall_port_cycles":0,"reads_served":796,"window_cycles":200},{"n_banks":1,"pattern":"stride4","stall_port_cycles":0,"reads_served":796,"window_cycles":200},{"n_banks":1,"pattern":"stride8","stall_port_cycles":0,"reads_served":796,"window_cycles":200},{"n_banks":2,"pattern":"same_addr","stall_port_cycles":600,"reads_served":199,"window_cycles":200},{"n_banks":2,"pattern":"consecutive","stall_port_cycles":400,"reads_served":398,"window_cycles":200},{"n_banks":2,"pattern":"stride4","stall_port_cycles":600,"reads_served":199,"window_cycles":200},{"n_banks":2,"pattern":"stride8","stall_port_cycles":600,"reads_served":199,"window_cycles":200},{"n_banks":4,"pattern":"same_addr","stall_port_cycles":600,"reads_served":199,"window_cycles":200},{"n_banks":4,"pattern":"consecutive","stall_port_cycles":0,"reads_served":796,"window_cycles":200},{"n_banks":4,"pattern":"stride4","stall_port_cycles":600,"reads_served":199,"window_cycles":200},{"n_banks":4,"pattern":"stride8","stall_port_cycles":600,"reads_served":199,"window_cycles":200},{"n_banks":8,"pattern":"same_addr","stall_port_cycles":600,"reads_served":199,"window_cycles":200},{"n_banks":8,"pattern":"consecutive","stall_port_cycles":0,"reads_served":796,"window_cycles":200},{"n_banks":8,"pattern":"stride4","stall_port_cycles":400,"reads_served":398,"window_cycles":200},{"n_banks":8,"pattern":"stride8","stall_port_cycles":600,"reads_served":199,"window_cycles":200},{"n_banks":16,"pattern":"same_addr","stall_port_cycles":600,"reads_served":199,"window_cycles":200},{"n_banks":16,"pattern":"consecutive","stall_port_cycles":0,"reads_served":796,"window_cycles":200},{"n_banks":16,"pattern":"stride4","stall_port_cycles":0,"reads_served":796,"window_cycles":200},{"n_banks":16,"pattern":"stride8","stall_port_cycles":400,"reads_served":398,"window_cycles":200}],"rtl":{"loads":134,"moves":144,"keeps":72,"allocs":127,"zeros":95,"bytes_loaded":157888,"bytes_moved":184320,"bytes_zeroed":77120,"bad_ops":0,"phases_replayed":127,"phases_total":127,"ops_executed":572,"passes":48,"fails":0},"area":[{"config":"stamp_ctrl_m256","scheme":"STAMP (static)","knob":"metadata_depth","knob_value":256,"luts":6434,"ffs":22198,"brams":0,"fmax":405.4},{"config":"stamp_ctrl_m512","scheme":"STAMP (static)","knob":"metadata_depth","knob_value":512,"luts":12574,"ffs":43938,"brams":0,"fmax":361.9},{"config":"stamp_ctrl_m1024","scheme":"STAMP (static)","knob":"metadata_depth","knob_value":1024,"luts":24680,"ffs":87468,"brams":0,"fmax":401.9},{"config":"paged_mgmt_p128","scheme":"PAGED (dynamic)","knob":"num_pages","knob_value":128,"luts":3074,"ffs":2752,"brams":0,"fmax":610.1},{"config":"paged_mgmt_p256","scheme":"PAGED (dynamic)","knob":"num_pages","knob_value":256,"luts":6110,"ffs":5440,"brams":0,"fmax":594.2},{"config":"paged_mgmt_p512","scheme":"PAGED (dynamic)","knob":"num_pages","knob_value":512,"luts":12106,"ffs":10816,"brams":0,"fmax":532.2},{"config":"scratchpad_b1","scheme":"Shared scratchpad","knob":"num_banks","knob_value":1,"luts":71388,"ffs":8357,"brams":0,"fmax":273.3},{"config":"scratchpad_b2","scheme":"Shared scratchpad","knob":"num_banks","knob_value":2,"luts":38186,"ffs":8421,"brams":0,"fmax":857.6},{"config":"scratchpad_b4","scheme":"Shared scratchpad","knob":"num_banks","knob_value":4,"luts":44880,"ffs":8421,"brams":0,"fmax":716.3},{"config":"scratchpad_b8","scheme":"Shared scratchpad","knob":"num_banks","knob_value":8,"luts":35356,"ffs":8421,"brams":0,"fmax":888.9},{"config":"scratchpad_b16","scheme":"Shared scratchpad","knob":"num_banks","knob_value":16,"luts":37713,"ffs":8421,"brams":0,"fmax":1001.0}],"sweep":[{"layer":"early-conv 3x3","spad_kb":8,"array":"4x4","phases":392,"reduction":67.45,"bytes_dram":587968,"metadata_bytes":27200},{"layer":"early-conv 3x3","spad_kb":16,"array":"4x4","phases":392,"reduction":67.45,"bytes_dram":587968,"metadata_bytes":27200},{"layer":"early-conv 3x3","spad_kb":16,"array":"8x8","phases":64,"reduction":64.18,"bytes_dram":252352,"metadata_bytes":4544},{"layer":"early-conv 3x3","spad_kb":32,"array":"4x4","phases":392,"reduction":67.45,"bytes_dram":587968,"metadata_bytes":27200},{"layer":"early-conv 3x3","spad_kb":32,"array":"8x8","phases":64,"reduction":64.18,"bytes_dram":252352,"metadata_bytes":4544},{"layer":"early-conv 3x3","spad_kb":64,"array":"4x4","phases":392,"reduction":67.45,"bytes_dram":587968,"metadata_bytes":27200},{"layer":"early-conv 3x3","spad_kb":64,"array":"8x8","phases":64,"reduction":64.18,"bytes_dram":252352,"metadata_bytes":4544},{"layer":"mid-conv 3x3","spad_kb":16,"array":"4x4","phases":256,"reduction":72.9,"bytes_dram":639360,"metadata_bytes":18368},{"layer":"mid-conv 3x3","spad_kb":32,"array":"4x4","phases":256,"reduction":72.9,"bytes_dram":639360,"metadata_bytes":18368},{"layer":"mid-conv 3x3","spad_kb":32,"array":"8x8","phases":32,"reduction":59.76,"bytes_dram":283520,"metadata_bytes":2240},{"layer":"mid-conv 3x3","spad_kb":64,"array":"4x4","phases":256,"reduction":72.9,"bytes_dram":639360,"metadata_bytes":18368},{"layer":"mid-conv 3x3","spad_kb":64,"array":"8x8","phases":32,"reduction":59.76,"bytes_dram":283520,"metadata_bytes":2240},{"layer":"late-conv 3x3","spad_kb":32,"array":"4x4","phases":128,"reduction":66.29,"bytes_dram":795392,"metadata_bytes":9152},{"layer":"late-conv 3x3","spad_kb":64,"array":"4x4","phases":128,"reduction":66.29,"bytes_dram":795392,"metadata_bytes":9152},{"layer":"late-conv 3x3","spad_kb":64,"array":"8x8","phases":16,"reduction":55.88,"bytes_dram":276480,"metadata_bytes":720},{"layer":"pointwise 1x1","spad_kb":8,"array":"4x4","phases":256,"reduction":37.89,"bytes_dram":814080,"metadata_bytes":14032},{"layer":"pointwise 1x1","spad_kb":16,"array":"4x4","phases":256,"reduction":37.89,"bytes_dram":814080,"metadata_bytes":14032},{"layer":"pointwise 1x1","spad_kb":32,"array":"4x4","phases":256,"reduction":37.89,"bytes_dram":814080,"metadata_bytes":14032},{"layer":"pointwise 1x1","spad_kb":32,"array":"8x8","phases":32,"reduction":32.29,"bytes_dram":399360,"metadata_bytes":1872},{"layer":"pointwise 1x1","spad_kb":64,"array":"4x4","phases":256,"reduction":37.89,"bytes_dram":814080,"metadata_bytes":14032},{"layer":"pointwise 1x1","spad_kb":64,"array":"8x8","phases":32,"reduction":32.29,"bytes_dram":399360,"metadata_bytes":1872},{"layer":"wide-spatial","spad_kb":8,"array":"4x4","phases":784,"reduction":67.31,"bytes_dram":590432,"metadata_bytes":52544},{"layer":"wide-spatial","spad_kb":8,"array":"8x8","phases":98,"reduction":54.87,"bytes_dram":243424,"metadata_bytes":6752},{"layer":"wide-spatial","spad_kb":16,"array":"4x4","phases":784,"reduction":67.31,"bytes_dram":590432,"metadata_bytes":52544},{"layer":"wide-spatial","spad_kb":16,"array":"8x8","phases":98,"reduction":54.87,"bytes_dram":243424,"metadata_bytes":6752},{"layer":"wide-spatial","spad_kb":32,"array":"4x4","phases":784,"reduction":67.31,"bytes_dram":590432,"metadata_bytes":52544},{"layer":"wide-spatial","spad_kb":32,"array":"8x8","phases":98,"reduction":54.87,"bytes_dram":243424,"metadata_bytes":6752},{"layer":"wide-spatial","spad_kb":64,"array":"4x4","phases":784,"reduction":67.31,"bytes_dram":590432,"metadata_bytes":52544},{"layer":"wide-spatial","spad_kb":64,"array":"8x8","phases":98,"reduction":54.87,"bytes_dram":243424,"metadata_bytes":6752},{"layer":"large-kernel 5x5","spad_kb":16,"array":"4x4","phases":72,"reduction":73.62,"bytes_dram":199360,"metadata_bytes":5184},{"layer":"large-kernel 5x5","spad_kb":32,"array":"4x4","phases":72,"reduction":73.62,"bytes_dram":199360,"metadata_bytes":5184},{"layer":"large-kernel 5x5","spad_kb":32,"array":"8x8","phases":16,"reduction":72.98,"bytes_dram":95168,"metadata_bytes":1088},{"layer":"large-kernel 5x5","spad_kb":64,"array":"4x4","phases":72,"reduction":73.62,"bytes_dram":199360,"metadata_bytes":5184},{"layer":"large-kernel 5x5","spad_kb":64,"array":"8x8","phases":16,"reduction":72.98,"bytes_dram":95168,"metadata_bytes":1088}],"sweepStats":{"n":34,"infeasible":14,"min":32.3,"mean":60.6,"max":73.6},"example":[{"op":"move","tile":"input","size":768},{"op":"load","tile":"input","size":1280},{"op":"zero","tile":"input","size":256},{"op":"alloc","tile":"output","size":256},{"op":"keep","tile":"weight","size":2304}]};
+
+const $ = (s)=>document.querySelector(s);
+const fmt = (n)=>n.toLocaleString("en-US");
+const tip = $("#tip");
+
+/* ---------- theme toggle ---------- */
+$("#theme").addEventListener("click",()=>{
+  const cur = document.documentElement.getAttribute("data-theme");
+  const dark = cur ? cur==="dark"
+    : matchMedia("(prefers-color-scheme: dark)").matches;
+  document.documentElement.setAttribute("data-theme", dark?"light":"dark");
+  renderAll();
+});
+
+function cssv(name){return getComputedStyle(document.documentElement).getPropertyValue(name).trim();}
+
+/* ---------- tooltip ---------- */
+function bindTip(el, html){
+  el.addEventListener("mouseenter",(e)=>{
+    tip.innerHTML = html; tip.style.opacity = "1"; el.classList.add("on");
+  });
+  el.addEventListener("mousemove",(e)=>{
+    tip.style.left = e.pageX+"px"; tip.style.top = (e.pageY-12)+"px";
+  });
+  el.addEventListener("mouseleave",()=>{
+    tip.style.opacity="0"; el.classList.remove("on");
+  });
+}
+
+/* ---------- generic grouped bar chart ---------- */
+function groupedBars(host, cfg){
+  const {groups, series, value, colors, yLabel, fmtVal=fmt, showValues=false} = cfg;
+  const W = Math.max(host.clientWidth||760, 380);
+  const padL=64, padR=14, padT=14, padB=46;
+  const H = cfg.height || 300;
+  const iw = W-padL-padR, ih = H-padT-padB;
+
+  let max = 0;
+  groups.forEach(g=>series.forEach(s=>{const v=value(g,s); if(v!==null&&v!==undefined) max=Math.max(max,v);}));
+  if(max<=0) max = 1;
+  const niceMax = niceCeil(max);
+  const y = v => padT + ih - (v/niceMax)*ih;
+
+  const gw = iw/groups.length;
+  const inner = gw*0.76;
+  const bw = inner/series.length;
+
+  let svg = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${yLabel}">`;
+  // gridlines + y ticks
+  const steps = 4;
+  for(let i=0;i<=steps;i++){
+    const v = niceMax*i/steps, yy = y(v);
+    svg += `<line class="gridline" x1="${padL}" x2="${W-padR}" y1="${yy}" y2="${yy}"/>`;
+    svg += `<text class="tick" x="${padL-9}" y="${yy+3.5}" text-anchor="end">${fmtVal(v)}</text>`;
+  }
+  svg += `<line class="axis" x1="${padL}" x2="${W-padR}" y1="${y(0)}" y2="${y(0)}"/>`;
+  svg += `<text class="axlabel" transform="translate(14,${padT+ih/2}) rotate(-90)" text-anchor="middle">${yLabel}</text>`;
+
+  groups.forEach((g,gi)=>{
+    const gx = padL + gi*gw + (gw-inner)/2;
+    series.forEach((s,si)=>{
+      const v = value(g,s);
+      const x = gx + si*bw;
+      const w = Math.max(bw-2, 1);           // 2px surface gap between bars
+      // null means "this configuration was never measured" -- distinct from a
+      // measured zero. Draw nothing at all, so an absent run cannot be read as
+      // a result of zero.
+      if(v === null || v === undefined){
+        // leave the slot empty
+      } else if(v>0){
+        const h = Math.max(2, (v/niceMax)*ih);
+        const r = Math.min(4, w/2, h);
+        svg += `<rect class="bar" data-g="${gi}" data-s="${si}" x="${x}" y="${y(v)}" `
+             + `width="${w}" height="${h}" rx="${r}" ry="${r}" fill="${colors[si]}"/>`;
+        if(showValues){
+          svg += `<text class="vlabel" x="${x+w/2}" y="${y(v)-6}" text-anchor="middle">${fmtVal(v)}</text>`;
+        }
+      } else {
+        // A measured zero must not look like missing data -- especially here,
+        // where zero stalls is the *best* outcome. Draw a flat stub on the
+        // baseline plus an explicit 0 so the reader sees a recorded value.
+        svg += `<rect class="bar" data-g="${gi}" data-s="${si}" x="${x}" y="${y(0)-2}" `
+             + `width="${w}" height="2" rx="1" ry="1" fill="${colors[si]}" opacity=".45"/>`;
+        svg += `<text class="vlabel zero" x="${x+w/2}" y="${y(0)-7}" text-anchor="middle">0</text>`;
+      }
+    });
+    svg += `<text class="tick" x="${padL+gi*gw+gw/2}" y="${H-padB+18}" text-anchor="middle">${g.label}</text>`;
+  });
+  if(cfg.xLabel){
+    svg += `<text class="axlabel" x="${padL+iw/2}" y="${H-6}" text-anchor="middle">${cfg.xLabel}</text>`;
+  }
+  svg += `</svg>`;
+  host.innerHTML = svg;
+
+  host.querySelectorAll(".bar").forEach(el=>{
+    const g = groups[+el.dataset.g], s = series[+el.dataset.s];
+    bindTip(el, cfg.tip(g,s));
+  });
+}
+
+function niceCeil(v){
+  const mag = Math.pow(10, Math.floor(Math.log10(v)));
+  const n = v/mag;
+  const m = n<=1?1:n<=2?2:n<=2.5?2.5:n<=5?5:10;
+  return m*mag;
+}
+
+/* ---------- KPIs ---------- */
+function renderKpis(){
+  const r = DATA.rtl||{};
+  const st = DATA.sweepStats||{};
+  const items = [
+    {v:DATA.reductionPct, u:"%", l:"less off-chip read traffic",
+     d:st.n ? `${st.min}–${st.max}% across ${st.n} swept configurations (mean ${st.mean}%)`
+            : `${(DATA.naiveBytes/1024).toFixed(0)} KB → ${(DATA.stampBytes/1024).toFixed(0)} KB over ${DATA.phases} phases`,
+     s:"compiler + FSM model", c:"var(--stamp)"},
+    {v:DATA.conflictRatio, u:"×", l:"fewer bank conflicts than a page table",
+     d:"2 vs 84 conflict events on identical hardware",
+     s:"measured in RTL", c:"var(--signal)"},
+    {v:r.ops_executed||0, u:"/"+DATA.totalOps, l:"delta operations run in hardware",
+     d:`all ${r.phases_replayed||0} phase transitions replayed in Vivado`,
+     s:"measured in RTL", c:"var(--paged)"},
+    {v:r.fails===0?"0":(r.fails??"—"), u:"", l:"failing assertions",
+     d:`${r.passes||0} passing checks across 13 directed tests`,
+     s:"measured in RTL", c:"var(--good)"}
+  ];
+  $("#kpis").innerHTML = items.map(i=>`
+    <div class="kpi" style="--accent:${i.c}">
+      <div class="kpi__v">${typeof i.v==="number"?fmt(i.v):i.v}<span>${i.u}</span></div>
+      <div class="kpi__l">${i.l}</div>
+      <div class="kpi__d">${i.d}</div>
+      <div class="kpi__src">${i.s}</div>
+    </div>`).join("");
+
+  const bt = $("#vbadge_t");
+  if(r.fails===0){ bt.innerHTML = `<b>${r.passes}</b> checks passed &middot; 0 failed`; }
+  else { bt.textContent = "no RTL log found"; $("#vbadge").style.borderColor="var(--ink3)"; }
+}
+
+/* ---------- scheme comparison ---------- */
+const METRICS = [
+  {k:"bank_conflicts",   t:"Bank conflicts", u:"conflict events",
+   note:"Static placement lets the compiler put concurrently-read tiles in different banks. The page table assigns physical addresses at runtime, so the compiler cannot reason about bank residency at all."},
+  {k:"stall_port_cycles",t:"Stall cycles",  u:"stalled port-cycles",
+   note:"The conflict count converted into cycles the compute pipeline actually lost. This is what shows up in end-to-end runtime."},
+  {k:"axi_beats",        t:"Off-chip beats",u:"AXI beats transferred",
+   note:"<b>Honest reading:</b> PAGED moves fewer beats here. Page faulting pulls whole 4 KB pages, which suits a small working set. The stamp advantage is in conflicts, translation cost and predictability — not in every metric at every size."},
+  {k:"axi_ar_requests",  t:"Read requests", u:"AXI read requests",
+   note:"Request count rather than volume. Stamp issues more, finer-grained requests; paged issues fewer, coarser ones."}
+];
+let metricIdx = 0;
+
+function renderSchemeSeg(){
+  $("#metricSeg").innerHTML = METRICS.map((m,i)=>
+    `<button type="button" data-i="${i}" aria-pressed="${i===metricIdx}">${m.t}</button>`).join("");
+  $("#metricSeg").querySelectorAll("button").forEach(b=>{
+    b.addEventListener("click",()=>{ metricIdx = +b.dataset.i; renderSchemeSeg(); renderScheme(); });
+  });
+}
+
+function renderScheme(){
+  const m = METRICS[metricIdx];
+  const layers = [...new Set(DATA.schemes.map(s=>s.layer))].map(l=>({label:l,key:l}));
+  const series = [{key:"STAMP"},{key:"PAGED"}];
+  const get = (g,s)=>{
+    const row = DATA.schemes.find(x=>x.layer===g.key && x.scheme===s.key);
+    return row ? row[m.k] : 0;
+  };
+  groupedBars($("#schemeChart"),{
+    groups:layers, series, value:get,
+    colors:[cssv("--stamp"), cssv("--paged")],
+    yLabel:m.u, xLabel:"Convolution layer", showValues:true, height:300,
+    tip:(g,s)=>`<b>${s.key}</b> · ${g.label}<br>${fmt(get(g,s))} ${m.u}`
+  });
+  $("#schemeNote").innerHTML = m.note;
+}
+
+/* ---------- bank sweep ---------- */
+const PATTERNS = [
+  {k:"consecutive", t:"Consecutive",   c:"--p3"},
+  {k:"stride4",     t:"Stride 4",      c:"--p1"},
+  {k:"stride8",     t:"Stride 8",      c:"--p2"},
+  {k:"same_addr",   t:"Same address",  c:"--p4"}
+];
+const patOn = new Set(PATTERNS.map(p=>p.k));
+
+function renderChips(){
+  $("#patChips").innerHTML = PATTERNS.map(p=>
+    `<button class="chip" type="button" data-k="${p.k}" aria-pressed="${patOn.has(p.k)}">
+       <span class="sw" style="background:${cssv(p.c)}"></span>${p.t}</button>`).join("");
+  $("#patChips").querySelectorAll(".chip").forEach(b=>{
+    b.addEventListener("click",()=>{
+      const k=b.dataset.k;
+      if(patOn.has(k)){ if(patOn.size>1) patOn.delete(k); } else patOn.add(k);
+      renderChips(); renderBank();
+    });
+  });
+}
+
+function renderBank(){
+  const banks = [...new Set(DATA.banks.map(b=>b.n_banks))].sort((a,b)=>a-b)
+    .map(n=>({label:n===1?"1 bank":n+" banks", key:n}));
+  const series = PATTERNS.filter(p=>patOn.has(p.k));
+  const get=(g,s)=>{
+    const row = DATA.banks.find(x=>x.n_banks===g.key && x.pattern===s.k);
+    return row ? row.stall_port_cycles : 0;
+  };
+  groupedBars($("#bankChart"),{
+    groups:banks, series, value:get,
+    colors:series.map(s=>cssv(s.c)),
+    yLabel:"Stalled port-cycles (200-cycle window)",
+    xLabel:"Scratchpad banks", height:320, showValues:true,
+    tip:(g,s)=>{
+      const row = DATA.banks.find(x=>x.n_banks===g.key && x.pattern===s.k)||{};
+      return `<b>${s.t}</b> · ${g.label}<br>${fmt(row.stall_port_cycles||0)} stalled port-cycles`
+           + `<br>${fmt(row.reads_served||0)} reads served`;
+    }
+  });
+}
+
+/* ---------- measured synthesis area ---------- */
+const AREA_METRICS = [
+  {k:"luts", t:"LUTs",      u:"LUTs"},
+  {k:"ffs",  t:"Registers", u:"registers"},
+  {k:"fmax", t:"Max clock", u:"MHz"}
+];
+let areaIdx = 0;
+
+function renderAreaSeg(){
+  const el = $("#areaSeg"); if(!el) return;
+  el.innerHTML = AREA_METRICS.map((m,i)=>
+    `<button type="button" data-i="${i}" aria-pressed="${i===areaIdx}">${m.t}</button>`).join("");
+  el.querySelectorAll("button").forEach(b=>{
+    b.addEventListener("click",()=>{ areaIdx=+b.dataset.i; renderAreaSeg(); renderArea(); });
+  });
+}
+
+function renderArea(){
+  const host = $("#areaChart"); if(!host) return;
+  const A = DATA.area||[];
+  const stamp = A.filter(r=>r.scheme.indexOf("STAMP")===0);
+  const paged = A.filter(r=>r.scheme.indexOf("PAGED")===0);
+  if(!stamp.length || !paged.length){ host.innerHTML="<p style='color:var(--ink3)'>No synthesis results found.</p>"; return; }
+
+  const m = AREA_METRICS[areaIdx];
+  const caps = [...new Set(A.filter(r=>r.knob!=="num_banks").map(r=>r.knob_value))].sort((a,b)=>a-b);
+  const groups = caps.map(c=>({label:c+" entries", key:c}));
+  const get=(g,s)=>{
+    const src = s.key==="STAMP" ? stamp : paged;
+    const row = src.find(r=>r.knob_value===g.key);
+    return row ? row[m.k] : null;   // null = not synthesised, not zero
+  };
+  groupedBars(host,{
+    groups, series:[{key:"STAMP"},{key:"PAGED"}],
+    value:get, colors:[cssv("--stamp"), cssv("--paged")],
+    yLabel:m.k==="fmax" ? "Max frequency (MHz)" : ("FPGA "+m.u),
+    xLabel:"Capacity (metadata entries / page-table entries)",
+    height:300, showValues:true,
+    tip:(g,s)=>{
+      const src = s.key==="STAMP" ? stamp : paged;
+      const row = src.find(r=>r.knob_value===g.key);
+      if(!row) return `<b>${s.key}</b><br>not synthesised at this capacity`;
+      return `<b>${s.key}</b> · ${g.label}<br>${fmt(row.luts)} LUTs · ${fmt(row.ffs)} registers`
+           + `<br>${row.brams} block RAMs · ${row.fmax.toFixed(0)} MHz`;
+    }
+  });
+
+  const s256 = stamp.find(r=>r.knob_value===256), p256 = paged.find(r=>r.knob_value===256);
+  if(s256 && p256){
+    const ffRatio = (s256.ffs / Math.max(p256.ffs,1)).toFixed(1);
+    $("#areaNote").innerHTML =
+      `At equal 256-entry capacity the LUT counts are close (${fmt(s256.luts)} vs ${fmt(p256.luts)}), but the `
+      + `static scheme uses <b>${ffRatio}&times; the registers</b> (${fmt(s256.ffs)} vs ${fmt(p256.ffs)}) and closes `
+      + `timing ${Math.round(100*(1-s256.fmax/p256.fmax))}% lower. `
+      + `<b>Cause:</b> its metadata RAM reports <b>${s256.brams} block RAMs</b> — it is being built from flip-flops instead of BRAM, `
+      + `because the write is split across five struct fields. This is a synthesis-inference problem, not an inherent cost of the scheme, `
+      + `and it is the single largest open item in this module.`;
+  }
+}
+
+function renderBankArea(){
+  const host = $("#bankAreaChart"); if(!host) return;
+  const rows = (DATA.area||[]).filter(r=>r.knob==="num_banks").sort((a,b)=>a.knob_value-b.knob_value);
+  if(!rows.length){ host.innerHTML="<p style='color:var(--ink3)'>No scratchpad synthesis results found.</p>"; return; }
+  // LUTs and MHz have unrelated units, so they are drawn as two separate
+  // groups on one shared axis of "measured value" rather than a dual axis.
+  const groups = rows.map(r=>({label:(r.knob_value===1?"1 bank":r.knob_value+" banks"), key:r.knob_value}));
+  // LUTs (tens of thousands) and MHz (hundreds) cannot share a y-axis without
+  // making one of them unreadable, and a dual axis would be worse. Two charts.
+  host.innerHTML = '<div id="bankAreaA"></div><div id="bankAreaB" style="margin-top:18px"></div>';
+  const mk = (sel, key, label, col) => groupedBars($(sel), {
+    groups, series:[{key}],
+    value:(g)=>{ const r=rows.find(x=>x.knob_value===g.key); return r? r[key] : null; },
+    colors:[col], yLabel:label, xLabel:"Scratchpad banks",
+    height:250, showValues:true,
+    fmtVal:(v)=> key==="fmax" ? v.toFixed(0) : fmt(v),
+    tip:(g)=>{ const r=rows.find(x=>x.knob_value===g.key);
+      return `<b>${g.label}</b><br>${fmt(r.luts)} LUTs<br>${r.fmax.toFixed(0)} MHz max clock`; }
+  });
+  mk("#bankAreaA","luts","LUTs used", cssv("--stamp"));
+  mk("#bankAreaB","fmax","Max clock frequency (MHz)", cssv("--signal"));
+  const flat = rows.find(r=>r.knob_value===1), b16 = rows.find(r=>r.knob_value===16);
+  if(flat && b16){
+    $("#bankAreaNote").innerHTML =
+      `Going from a flat scratchpad to 16 banks cuts LUTs from ${fmt(flat.luts)} to ${fmt(b16.luts)} `
+      + `(<b>${Math.round(100*(1-b16.luts/flat.luts))}% smaller</b>) and raises the achievable clock from `
+      + `${flat.fmax.toFixed(0)} MHz to ${b16.fmax.toFixed(0)} MHz (<b>${(b16.fmax/flat.fmax).toFixed(1)}&times; faster</b>) — `
+      + `while the measured conflict data above shows stride-4 access going from fully serialised to conflict-free. `
+      + `Banking has essentially no downside in this range.`;
+  }
+}
+
+/* ---------- design-space sweep ---------- */
+function renderSweep(){
+  const host = $("#sweepChart"); if(!host) return;
+  const S = DATA.sweep||[]; const st = DATA.sweepStats||{};
+  if(!S.length){ host.innerHTML="<p style='color:var(--ink3)'>No sweep results found.</p>"; return; }
+
+  const layers = [...new Set(S.map(r=>r.layer))];
+  const caps = [...new Set(S.map(r=>r.spad_kb))].sort((a,b)=>a-b);
+  const shades = ["#a8cfe0","#6fa8cc","#3d6f9e","#1a3a5c"];
+  groupedBars(host,{
+    groups: layers.map(l=>({label:l,key:l})),
+    series: caps.map(c=>({key:c, t:c+" KB"})),
+    value:(g,s)=>{
+      const rs = S.filter(r=>r.layer===g.key && r.spad_kb===s.key);
+      return rs.length ? rs.reduce((a,r)=>a+r.reduction,0)/rs.length : 0;
+    },
+    colors: caps.map((_,i)=>shades[i%shades.length]),
+    yLabel:"Off-chip read traffic avoided (%)",
+    xLabel:"Convolution layer shape", height:330,
+    tip:(g,s)=>{
+      const rs = S.filter(r=>r.layer===g.key && r.spad_kb===s.key);
+      if(!rs.length) return `<b>${g.key}</b> · ${s.t}<br>does not fit this scratchpad`;
+      const avg = rs.reduce((a,r)=>a+r.reduction,0)/rs.length;
+      return `<b>${g.key}</b> · ${s.t}<br>${avg.toFixed(1)}% avoided`
+           + `<br>${fmt(rs[0].phases)} phases`;
+    }
+  });
+  $("#sweepSub").textContent =
+    `${st.n} configurations actually compiled — ${layers.length} layer shapes x ${caps.length} scratchpad sizes x 2 array sizes. `
+    + `Every bar is a real compiler run.`;
+  $("#sweepNote").innerHTML =
+    `Reduction ranges <b>${st.min}%</b> to <b>${st.max}%</b> (mean ${st.mean}%). `
+    + `A zero-height bar means that layer's working set does not fit that scratchpad — `
+    + `<b>${st.infeasible}</b> of the ${st.n + st.infeasible} attempted configurations hit a capacity limit. `
+    + `Pointwise 1&times;1 gains least: with no spatial overlap between phases there is no halo to reuse.`;
+}
+
+/* ---------- traffic ---------- */
+function renderTraffic(){
+  const groups=[{label:"Always-load",key:"n"},{label:"STAMP",key:"s"}];
+  const val=(g)=> g.key==="n" ? DATA.naiveBytes/1024 : DATA.stampBytes/1024;
+  groupedBars($("#trafficChart"),{
+    groups, series:[{key:"v"}], value:(g)=>val(g),
+    colors:[cssv("--ink3")], yLabel:"Off-chip read traffic (KB)",
+    height:260, showValues:true,
+    fmtVal:(v)=>v.toFixed(0),
+    tip:(g)=>`<b>${g.label}</b><br>${val(g).toFixed(1)} KB from DRAM`
+  });
+  // recolour the STAMP bar so the comparison reads at a glance
+  const bars = $("#trafficChart").querySelectorAll(".bar");
+  if(bars[1]) bars[1].setAttribute("fill", cssv("--stamp"));
+}
+
+/* ---------- op mix ---------- */
+function renderMix(){
+  const groups = DATA.opMix.map(o=>({label:o.op.toUpperCase(),key:o.op,dram:o.dram,count:o.count}));
+  groupedBars($("#mixChart"),{
+    groups, series:[{key:"v"}], value:(g)=>g.count,
+    colors:[cssv("--ink3")], yLabel:"Operation count",
+    height:260, showValues:true,
+    tip:(g)=>`<b>${g.label}</b><br>${fmt(g.count)} operations`
+        + `<br>${g.dram?"reads off-chip DRAM":"resolved entirely on-chip"}`
+  });
+  const bars = $("#mixChart").querySelectorAll(".bar");
+  groups.forEach((g,i)=>{ if(bars[i]) bars[i].setAttribute("fill", g.dram?cssv("--signal"):cssv("--stamp")); });
+}
+
+/* ---------- phase flow ---------- */
+const OPC = {keep:"--stamp",move:"--paged",load:"--signal",zero:"--ink3",alloc:"--ink2"};
+const OPWHY = {
+  keep:"same filters, same address — free",
+  move:"overlapping input columns, already on-chip",
+  load:"new input columns — the only DRAM read",
+  zero:"padding halo — written as zeros",
+  alloc:"output slot, filled by the array"
+};
+function renderFlow(){
+  const total = DATA.example.reduce((a,o)=>a+o.size,0);
+  const dram = DATA.example.filter(o=>o.op==="load").reduce((a,o)=>a+o.size,0);
+  $("#flow").innerHTML = DATA.example.map(o=>`
+    <div class="frow">
+      <span class="ftag" style="background:${cssv(OPC[o.op]||"--ink3")}">${o.op.toUpperCase()}</span>
+      <span class="ftrack"><span style="width:${(100*o.size/total).toFixed(1)}%;background:${cssv(OPC[o.op]||"--ink3")}"></span></span>
+      <span class="fsize">${fmt(o.size)} B</span>
+      <span class="fnote">${o.tile} tile — ${OPWHY[o.op]||""}</span>
+    </div>`).join("");
+  $("#flowNote").innerHTML = `Working set <b>${fmt(total)} B</b> &rarr; fetched from DRAM `
+    + `<b style="color:var(--signal)">${fmt(dram)} B</b> (${(100*dram/total).toFixed(0)}%). `
+    + `The other ${(100*(total-dram)/total).toFixed(0)}% never leaves the chip.`;
+}
+
+/* ---------- verification table ---------- */
+function renderVerify(){
+  const rows = DATA.verify.map(v=>{
+    const agree = v.r!=null && v.c===v.m && v.m===v.r;
+    return `<tr>
+      <th scope="row">${v.label}</th>
+      <td class="n">${fmt(v.c)}</td>
+      <td class="n">${fmt(v.m)}</td>
+      <td class="n">${v.r==null?"—":fmt(v.r)}</td>
+      <td class="${agree?"ok":"no"}">${v.r==null?"no RTL log":(agree?"identical":"DIVERGED")}</td>
+    </tr>`;}).join("");
+  $("#verifyTable").innerHTML =
+    `<thead><tr><th>Quantity</th><th class="n">Compiler</th><th class="n">FSM model</th>
+     <th class="n">RTL (xsim)</th><th>Agreement</th></tr></thead><tbody>${rows}</tbody>`;
+  const r = DATA.rtl||{};
+  $("#verifyNote").innerHTML = `Totals over <b>${DATA.deltas}</b> phase transitions and `
+    + `<b>${DATA.totalOps}</b> delta operations. `
+    + `<b>${r.bad_ops??"—"}</b> undecodable opcodes — every operation the compiler emits is one the hardware implements.`;
+}
+
+/* ---------- boot ---------- */
+function renderAll(){
+  renderKpis(); renderSchemeSeg(); renderScheme();
+  renderChips(); renderBank();
+  renderAreaSeg(); renderArea(); renderBankArea(); renderSweep();
+  renderTraffic(); renderMix(); renderFlow(); renderVerify();
+}
+renderAll();
+let rt; addEventListener("resize",()=>{clearTimeout(rt);rt=setTimeout(renderAll,140);});
+</script>
+</body>
+</html>

@@ -285,8 +285,12 @@ module multi_dnn_top
         .stats_loads_or_hits     (),
         .stats_moves_or_misses   (),
         .stats_keeps             (),
+        .stats_allocs            (),
+        .stats_zeros             (),
         .stats_bytes_loaded      (),
         .stats_bytes_moved       (),
+        .stats_bytes_zeroed      (),
+        .stats_bad_ops           (),
         .stats_compute_cycles    (),
         .stats_bank_conflicts             (),
         .stats_bank_conflict_stall_cycles ()

@@ -65,8 +65,12 @@ module stamp_memory_backend #(
     output logic [31:0] stats_loads,
     output logic [31:0] stats_moves,
     output logic [31:0] stats_keeps,
+    output logic [31:0] stats_allocs,
+    output logic [31:0] stats_zeros,
     output logic [31:0] stats_bytes_loaded,
     output logic [31:0] stats_bytes_moved,
+    output logic [31:0] stats_bytes_zeroed,
+    output logic [31:0] stats_bad_ops,
     output logic        controller_busy,
 
     //--- statistics: bank conflict (from scratchpad_ram)
@@ -123,11 +127,16 @@ module stamp_memory_backend #(
         .mem_rd_ready       (mem_rd_ready_int),
         .mem_rd_data        (mem_rd_data_int),
         .mem_rd_valid       (mem_rd_valid_int),
+        .mem_rd_ready_ack   (),   // flow control handled by axi_read_adapter
         .stats_loads        (stats_loads),
         .stats_moves        (stats_moves),
         .stats_keeps        (stats_keeps),
+        .stats_allocs       (stats_allocs),
+        .stats_zeros        (stats_zeros),
         .stats_bytes_loaded (stats_bytes_loaded),
         .stats_bytes_moved  (stats_bytes_moved),
+        .stats_bytes_zeroed (stats_bytes_zeroed),
+        .stats_bad_ops      (stats_bad_ops),
         .controller_busy    (controller_busy)
     );
 

@@ -69,8 +69,12 @@ module mem_backend_wrap
     output logic [31:0] stats_loads_or_hits,
     output logic [31:0] stats_moves_or_misses,
     output logic [31:0] stats_keeps,
+    output logic [31:0] stats_allocs,
+    output logic [31:0] stats_zeros,
     output logic [31:0] stats_bytes_loaded,
     output logic [31:0] stats_bytes_moved,
+    output logic [31:0] stats_bytes_zeroed,
+    output logic [31:0] stats_bad_ops,
     output logic        controller_busy,
 
     //--- bank conflict stats (valid for both backends; zero when NUM_BANKS==1)
@@ -129,8 +133,12 @@ module mem_backend_wrap
                 .stats_loads                      (stats_loads_or_hits),
                 .stats_moves                      (stats_moves_or_misses),
                 .stats_keeps                      (stats_keeps),
+                .stats_allocs                     (stats_allocs),
+                .stats_zeros                      (stats_zeros),
                 .stats_bytes_loaded               (stats_bytes_loaded),
                 .stats_bytes_moved                (stats_bytes_moved),
+                .stats_bytes_zeroed               (stats_bytes_zeroed),
+                .stats_bad_ops                    (stats_bad_ops),
                 .controller_busy                  (controller_busy),
                 .bank_conflict_detected           (bank_conflict_detected),
                 .stats_bank_conflicts             (stats_bank_conflicts),
@@ -145,8 +153,12 @@ module mem_backend_wrap
             assign axi_arvalid         = 1'b0;
             assign axi_rready          = 1'b0;
             assign stats_keeps         = '0;
+            assign stats_allocs        = '0;
+            assign stats_zeros         = '0;
             assign stats_bytes_loaded  = '0;
             assign stats_bytes_moved   = '0;
+            assign stats_bytes_zeroed  = '0;
+            assign stats_bad_ops       = '0;
             assign controller_busy     = 1'b0;
 
             paged_memory_backend #(

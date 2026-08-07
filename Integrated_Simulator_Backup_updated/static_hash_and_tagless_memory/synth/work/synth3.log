@@ -1,0 +1,1184 @@
+
+****** Vivado v2025.2 (64-bit)
+  **** SW Build 6299465 on Fri Nov 14 12:34:56 MST 2025
+  **** IP Build 6300035 on Fri Nov 14 10:48:45 MST 2025
+  **** SharedData Build 6298862 on Thu Nov 13 04:50:51 MST 2025
+  **** Start of session at: Fri Aug  7 01:09:47 2026
+    ** Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+    ** Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
+
+source ../synth_area.tcl
+# set rtl_dir [lindex $argv 0]
+# set out_dir [lindex $argv 1]
+# set part    "xczu7ev-ffvc1156-2-e"   
+# set harness_dir [file normalize [file dirname [info script]]]
+# file mkdir $out_dir
+# set csv_path $out_dir/area_results.csv
+# set done_configs {}
+# if {[file exists $csv_path]} {
+#     set fh [open $csv_path r]
+#     foreach line [split [read $fh] "\n"] {
+#         set line [string trim $line]
+#         if {$line eq "" || [string match "config,*" $line]} { continue }
+#         lappend done_configs [lindex [split $line ","] 0]
+#     }
+#     close $fh
+#     set csv [open $csv_path a]
+#     puts "Resuming: [llength $done_configs] configuration(s) already done."
+# } else {
+#     set csv [open $csv_path w]
+#     puts $csv "config,scheme,knob,knob_value,luts,ffs,brams,dsps,lutram,wns_ns,fmax_mhz"
+# }
+Resuming: 6 configuration(s) already done.
+# set period 10.0
+# proc util_field {rpt label} {
+#     foreach line [split $rpt "\n"] {
+#         if {![string match "|*" $line]} { continue }
+#         set cols [split $line "|"]
+#         if {[llength $cols] < 3} { continue }
+#         set name [string trim [lindex $cols 1]]
+#         set name [string trimright $name "*"]
+#         set name [string trim $name]
+#         if {$name eq $label} {
+#             set v [string trim [lindex $cols 2]]
+#             if {[string is integer -strict $v]} { return $v }
+#             # Some rows report fractional usage; round to nearest integer.
+#             if {[string is double -strict $v]} { return [expr {int($v + 0.5)}] }
+#         }
+#     }
+#     return 0
+# }
+# proc run_one {csv part period rtl_dir out_dir name scheme knob knob_value top files generics} {
+#     global done_configs harness_dir
+#     if {[lsearch -exact $done_configs $name] >= 0} {
+#         puts "  Skipping $name (already in area_results.csv)"
+#         return
+#     }
+#     puts "\n=========================================================="
+#     puts "  Synthesising $name  (top = $top)"
+#     puts "=========================================================="
+# 
+#     create_project -in_memory -part $part
+# 
+#     foreach f $files {
+#         set path [file join $rtl_dir $f]
+#         if {![file exists $path]} {
+#             # Harness-only sources (e.g. paged_mgmt_wrap.sv) live next to this
+#             # script, not in the RTL tree.
+#             set path [file join $harness_dir [file tail $f]]
+#         }
+#         if {[string match "*.v" $f]} {
+#             read_verilog $path
+#         } else {
+#             read_verilog -sv $path
+#         }
+#     }
+# 
+#     set gen_args {}
+#     foreach {g v} $generics { lappend gen_args "$g=$v" }
+# 
+#     if {[llength $gen_args] > 0} {
+#         synth_design -top $top -part $part -mode out_of_context \
+#                      -generic $gen_args -no_iobuf
+#     } else {
+#         synth_design -top $top -part $part -mode out_of_context -no_iobuf
+#     }
+# 
+#     # Constrain a clock so timing numbers mean something.
+#     if {[llength [get_ports -quiet clk]] > 0} {
+#         create_clock -name clk -period $period [get_ports clk]
+#     }
+#     opt_design -quiet
+# 
+#     # Read the utilization report rather than filtering on PRIMITIVE_GROUP.
+#     # On UltraScale+ that property only returns coarse buckets (CLB / REGISTER
+#     # / OTHERS), so it cannot separate LUTs from LUTRAM or count BRAM tiles.
+#     # report_utilization is the authoritative source.
+#     set rpt [report_utilization -return_string]
+# 
+#     set luts   [util_field $rpt "CLB LUTs"]
+#     set ffs    [util_field $rpt "CLB Registers"]
+#     set brams  [util_field $rpt "Block RAM Tile"]
+#     set dsps   [util_field $rpt "DSPs"]
+#     set lutram [util_field $rpt "LUT as Memory"]
+# 
+#     set wns 0.0
+#     set fmax 0.0
+#     if {[llength [get_clocks -quiet]] > 0} {
+#         set tp [get_property SLACK [get_timing_paths -quiet -max_paths 1 -setup]]
+#         if {$tp ne ""} {
+#             set wns $tp
+#             set achieved [expr {$period - $wns}]
+#             if {$achieved > 0} { set fmax [expr {1000.0 / $achieved}] }
+#         }
+#     }
+# 
+#     puts $csv [format "%s,%s,%s,%s,%d,%d,%d,%d,%d,%.3f,%.1f" \
+#                $name $scheme $knob $knob_value $luts $ffs $brams $dsps $lutram $wns $fmax]
+#     flush $csv
+# 
+#     puts "  -> LUT=$luts  FF=$ffs  BRAM=$brams  LUTRAM=$lutram  WNS=${wns}ns  Fmax=${fmax}MHz"
+#     close_project
+# }
+# foreach md {256 512 1024} {
+#     run_one $csv $part $period $rtl_dir $out_dir \
+#         "stamp_ctrl_m$md" "STAMP (static)" "metadata_depth" $md \
+#         stamp_based_memory_controller {memory/stamp_based_memory_controller.sv} \
+#         [list ADDR_WIDTH 32 DATA_WIDTH 32 SPAD_DEPTH 4096 METADATA_DEPTH $md]
+# }
+  Skipping stamp_ctrl_m256 (already in area_results.csv)
+  Skipping stamp_ctrl_m512 (already in area_results.csv)
+  Skipping stamp_ctrl_m1024 (already in area_results.csv)
+# foreach np {128 256 512} {
+#     set vpn [expr {int(ceil(log($np)/log(2)))}]
+#     run_one $csv $part $period $rtl_dir $out_dir \
+#         "paged_mgmt_p$np" "PAGED (dynamic)" "num_pages" $np \
+#         paged_mgmt_wrap {memory/paged_table.v paged_mgmt_wrap.sv} \
+#         [list N_PORTS 4 NUM_PAGES $np VPN_WIDTH $vpn PPN_WIDTH 20]
+# }
+  Skipping paged_mgmt_p128 (already in area_results.csv)
+  Skipping paged_mgmt_p256 (already in area_results.csv)
+  Skipping paged_mgmt_p512 (already in area_results.csv)
+# set spad_depth 256
+# foreach nb {1 2 4 8 16} {
+#     run_one $csv $part $period $rtl_dir $out_dir \
+#         "scratchpad_b$nb" "Shared scratchpad" "num_banks" $nb \
+#         scratchpad_ram {memory/scratchpad_ram.sv} \
+#         [list DATA_WIDTH 32 DEPTH $spad_depth N_PORTS 5 NUM_BANKS $nb]
+# }
+
+==========================================================
+  Synthesising scratchpad_b1  (top = scratchpad_ram)
+==========================================================
+Command: synth_design -top scratchpad_ram -part xczu7ev-ffvc1156-2-e -mode out_of_context -generic {DATA_WIDTH=32 DEPTH=256 N_PORTS=5 NUM_BANKS=1} -no_iobuf
+Starting synth_design
+Attempting to get a license for feature 'Synthesis' and/or device 'xczu7ev'
+INFO: [Common 17-349] Got license for feature 'Synthesis' and/or device 'xczu7ev'
+INFO: [Synth 8-7079] Multithreading enabled for synth_design using a maximum of 7 processes.
+INFO: [Synth 8-7078] Launching helper process for spawning children vivado processes
+INFO: [Synth 8-7075] Helper process launched with PID 16079
+---------------------------------------------------------------------------------
+Starting Synthesize : Time (s): cpu = 00:00:04 ; elapsed = 00:00:04 . Memory (MB): peak = 2064.754 ; gain = 435.922 ; free physical = 10199 ; free virtual = 14376
+---------------------------------------------------------------------------------
+INFO: [Synth 8-6157] synthesizing module 'scratchpad_ram' [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/scratchpad_ram.sv:27]
+	Parameter DATA_WIDTH bound to: 32'sb00000000000000000000000000100000 
+	Parameter DEPTH bound to: 32'sb00000000000000000000000100000000 
+	Parameter N_PORTS bound to: 32'sb00000000000000000000000000000101 
+	Parameter NUM_BANKS bound to: 32'sb00000000000000000000000000000001 
+INFO: [Synth 8-6155] done synthesizing module 'scratchpad_ram' (0#1) [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/scratchpad_ram.sv:27]
+WARNING: [Synth 8-4767] Trying to implement RAM ' ' in registers. Block RAM or DRAM implementation is not possible; see log for reasons. [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/scratchpad_ram.sv:77]
+	1: Invalid write to RAM. 
+	2: Invalid write to RAM. 
+	3: Unable to determine number of words or word size in RAM. 
+	4: No valid clock found for write to RAM. 
+WARNING: [Synth 8-4767] Trying to implement RAM ' ' in registers. Block RAM or DRAM implementation is not possible; see log for reasons. [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/scratchpad_ram.sv:77]
+	1: RAM has multiple writes via different ports in same process. If RAM inferencing intended, write to one port per process. 
+	2: Invalid write to RAM. 
+	3: Invalid write to RAM. 
+	4: Invalid write to RAM. 
+	5: Unable to determine number of words or word size in RAM. 
+	6: No valid clock found for write to RAM. 
+WARNING: [Synth 8-4767] Trying to implement RAM 'g_flat.mem_reg' in registers. Block RAM or DRAM implementation is not possible; see log for reasons. [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/scratchpad_ram.sv:77]
+Reason is one or more of the following :
+	1: RAM has multiple writes via different ports in same process. If RAM inferencing intended, write to one port per process. 
+	2: Invalid write to RAM. 
+	3: Invalid write to RAM. 
+	4: No valid clock found for write to RAM. 
+WARNING: [Synth 8-3917] design scratchpad_ram has port bank_conflict_detected driven by constant 0
+WARNING: [Synth 8-3917] design scratchpad_ram has port stats_bank_conflicts[31] driven by constant 0
+WARNING: [Synth 8-3917] design scratchpad_ram has port stats_bank_conflicts[30] driven by constant 0
+WARNING: [Synth 8-3917] design scratchpad_ram has port stats_bank_conflicts[29] driven by constant 0
+WARNING: [Synth 8-3917] design scratchpad_ram has port stats_bank_conflicts[28] driven by constant 0
+WARNING: [Synth 8-3917] design scratchpad_ram has port stats_bank_conflicts[27] driven by constant 0
+WARNING: [Synth 8-3917] design scratchpad_ram has port stats_bank_conflicts[26] driven by constant 0
+WARNING: [Synth 8-3917] design scratchpad_ram has port stats_bank_conflicts[25] driven by constant 0
+WARNING: [Synth 8-3917] design scratchpad_ram has port stats_bank_conflicts[24] driven by constant 0
+WARNING: [Synth 8-3917] design scratchpad_ram has port stats_bank_conflicts[23] driven by constant 0
+WARNING: [Synth 8-3917] design scratchpad_ram has port stats_bank_conflicts[22] driven by constant 0
+WARNING: [Synth 8-3917] design scratchpad_ram has port stats_bank_conflicts[21] driven by constant 0
+WARNING: [Synth 8-3917] design scratchpad_ram has port stats_bank_conflicts[20] driven by constant 0
+WARNING: [Synth 8-3917] design scratchpad_ram has port stats_bank_conflicts[19] driven by constant 0
+WARNING: [Synth 8-3917] design scratchpad_ram has port stats_bank_conflicts[18] driven by constant 0
+WARNING: [Synth 8-3917] design scratchpad_ram has port stats_bank_conflicts[17] driven by constant 0
+WARNING: [Synth 8-3917] design scratchpad_ram has port stats_bank_conflicts[16] driven by constant 0
+WARNING: [Synth 8-3917] design scratchpad_ram has port stats_bank_conflicts[15] driven by constant 0
+WARNING: [Synth 8-3917] design scratchpad_ram has port stats_bank_conflicts[14] driven by constant 0
+WARNING: [Synth 8-3917] design scratchpad_ram has port stats_bank_conflicts[13] driven by constant 0
+WARNING: [Synth 8-3917] design scratchpad_ram has port stats_bank_conflicts[12] driven by constant 0
+WARNING: [Synth 8-3917] design scratchpad_ram has port stats_bank_conflicts[11] driven by constant 0
+WARNING: [Synth 8-3917] design scratchpad_ram has port stats_bank_conflicts[10] driven by constant 0
+WARNING: [Synth 8-3917] design scratchpad_ram has port stats_bank_conflicts[9] driven by constant 0
+WARNING: [Synth 8-3917] design scratchpad_ram has port stats_bank_conflicts[8] driven by constant 0
+WARNING: [Synth 8-3917] design scratchpad_ram has port stats_bank_conflicts[7] driven by constant 0
+WARNING: [Synth 8-3917] design scratchpad_ram has port stats_bank_conflicts[6] driven by constant 0
+WARNING: [Synth 8-3917] design scratchpad_ram has port stats_bank_conflicts[5] driven by constant 0
+WARNING: [Synth 8-3917] design scratchpad_ram has port stats_bank_conflicts[4] driven by constant 0
+WARNING: [Synth 8-3917] design scratchpad_ram has port stats_bank_conflicts[3] driven by constant 0
+WARNING: [Synth 8-3917] design scratchpad_ram has port stats_bank_conflicts[2] driven by constant 0
+WARNING: [Synth 8-3917] design scratchpad_ram has port stats_bank_conflicts[1] driven by constant 0
+WARNING: [Synth 8-3917] design scratchpad_ram has port stats_bank_conflicts[0] driven by constant 0
+WARNING: [Synth 8-3917] design scratchpad_ram has port stats_bank_conflict_stall_cycles[31] driven by constant 0
+WARNING: [Synth 8-3917] design scratchpad_ram has port stats_bank_conflict_stall_cycles[30] driven by constant 0
+WARNING: [Synth 8-3917] design scratchpad_ram has port stats_bank_conflict_stall_cycles[29] driven by constant 0
+WARNING: [Synth 8-3917] design scratchpad_ram has port stats_bank_conflict_stall_cycles[28] driven by constant 0
+WARNING: [Synth 8-3917] design scratchpad_ram has port stats_bank_conflict_stall_cycles[27] driven by constant 0
+WARNING: [Synth 8-3917] design scratchpad_ram has port stats_bank_conflict_stall_cycles[26] driven by constant 0
+WARNING: [Synth 8-3917] design scratchpad_ram has port stats_bank_conflict_stall_cycles[25] driven by constant 0
+WARNING: [Synth 8-3917] design scratchpad_ram has port stats_bank_conflict_stall_cycles[24] driven by constant 0
+WARNING: [Synth 8-3917] design scratchpad_ram has port stats_bank_conflict_stall_cycles[23] driven by constant 0
+WARNING: [Synth 8-3917] design scratchpad_ram has port stats_bank_conflict_stall_cycles[22] driven by constant 0
+WARNING: [Synth 8-3917] design scratchpad_ram has port stats_bank_conflict_stall_cycles[21] driven by constant 0
+WARNING: [Synth 8-3917] design scratchpad_ram has port stats_bank_conflict_stall_cycles[20] driven by constant 0
+WARNING: [Synth 8-3917] design scratchpad_ram has port stats_bank_conflict_stall_cycles[19] driven by constant 0
+WARNING: [Synth 8-3917] design scratchpad_ram has port stats_bank_conflict_stall_cycles[18] driven by constant 0
+WARNING: [Synth 8-3917] design scratchpad_ram has port stats_bank_conflict_stall_cycles[17] driven by constant 0
+WARNING: [Synth 8-3917] design scratchpad_ram has port stats_bank_conflict_stall_cycles[16] driven by constant 0
+WARNING: [Synth 8-3917] design scratchpad_ram has port stats_bank_conflict_stall_cycles[15] driven by constant 0
+WARNING: [Synth 8-3917] design scratchpad_ram has port stats_bank_conflict_stall_cycles[14] driven by constant 0
+WARNING: [Synth 8-3917] design scratchpad_ram has port stats_bank_conflict_stall_cycles[13] driven by constant 0
+WARNING: [Synth 8-3917] design scratchpad_ram has port stats_bank_conflict_stall_cycles[12] driven by constant 0
+WARNING: [Synth 8-3917] design scratchpad_ram has port stats_bank_conflict_stall_cycles[11] driven by constant 0
+WARNING: [Synth 8-3917] design scratchpad_ram has port stats_bank_conflict_stall_cycles[10] driven by constant 0
+WARNING: [Synth 8-3917] design scratchpad_ram has port stats_bank_conflict_stall_cycles[9] driven by constant 0
+WARNING: [Synth 8-3917] design scratchpad_ram has port stats_bank_conflict_stall_cycles[8] driven by constant 0
+WARNING: [Synth 8-3917] design scratchpad_ram has port stats_bank_conflict_stall_cycles[7] driven by constant 0
+WARNING: [Synth 8-3917] design scratchpad_ram has port stats_bank_conflict_stall_cycles[6] driven by constant 0
+WARNING: [Synth 8-3917] design scratchpad_ram has port stats_bank_conflict_stall_cycles[5] driven by constant 0
+WARNING: [Synth 8-3917] design scratchpad_ram has port stats_bank_conflict_stall_cycles[4] driven by constant 0
+WARNING: [Synth 8-3917] design scratchpad_ram has port stats_bank_conflict_stall_cycles[3] driven by constant 0
+WARNING: [Synth 8-3917] design scratchpad_ram has port stats_bank_conflict_stall_cycles[2] driven by constant 0
+WARNING: [Synth 8-3917] design scratchpad_ram has port stats_bank_conflict_stall_cycles[1] driven by constant 0
+WARNING: [Synth 8-3917] design scratchpad_ram has port stats_bank_conflict_stall_cycles[0] driven by constant 0
+---------------------------------------------------------------------------------
+Finished Synthesize : Time (s): cpu = 00:00:06 ; elapsed = 00:00:06 . Memory (MB): peak = 2224.723 ; gain = 595.891 ; free physical = 10050 ; free virtual = 14229
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Constraint Validation : Time (s): cpu = 00:00:07 ; elapsed = 00:00:07 . Memory (MB): peak = 2224.723 ; gain = 595.891 ; free physical = 10102 ; free virtual = 14275
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Loading Part and Timing Information
+---------------------------------------------------------------------------------
+Loading part: xczu7ev-ffvc1156-2-e
+INFO: [Synth 8-6742] Reading net delay rules and data
+INFO: [Device 21-403] Loading part xczu7ev-ffvc1156-2-e
+---------------------------------------------------------------------------------
+Finished Loading Part and Timing Information : Time (s): cpu = 00:00:07 ; elapsed = 00:00:07 . Memory (MB): peak = 2224.723 ; gain = 595.891 ; free physical = 10102 ; free virtual = 14275
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished RTL Optimization Phase 2 : Time (s): cpu = 00:00:32 ; elapsed = 00:00:26 . Memory (MB): peak = 3180.363 ; gain = 1551.531 ; free physical = 9243 ; free virtual = 13426
+---------------------------------------------------------------------------------
+No constraint files found.
+---------------------------------------------------------------------------------
+Start RTL Component Statistics 
+---------------------------------------------------------------------------------
+Detailed RTL Component Info : 
++---Registers : 
+	               32 Bit    Registers := 261   
+	                5 Bit    Registers := 1     
++---Muxes : 
+	   2 Input 8192 Bit        Muxes := 3     
+	   2 Input   32 Bit        Muxes := 5     
+---------------------------------------------------------------------------------
+Finished RTL Component Statistics 
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Part Resource Summary
+---------------------------------------------------------------------------------
+Part Resources:
+DSPs: 1728 (col length:144)
+BRAMs: 624 (col length: RAMB18 144 RAMB36 72)
+---------------------------------------------------------------------------------
+Finished Part Resource Summary
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Cross Boundary and Area Optimization
+---------------------------------------------------------------------------------
+WARNING: [Synth 8-3917] design scratchpad_ram has port bank_conflict_detected driven by constant 0
+WARNING: [Synth 8-3917] design scratchpad_ram has port stats_bank_conflicts[31] driven by constant 0
+WARNING: [Synth 8-3917] design scratchpad_ram has port stats_bank_conflicts[30] driven by constant 0
+WARNING: [Synth 8-3917] design scratchpad_ram has port stats_bank_conflicts[29] driven by constant 0
+WARNING: [Synth 8-3917] design scratchpad_ram has port stats_bank_conflicts[28] driven by constant 0
+WARNING: [Synth 8-3917] design scratchpad_ram has port stats_bank_conflicts[27] driven by constant 0
+WARNING: [Synth 8-3917] design scratchpad_ram has port stats_bank_conflicts[26] driven by constant 0
+WARNING: [Synth 8-3917] design scratchpad_ram has port stats_bank_conflicts[25] driven by constant 0
+WARNING: [Synth 8-3917] design scratchpad_ram has port stats_bank_conflicts[24] driven by constant 0
+WARNING: [Synth 8-3917] design scratchpad_ram has port stats_bank_conflicts[23] driven by constant 0
+WARNING: [Synth 8-3917] design scratchpad_ram has port stats_bank_conflicts[22] driven by constant 0
+WARNING: [Synth 8-3917] design scratchpad_ram has port stats_bank_conflicts[21] driven by constant 0
+WARNING: [Synth 8-3917] design scratchpad_ram has port stats_bank_conflicts[20] driven by constant 0
+WARNING: [Synth 8-3917] design scratchpad_ram has port stats_bank_conflicts[19] driven by constant 0
+WARNING: [Synth 8-3917] design scratchpad_ram has port stats_bank_conflicts[18] driven by constant 0
+WARNING: [Synth 8-3917] design scratchpad_ram has port stats_bank_conflicts[17] driven by constant 0
+WARNING: [Synth 8-3917] design scratchpad_ram has port stats_bank_conflicts[16] driven by constant 0
+WARNING: [Synth 8-3917] design scratchpad_ram has port stats_bank_conflicts[15] driven by constant 0
+WARNING: [Synth 8-3917] design scratchpad_ram has port stats_bank_conflicts[14] driven by constant 0
+WARNING: [Synth 8-3917] design scratchpad_ram has port stats_bank_conflicts[13] driven by constant 0
+WARNING: [Synth 8-3917] design scratchpad_ram has port stats_bank_conflicts[12] driven by constant 0
+WARNING: [Synth 8-3917] design scratchpad_ram has port stats_bank_conflicts[11] driven by constant 0
+WARNING: [Synth 8-3917] design scratchpad_ram has port stats_bank_conflicts[10] driven by constant 0
+WARNING: [Synth 8-3917] design scratchpad_ram has port stats_bank_conflicts[9] driven by constant 0
+WARNING: [Synth 8-3917] design scratchpad_ram has port stats_bank_conflicts[8] driven by constant 0
+WARNING: [Synth 8-3917] design scratchpad_ram has port stats_bank_conflicts[7] driven by constant 0
+WARNING: [Synth 8-3917] design scratchpad_ram has port stats_bank_conflicts[6] driven by constant 0
+WARNING: [Synth 8-3917] design scratchpad_ram has port stats_bank_conflicts[5] driven by constant 0
+WARNING: [Synth 8-3917] design scratchpad_ram has port stats_bank_conflicts[4] driven by constant 0
+WARNING: [Synth 8-3917] design scratchpad_ram has port stats_bank_conflicts[3] driven by constant 0
+WARNING: [Synth 8-3917] design scratchpad_ram has port stats_bank_conflicts[2] driven by constant 0
+WARNING: [Synth 8-3917] design scratchpad_ram has port stats_bank_conflicts[1] driven by constant 0
+WARNING: [Synth 8-3917] design scratchpad_ram has port stats_bank_conflicts[0] driven by constant 0
+WARNING: [Synth 8-3917] design scratchpad_ram has port stats_bank_conflict_stall_cycles[31] driven by constant 0
+WARNING: [Synth 8-3917] design scratchpad_ram has port stats_bank_conflict_stall_cycles[30] driven by constant 0
+INFO: [Common 17-14] Message 'Synth 8-3917' appears 100 times and further instances of the messages will be disabled. Use the Tcl command set_msg_config to change the current settings.
+---------------------------------------------------------------------------------
+Finished Cross Boundary and Area Optimization : Time (s): cpu = 00:01:20 ; elapsed = 00:01:40 . Memory (MB): peak = 3211.688 ; gain = 1582.855 ; free physical = 935 ; free virtual = 5108
+---------------------------------------------------------------------------------
+No constraint files found.
+---------------------------------------------------------------------------------
+Start Timing Optimization
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Timing Optimization : Time (s): cpu = 00:04:01 ; elapsed = 00:01:47 . Memory (MB): peak = 3211.688 ; gain = 1582.855 ; free physical = 4715 ; free virtual = 8889
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Technology Mapping
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Technology Mapping : Time (s): cpu = 00:04:11 ; elapsed = 00:02:07 . Memory (MB): peak = 3277.207 ; gain = 1648.375 ; free physical = 619 ; free virtual = 4796
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start IO Insertion
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Flattening Before IO Insertion
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Flattening Before IO Insertion
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Final Netlist Cleanup
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Final Netlist Cleanup
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished IO Insertion : Time (s): cpu = 00:04:19 ; elapsed = 00:02:15 . Memory (MB): peak = 3288.160 ; gain = 1659.328 ; free physical = 638 ; free virtual = 4815
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Renaming Generated Instances
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Renaming Generated Instances : Time (s): cpu = 00:04:19 ; elapsed = 00:02:16 . Memory (MB): peak = 3288.160 ; gain = 1659.328 ; free physical = 611 ; free virtual = 4788
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Rebuilding User Hierarchy
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Rebuilding User Hierarchy : Time (s): cpu = 00:04:20 ; elapsed = 00:02:17 . Memory (MB): peak = 3292.160 ; gain = 1663.328 ; free physical = 607 ; free virtual = 4784
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Renaming Generated Ports
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Renaming Generated Ports : Time (s): cpu = 00:04:20 ; elapsed = 00:02:17 . Memory (MB): peak = 3292.160 ; gain = 1663.328 ; free physical = 606 ; free virtual = 4783
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Handling Custom Attributes
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Handling Custom Attributes : Time (s): cpu = 00:04:28 ; elapsed = 00:02:24 . Memory (MB): peak = 3292.160 ; gain = 1663.328 ; free physical = 625 ; free virtual = 4803
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Renaming Generated Nets
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Renaming Generated Nets : Time (s): cpu = 00:04:28 ; elapsed = 00:02:25 . Memory (MB): peak = 3292.160 ; gain = 1663.328 ; free physical = 625 ; free virtual = 4803
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Writing Synthesis Report
+---------------------------------------------------------------------------------
+
+Report BlackBoxes: 
++-+--------------+----------+
+| |BlackBox name |Instances |
++-+--------------+----------+
++-+--------------+----------+
+
+Report Cell Usage: 
++------+------+------+
+|      |Cell  |Count |
++------+------+------+
+|1     |LUT1  |     1|
+|2     |LUT2  |   104|
+|3     |LUT3  | 12400|
+|4     |LUT4  |  4363|
+|5     |LUT5  |  8959|
+|6     |LUT6  | 52117|
+|7     |MUXF7 |  7616|
+|8     |MUXF8 |  3808|
+|9     |FDCE  |   165|
+|10    |FDRE  |  8192|
++------+------+------+
+
+Report Instance Areas: 
++------+---------+-------+------+
+|      |Instance |Module |Cells |
++------+---------+-------+------+
+|1     |top      |       | 97725|
++------+---------+-------+------+
+---------------------------------------------------------------------------------
+Finished Writing Synthesis Report : Time (s): cpu = 00:04:28 ; elapsed = 00:02:25 . Memory (MB): peak = 3292.160 ; gain = 1663.328 ; free physical = 625 ; free virtual = 4803
+---------------------------------------------------------------------------------
+Synthesis finished with 0 errors, 0 critical warnings and 133 warnings.
+Synthesis Optimization Runtime : Time (s): cpu = 00:04:28 ; elapsed = 00:02:28 . Memory (MB): peak = 3296.074 ; gain = 1667.242 ; free physical = 9292 ; free virtual = 13470
+Synthesis Optimization Complete : Time (s): cpu = 00:04:28 ; elapsed = 00:02:28 . Memory (MB): peak = 3296.074 ; gain = 1667.242 ; free physical = 9310 ; free virtual = 13477
+INFO: [Project 1-571] Translating synthesized netlist
+Netlist sorting complete. Time (s): cpu = 00:00:00.55 ; elapsed = 00:00:00.55 . Memory (MB): peak = 3381.965 ; gain = 0.000 ; free physical = 9252 ; free virtual = 13419
+INFO: [Netlist 29-17] Analyzing 11424 Unisim elements for replacement
+INFO: [Netlist 29-28] Unisim Transformation completed in 0 CPU seconds
+WARNING: [Netlist 29-101] Netlist 'scratchpad_ram' is not ideal for floorplanning, since the cellview 'scratchpad_ram' contains a large number of primitives.  Please consider enabling hierarchy in synthesis if you want to do floorplanning.
+INFO: [Project 1-570] Preparing netlist for logic optimization
+INFO: [Opt 31-138] Pushed 0 inverter(s) to 0 load pin(s).
+Netlist sorting complete. Time (s): cpu = 00:00:00.02 ; elapsed = 00:00:00.02 . Memory (MB): peak = 3532.840 ; gain = 0.000 ; free physical = 9156 ; free virtual = 13324
+INFO: [Project 1-111] Unisim Transformation Summary:
+No Unisim elements were transformed.
+
+Synth Design complete | Checksum: c2b120ee
+INFO: [Common 17-83] Releasing license: Synthesis
+16 Infos, 104 Warnings, 0 Critical Warnings and 0 Errors encountered.
+synth_design completed successfully
+synth_design: Time (s): cpu = 00:04:42 ; elapsed = 00:02:40 . Memory (MB): peak = 3532.875 ; gain = 1904.043 ; free physical = 9156 ; free virtual = 13324
+INFO: [Common 17-2834] synth_design peak Physical Memory [PSS] (MB): overall = 10729.848; main = 2909.812; forked = 8537.984
+INFO: [Common 17-2834] synth_design peak Virtual Memory [VSS] (MB): overall = 19612.766; main = 3532.844; forked = 16404.992
+create_clock: Time (s): cpu = 00:00:05 ; elapsed = 00:00:05 . Memory (MB): peak = 3532.875 ; gain = 0.000 ; free physical = 9156 ; free virtual = 13323
+  -> LUT=71388  FF=8357  BRAM=0  LUTRAM=0  WNS=6.341ns  Fmax=273.2987154960372MHz
+
+==========================================================
+  Synthesising scratchpad_b2  (top = scratchpad_ram)
+==========================================================
+Command: synth_design -top scratchpad_ram -part xczu7ev-ffvc1156-2-e -mode out_of_context -generic {DATA_WIDTH=32 DEPTH=256 N_PORTS=5 NUM_BANKS=2} -no_iobuf
+Starting synth_design
+Attempting to get a license for feature 'Synthesis' and/or device 'xczu7ev'
+INFO: [Common 17-349] Got license for feature 'Synthesis' and/or device 'xczu7ev'
+INFO: [Synth 8-7079] Multithreading enabled for synth_design using a maximum of 7 processes.
+---------------------------------------------------------------------------------
+Starting Synthesize : Time (s): cpu = 00:00:04 ; elapsed = 00:00:04 . Memory (MB): peak = 4661.770 ; gain = 0.000 ; free physical = 7979 ; free virtual = 12144
+---------------------------------------------------------------------------------
+INFO: [Synth 8-6157] synthesizing module 'scratchpad_ram' [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/scratchpad_ram.sv:27]
+	Parameter DATA_WIDTH bound to: 32'sb00000000000000000000000000100000 
+	Parameter DEPTH bound to: 32'sb00000000000000000000000100000000 
+	Parameter N_PORTS bound to: 32'sb00000000000000000000000000000101 
+	Parameter NUM_BANKS bound to: 32'sb00000000000000000000000000000010 
+INFO: [Synth 8-6155] done synthesizing module 'scratchpad_ram' (0#1) [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/scratchpad_ram.sv:27]
+---------------------------------------------------------------------------------
+Finished Synthesize : Time (s): cpu = 00:00:07 ; elapsed = 00:00:07 . Memory (MB): peak = 4661.770 ; gain = 0.000 ; free physical = 7962 ; free virtual = 12129
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Constraint Validation : Time (s): cpu = 00:00:07 ; elapsed = 00:00:08 . Memory (MB): peak = 4661.770 ; gain = 0.000 ; free physical = 8016 ; free virtual = 12184
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Loading Part and Timing Information
+---------------------------------------------------------------------------------
+Loading part: xczu7ev-ffvc1156-2-e
+INFO: [Synth 8-6742] Reading net delay rules and data
+---------------------------------------------------------------------------------
+Finished Loading Part and Timing Information : Time (s): cpu = 00:00:07 ; elapsed = 00:00:08 . Memory (MB): peak = 4661.770 ; gain = 0.000 ; free physical = 8016 ; free virtual = 12184
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished RTL Optimization Phase 2 : Time (s): cpu = 00:00:27 ; elapsed = 00:00:27 . Memory (MB): peak = 4661.770 ; gain = 0.000 ; free physical = 8150 ; free virtual = 12321
+---------------------------------------------------------------------------------
+No constraint files found.
+---------------------------------------------------------------------------------
+Start RTL Component Statistics 
+---------------------------------------------------------------------------------
+Detailed RTL Component Info : 
++---Adders : 
+	   2 Input   32 Bit       Adders := 1     
+	   5 Input    3 Bit       Adders := 1     
++---Registers : 
+	               32 Bit    Registers := 262   
+	                5 Bit    Registers := 1     
++---Muxes : 
+	   2 Input   32 Bit        Muxes := 2688  
+	   2 Input    5 Bit        Muxes := 5     
+	   2 Input    1 Bit        Muxes := 2062  
+	   5 Input    1 Bit        Muxes := 1     
+---------------------------------------------------------------------------------
+Finished RTL Component Statistics 
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Part Resource Summary
+---------------------------------------------------------------------------------
+Part Resources:
+DSPs: 1728 (col length:144)
+BRAMs: 624 (col length: RAMB18 144 RAMB36 72)
+---------------------------------------------------------------------------------
+Finished Part Resource Summary
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Cross Boundary and Area Optimization
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Cross Boundary and Area Optimization : Time (s): cpu = 00:01:09 ; elapsed = 00:01:45 . Memory (MB): peak = 4661.770 ; gain = 0.000 ; free physical = 230 ; free virtual = 4313
+---------------------------------------------------------------------------------
+No constraint files found.
+---------------------------------------------------------------------------------
+Start Timing Optimization
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Timing Optimization : Time (s): cpu = 00:03:56 ; elapsed = 00:01:51 . Memory (MB): peak = 4661.770 ; gain = 0.000 ; free physical = 3695 ; free virtual = 7778
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Technology Mapping
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Technology Mapping : Time (s): cpu = 00:04:09 ; elapsed = 00:02:11 . Memory (MB): peak = 4661.770 ; gain = 0.000 ; free physical = 196 ; free virtual = 3816
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start IO Insertion
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Flattening Before IO Insertion
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Flattening Before IO Insertion
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Final Netlist Cleanup
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Final Netlist Cleanup
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished IO Insertion : Time (s): cpu = 00:04:15 ; elapsed = 00:02:18 . Memory (MB): peak = 4661.770 ; gain = 0.000 ; free physical = 198 ; free virtual = 3821
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Renaming Generated Instances
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Renaming Generated Instances : Time (s): cpu = 00:04:15 ; elapsed = 00:02:18 . Memory (MB): peak = 4661.770 ; gain = 0.000 ; free physical = 198 ; free virtual = 3821
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Rebuilding User Hierarchy
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Rebuilding User Hierarchy : Time (s): cpu = 00:04:16 ; elapsed = 00:02:19 . Memory (MB): peak = 4661.770 ; gain = 0.000 ; free physical = 199 ; free virtual = 3822
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Renaming Generated Ports
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Renaming Generated Ports : Time (s): cpu = 00:04:16 ; elapsed = 00:02:19 . Memory (MB): peak = 4661.770 ; gain = 0.000 ; free physical = 199 ; free virtual = 3822
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Handling Custom Attributes
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Handling Custom Attributes : Time (s): cpu = 00:04:24 ; elapsed = 00:02:27 . Memory (MB): peak = 4661.770 ; gain = 0.000 ; free physical = 207 ; free virtual = 3831
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Renaming Generated Nets
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Renaming Generated Nets : Time (s): cpu = 00:04:24 ; elapsed = 00:02:27 . Memory (MB): peak = 4661.770 ; gain = 0.000 ; free physical = 207 ; free virtual = 3831
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Writing Synthesis Report
+---------------------------------------------------------------------------------
+
+Report BlackBoxes: 
++-+--------------+----------+
+| |BlackBox name |Instances |
++-+--------------+----------+
++-+--------------+----------+
+
+Report Cell Usage: 
++------+-------+------+
+|      |Cell   |Count |
++------+-------+------+
+|1     |CARRY8 |     8|
+|2     |LUT1   |     2|
+|3     |LUT2   |  2595|
+|4     |LUT3   |  7842|
+|5     |LUT4   |  1867|
+|6     |LUT5   |  7902|
+|7     |LUT6   | 24181|
+|8     |MUXF7  |  4320|
+|9     |MUXF8  |   800|
+|10    |FDCE   |   229|
+|11    |FDRE   |  8192|
++------+-------+------+
+---------------------------------------------------------------------------------
+Finished Writing Synthesis Report : Time (s): cpu = 00:04:24 ; elapsed = 00:02:27 . Memory (MB): peak = 4661.770 ; gain = 0.000 ; free physical = 207 ; free virtual = 3831
+---------------------------------------------------------------------------------
+Synthesis finished with 0 errors, 0 critical warnings and 0 warnings.
+Synthesis Optimization Runtime : Time (s): cpu = 00:04:24 ; elapsed = 00:02:28 . Memory (MB): peak = 4661.770 ; gain = 0.000 ; free physical = 8869 ; free virtual = 12494
+Synthesis Optimization Complete : Time (s): cpu = 00:04:24 ; elapsed = 00:02:28 . Memory (MB): peak = 4661.770 ; gain = 0.000 ; free physical = 8879 ; free virtual = 12495
+INFO: [Project 1-571] Translating synthesized netlist
+Netlist sorting complete. Time (s): cpu = 00:00:00.32 ; elapsed = 00:00:00.32 . Memory (MB): peak = 4661.770 ; gain = 0.000 ; free physical = 8869 ; free virtual = 12490
+INFO: [Netlist 29-17] Analyzing 5128 Unisim elements for replacement
+INFO: [Netlist 29-28] Unisim Transformation completed in 0 CPU seconds
+WARNING: [Netlist 29-101] Netlist 'scratchpad_ram' is not ideal for floorplanning, since the cellview 'scratchpad_ram' contains a large number of primitives.  Please consider enabling hierarchy in synthesis if you want to do floorplanning.
+INFO: [Project 1-570] Preparing netlist for logic optimization
+INFO: [Opt 31-138] Pushed 0 inverter(s) to 0 load pin(s).
+Netlist sorting complete. Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00.01 . Memory (MB): peak = 4661.770 ; gain = 0.000 ; free physical = 8861 ; free virtual = 12498
+INFO: [Project 1-111] Unisim Transformation Summary:
+No Unisim elements were transformed.
+
+Synth Design complete | Checksum: ee5b1186
+INFO: [Common 17-83] Releasing license: Synthesis
+12 Infos, 1 Warnings, 0 Critical Warnings and 0 Errors encountered.
+synth_design completed successfully
+synth_design: Time (s): cpu = 00:04:36 ; elapsed = 00:02:37 . Memory (MB): peak = 4661.770 ; gain = 0.000 ; free physical = 8862 ; free virtual = 12499
+INFO: [Common 17-2834] synth_design peak Physical Memory [PSS] (MB): overall = 11935.700; main = 3752.367; forked = 8636.452
+INFO: [Common 17-2834] synth_design peak Virtual Memory [VSS] (MB): overall = 21099.859; main = 4596.094; forked = 16511.770
+create_clock: Time (s): cpu = 00:00:05 ; elapsed = 00:00:05 . Memory (MB): peak = 4661.770 ; gain = 0.000 ; free physical = 8860 ; free virtual = 12505
+  -> LUT=38186  FF=8421  BRAM=0  LUTRAM=0  WNS=8.834ns  Fmax=857.632933104631MHz
+
+==========================================================
+  Synthesising scratchpad_b4  (top = scratchpad_ram)
+==========================================================
+Command: synth_design -top scratchpad_ram -part xczu7ev-ffvc1156-2-e -mode out_of_context -generic {DATA_WIDTH=32 DEPTH=256 N_PORTS=5 NUM_BANKS=4} -no_iobuf
+Starting synth_design
+Attempting to get a license for feature 'Synthesis' and/or device 'xczu7ev'
+INFO: [Common 17-349] Got license for feature 'Synthesis' and/or device 'xczu7ev'
+INFO: [Synth 8-7079] Multithreading enabled for synth_design using a maximum of 7 processes.
+---------------------------------------------------------------------------------
+Starting Synthesize : Time (s): cpu = 00:00:04 ; elapsed = 00:00:04 . Memory (MB): peak = 4693.785 ; gain = 0.000 ; free physical = 8411 ; free virtual = 12176
+---------------------------------------------------------------------------------
+INFO: [Synth 8-6157] synthesizing module 'scratchpad_ram' [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/scratchpad_ram.sv:27]
+	Parameter DATA_WIDTH bound to: 32'sb00000000000000000000000000100000 
+	Parameter DEPTH bound to: 32'sb00000000000000000000000100000000 
+	Parameter N_PORTS bound to: 32'sb00000000000000000000000000000101 
+	Parameter NUM_BANKS bound to: 32'sb00000000000000000000000000000100 
+INFO: [Synth 8-6155] done synthesizing module 'scratchpad_ram' (0#1) [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/scratchpad_ram.sv:27]
+---------------------------------------------------------------------------------
+Finished Synthesize : Time (s): cpu = 00:00:07 ; elapsed = 00:00:07 . Memory (MB): peak = 4693.785 ; gain = 0.000 ; free physical = 8411 ; free virtual = 12182
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Constraint Validation : Time (s): cpu = 00:00:08 ; elapsed = 00:00:08 . Memory (MB): peak = 4693.785 ; gain = 0.000 ; free physical = 8442 ; free virtual = 12213
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Loading Part and Timing Information
+---------------------------------------------------------------------------------
+Loading part: xczu7ev-ffvc1156-2-e
+INFO: [Synth 8-6742] Reading net delay rules and data
+---------------------------------------------------------------------------------
+Finished Loading Part and Timing Information : Time (s): cpu = 00:00:08 ; elapsed = 00:00:08 . Memory (MB): peak = 4693.785 ; gain = 0.000 ; free physical = 8442 ; free virtual = 12213
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished RTL Optimization Phase 2 : Time (s): cpu = 00:00:23 ; elapsed = 00:00:23 . Memory (MB): peak = 4693.785 ; gain = 0.000 ; free physical = 8517 ; free virtual = 12292
+---------------------------------------------------------------------------------
+No constraint files found.
+---------------------------------------------------------------------------------
+Start RTL Component Statistics 
+---------------------------------------------------------------------------------
+Detailed RTL Component Info : 
++---Adders : 
+	   2 Input   32 Bit       Adders := 1     
+	   5 Input    3 Bit       Adders := 1     
++---Registers : 
+	               32 Bit    Registers := 262   
+	                5 Bit    Registers := 1     
++---Muxes : 
+	   2 Input   32 Bit        Muxes := 2100  
+	   4 Input   32 Bit        Muxes := 320   
+	   2 Input    5 Bit        Muxes := 5     
+	   2 Input    1 Bit        Muxes := 2446  
+	   5 Input    1 Bit        Muxes := 1     
+---------------------------------------------------------------------------------
+Finished RTL Component Statistics 
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Part Resource Summary
+---------------------------------------------------------------------------------
+Part Resources:
+DSPs: 1728 (col length:144)
+BRAMs: 624 (col length: RAMB18 144 RAMB36 72)
+---------------------------------------------------------------------------------
+Finished Part Resource Summary
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Cross Boundary and Area Optimization
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Cross Boundary and Area Optimization : Time (s): cpu = 00:00:50 ; elapsed = 00:01:31 . Memory (MB): peak = 4693.785 ; gain = 0.000 ; free physical = 750 ; free virtual = 4552
+---------------------------------------------------------------------------------
+No constraint files found.
+---------------------------------------------------------------------------------
+Start Timing Optimization
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Timing Optimization : Time (s): cpu = 00:03:04 ; elapsed = 00:01:39 . Memory (MB): peak = 4693.785 ; gain = 0.000 ; free physical = 3972 ; free virtual = 7784
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Technology Mapping
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Technology Mapping : Time (s): cpu = 00:03:09 ; elapsed = 00:01:58 . Memory (MB): peak = 4693.785 ; gain = 0.000 ; free physical = 217 ; free virtual = 3779
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start IO Insertion
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Flattening Before IO Insertion
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Flattening Before IO Insertion
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Final Netlist Cleanup
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Final Netlist Cleanup
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished IO Insertion : Time (s): cpu = 00:03:15 ; elapsed = 00:02:04 . Memory (MB): peak = 4693.785 ; gain = 0.000 ; free physical = 219 ; free virtual = 3780
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Renaming Generated Instances
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Renaming Generated Instances : Time (s): cpu = 00:03:15 ; elapsed = 00:02:04 . Memory (MB): peak = 4693.785 ; gain = 0.000 ; free physical = 213 ; free virtual = 3774
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Rebuilding User Hierarchy
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Rebuilding User Hierarchy : Time (s): cpu = 00:03:16 ; elapsed = 00:02:05 . Memory (MB): peak = 4693.785 ; gain = 0.000 ; free physical = 215 ; free virtual = 3776
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Renaming Generated Ports
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Renaming Generated Ports : Time (s): cpu = 00:03:16 ; elapsed = 00:02:05 . Memory (MB): peak = 4693.785 ; gain = 0.000 ; free physical = 215 ; free virtual = 3776
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Handling Custom Attributes
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Handling Custom Attributes : Time (s): cpu = 00:03:25 ; elapsed = 00:02:15 . Memory (MB): peak = 4693.785 ; gain = 0.000 ; free physical = 231 ; free virtual = 3793
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Renaming Generated Nets
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Renaming Generated Nets : Time (s): cpu = 00:03:25 ; elapsed = 00:02:15 . Memory (MB): peak = 4693.785 ; gain = 0.000 ; free physical = 231 ; free virtual = 3793
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Writing Synthesis Report
+---------------------------------------------------------------------------------
+
+Report BlackBoxes: 
++-+--------------+----------+
+| |BlackBox name |Instances |
++-+--------------+----------+
++-+--------------+----------+
+
+Report Cell Usage: 
++------+-------+------+
+|      |Cell   |Count |
++------+-------+------+
+|1     |CARRY8 |     8|
+|2     |LUT1   |     2|
+|3     |LUT2   |   750|
+|4     |LUT3   |  1854|
+|5     |LUT4   |  5298|
+|6     |LUT5   | 19423|
+|7     |LUT6   | 19517|
+|8     |MUXF7  |  1056|
+|9     |MUXF8  |   256|
+|10    |FDCE   |   229|
+|11    |FDRE   |  8192|
++------+-------+------+
+---------------------------------------------------------------------------------
+Finished Writing Synthesis Report : Time (s): cpu = 00:03:25 ; elapsed = 00:02:15 . Memory (MB): peak = 4693.785 ; gain = 0.000 ; free physical = 231 ; free virtual = 3793
+---------------------------------------------------------------------------------
+Synthesis finished with 0 errors, 0 critical warnings and 0 warnings.
+Synthesis Optimization Runtime : Time (s): cpu = 00:03:25 ; elapsed = 00:02:17 . Memory (MB): peak = 4693.785 ; gain = 0.000 ; free physical = 8994 ; free virtual = 12555
+Synthesis Optimization Complete : Time (s): cpu = 00:03:25 ; elapsed = 00:02:17 . Memory (MB): peak = 4693.785 ; gain = 0.000 ; free physical = 9005 ; free virtual = 12559
+INFO: [Project 1-571] Translating synthesized netlist
+Netlist sorting complete. Time (s): cpu = 00:00:00.35 ; elapsed = 00:00:00.35 . Memory (MB): peak = 4693.785 ; gain = 0.000 ; free physical = 9008 ; free virtual = 12562
+INFO: [Netlist 29-17] Analyzing 1320 Unisim elements for replacement
+INFO: [Netlist 29-28] Unisim Transformation completed in 0 CPU seconds
+WARNING: [Netlist 29-101] Netlist 'scratchpad_ram' is not ideal for floorplanning, since the cellview 'scratchpad_ram' contains a large number of primitives.  Please consider enabling hierarchy in synthesis if you want to do floorplanning.
+INFO: [Project 1-570] Preparing netlist for logic optimization
+INFO: [Opt 31-138] Pushed 0 inverter(s) to 0 load pin(s).
+Netlist sorting complete. Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00.01 . Memory (MB): peak = 4693.785 ; gain = 0.000 ; free physical = 9012 ; free virtual = 12566
+INFO: [Project 1-111] Unisim Transformation Summary:
+No Unisim elements were transformed.
+
+Synth Design complete | Checksum: 15d4510d
+INFO: [Common 17-83] Releasing license: Synthesis
+12 Infos, 1 Warnings, 0 Critical Warnings and 0 Errors encountered.
+synth_design completed successfully
+synth_design: Time (s): cpu = 00:03:34 ; elapsed = 00:02:26 . Memory (MB): peak = 4693.785 ; gain = 0.000 ; free physical = 9012 ; free virtual = 12566
+INFO: [Common 17-2834] synth_design peak Physical Memory [PSS] (MB): overall = 11679.970; main = 3814.027; forked = 8321.377
+INFO: [Common 17-2834] synth_design peak Virtual Memory [VSS] (MB): overall = 20831.922; main = 4628.109; forked = 16211.820
+create_clock: Time (s): cpu = 00:00:05 ; elapsed = 00:00:05 . Memory (MB): peak = 4693.785 ; gain = 0.000 ; free physical = 9016 ; free virtual = 12570
+  -> LUT=44880  FF=8421  BRAM=0  LUTRAM=0  WNS=8.604ns  Fmax=716.3323782234953MHz
+
+==========================================================
+  Synthesising scratchpad_b8  (top = scratchpad_ram)
+==========================================================
+Command: synth_design -top scratchpad_ram -part xczu7ev-ffvc1156-2-e -mode out_of_context -generic {DATA_WIDTH=32 DEPTH=256 N_PORTS=5 NUM_BANKS=8} -no_iobuf
+Starting synth_design
+Attempting to get a license for feature 'Synthesis' and/or device 'xczu7ev'
+INFO: [Common 17-349] Got license for feature 'Synthesis' and/or device 'xczu7ev'
+INFO: [Synth 8-7079] Multithreading enabled for synth_design using a maximum of 7 processes.
+---------------------------------------------------------------------------------
+Starting Synthesize : Time (s): cpu = 00:00:04 ; elapsed = 00:00:04 . Memory (MB): peak = 4725.801 ; gain = 0.000 ; free physical = 8647 ; free virtual = 12201
+---------------------------------------------------------------------------------
+INFO: [Synth 8-6157] synthesizing module 'scratchpad_ram' [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/scratchpad_ram.sv:27]
+	Parameter DATA_WIDTH bound to: 32'sb00000000000000000000000000100000 
+	Parameter DEPTH bound to: 32'sb00000000000000000000000100000000 
+	Parameter N_PORTS bound to: 32'sb00000000000000000000000000000101 
+	Parameter NUM_BANKS bound to: 32'sb00000000000000000000000000001000 
+INFO: [Synth 8-6155] done synthesizing module 'scratchpad_ram' (0#1) [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/scratchpad_ram.sv:27]
+---------------------------------------------------------------------------------
+Finished Synthesize : Time (s): cpu = 00:00:07 ; elapsed = 00:00:07 . Memory (MB): peak = 4725.801 ; gain = 0.000 ; free physical = 8649 ; free virtual = 12207
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Constraint Validation : Time (s): cpu = 00:00:07 ; elapsed = 00:00:08 . Memory (MB): peak = 4725.801 ; gain = 0.000 ; free physical = 8693 ; free virtual = 12251
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Loading Part and Timing Information
+---------------------------------------------------------------------------------
+Loading part: xczu7ev-ffvc1156-2-e
+INFO: [Synth 8-6742] Reading net delay rules and data
+---------------------------------------------------------------------------------
+Finished Loading Part and Timing Information : Time (s): cpu = 00:00:07 ; elapsed = 00:00:08 . Memory (MB): peak = 4725.801 ; gain = 0.000 ; free physical = 8693 ; free virtual = 12251
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished RTL Optimization Phase 2 : Time (s): cpu = 00:00:18 ; elapsed = 00:00:18 . Memory (MB): peak = 4725.801 ; gain = 0.000 ; free physical = 8749 ; free virtual = 12310
+---------------------------------------------------------------------------------
+No constraint files found.
+---------------------------------------------------------------------------------
+Start RTL Component Statistics 
+---------------------------------------------------------------------------------
+Detailed RTL Component Info : 
++---Adders : 
+	   2 Input   32 Bit       Adders := 1     
+	   5 Input    3 Bit       Adders := 1     
++---Registers : 
+	               32 Bit    Registers := 262   
+	                5 Bit    Registers := 1     
++---Muxes : 
+	   2 Input   32 Bit        Muxes := 2248  
+	   2 Input    5 Bit        Muxes := 5     
+	   2 Input    1 Bit        Muxes := 3374  
+	   5 Input    1 Bit        Muxes := 1     
+---------------------------------------------------------------------------------
+Finished RTL Component Statistics 
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Part Resource Summary
+---------------------------------------------------------------------------------
+Part Resources:
+DSPs: 1728 (col length:144)
+BRAMs: 624 (col length: RAMB18 144 RAMB36 72)
+---------------------------------------------------------------------------------
+Finished Part Resource Summary
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Cross Boundary and Area Optimization
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Cross Boundary and Area Optimization : Time (s): cpu = 00:00:53 ; elapsed = 00:01:20 . Memory (MB): peak = 4725.801 ; gain = 0.000 ; free physical = 1027 ; free virtual = 4606
+---------------------------------------------------------------------------------
+No constraint files found.
+---------------------------------------------------------------------------------
+Start Timing Optimization
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Timing Optimization : Time (s): cpu = 00:03:11 ; elapsed = 00:01:24 . Memory (MB): peak = 4725.801 ; gain = 0.000 ; free physical = 4354 ; free virtual = 7936
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Technology Mapping
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Technology Mapping : Time (s): cpu = 00:03:19 ; elapsed = 00:01:45 . Memory (MB): peak = 4725.801 ; gain = 0.000 ; free physical = 273 ; free virtual = 3746
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start IO Insertion
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Flattening Before IO Insertion
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Flattening Before IO Insertion
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Final Netlist Cleanup
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Final Netlist Cleanup
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished IO Insertion : Time (s): cpu = 00:03:25 ; elapsed = 00:01:52 . Memory (MB): peak = 4725.801 ; gain = 0.000 ; free physical = 294 ; free virtual = 3767
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Renaming Generated Instances
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Renaming Generated Instances : Time (s): cpu = 00:03:25 ; elapsed = 00:01:52 . Memory (MB): peak = 4725.801 ; gain = 0.000 ; free physical = 293 ; free virtual = 3767
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Rebuilding User Hierarchy
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Rebuilding User Hierarchy : Time (s): cpu = 00:03:25 ; elapsed = 00:01:52 . Memory (MB): peak = 4725.801 ; gain = 0.000 ; free physical = 293 ; free virtual = 3767
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Renaming Generated Ports
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Renaming Generated Ports : Time (s): cpu = 00:03:25 ; elapsed = 00:01:52 . Memory (MB): peak = 4725.801 ; gain = 0.000 ; free physical = 293 ; free virtual = 3767
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Handling Custom Attributes
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Handling Custom Attributes : Time (s): cpu = 00:03:33 ; elapsed = 00:02:00 . Memory (MB): peak = 4725.801 ; gain = 0.000 ; free physical = 316 ; free virtual = 3790
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Renaming Generated Nets
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Renaming Generated Nets : Time (s): cpu = 00:03:33 ; elapsed = 00:02:00 . Memory (MB): peak = 4725.801 ; gain = 0.000 ; free physical = 316 ; free virtual = 3790
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Writing Synthesis Report
+---------------------------------------------------------------------------------
+
+Report BlackBoxes: 
++-+--------------+----------+
+| |BlackBox name |Instances |
++-+--------------+----------+
++-+--------------+----------+
+
+Report Cell Usage: 
++------+-------+------+
+|      |Cell   |Count |
++------+-------+------+
+|1     |CARRY8 |     8|
+|2     |LUT1   |     2|
+|3     |LUT2   |   373|
+|4     |LUT3   |  1613|
+|5     |LUT4   |  2278|
+|6     |LUT5   |  5929|
+|7     |LUT6   | 27319|
+|8     |MUXF7  |  5760|
+|9     |FDCE   |   229|
+|10    |FDRE   |  8192|
++------+-------+------+
+---------------------------------------------------------------------------------
+Finished Writing Synthesis Report : Time (s): cpu = 00:03:33 ; elapsed = 00:02:00 . Memory (MB): peak = 4725.801 ; gain = 0.000 ; free physical = 316 ; free virtual = 3790
+---------------------------------------------------------------------------------
+Synthesis finished with 0 errors, 0 critical warnings and 0 warnings.
+Synthesis Optimization Runtime : Time (s): cpu = 00:03:33 ; elapsed = 00:02:03 . Memory (MB): peak = 4725.801 ; gain = 0.000 ; free physical = 9014 ; free virtual = 12496
+Synthesis Optimization Complete : Time (s): cpu = 00:03:33 ; elapsed = 00:02:03 . Memory (MB): peak = 4725.801 ; gain = 0.000 ; free physical = 9038 ; free virtual = 12514
+INFO: [Project 1-571] Translating synthesized netlist
+Netlist sorting complete. Time (s): cpu = 00:00:00.31 ; elapsed = 00:00:00.31 . Memory (MB): peak = 4725.801 ; gain = 0.000 ; free physical = 9040 ; free virtual = 12516
+INFO: [Netlist 29-17] Analyzing 5768 Unisim elements for replacement
+INFO: [Netlist 29-28] Unisim Transformation completed in 0 CPU seconds
+WARNING: [Netlist 29-101] Netlist 'scratchpad_ram' is not ideal for floorplanning, since the cellview 'scratchpad_ram' contains a large number of primitives.  Please consider enabling hierarchy in synthesis if you want to do floorplanning.
+INFO: [Project 1-570] Preparing netlist for logic optimization
+INFO: [Opt 31-138] Pushed 0 inverter(s) to 0 load pin(s).
+Netlist sorting complete. Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00.01 . Memory (MB): peak = 4725.801 ; gain = 0.000 ; free physical = 9040 ; free virtual = 12516
+INFO: [Project 1-111] Unisim Transformation Summary:
+No Unisim elements were transformed.
+
+Synth Design complete | Checksum: cfb05c6
+INFO: [Common 17-83] Releasing license: Synthesis
+12 Infos, 1 Warnings, 0 Critical Warnings and 0 Errors encountered.
+synth_design completed successfully
+synth_design: Time (s): cpu = 00:03:42 ; elapsed = 00:02:12 . Memory (MB): peak = 4725.801 ; gain = 0.000 ; free physical = 9040 ; free virtual = 12517
+INFO: [Common 17-2834] synth_design peak Physical Memory [PSS] (MB): overall = 11660.806; main = 3788.000; forked = 8242.480
+INFO: [Common 17-2834] synth_design peak Virtual Memory [VSS] (MB): overall = 20765.180; main = 4660.125; forked = 16113.059
+  -> LUT=35356  FF=8421  BRAM=0  LUTRAM=0  WNS=8.875ns  Fmax=888.8888888888889MHz
+
+==========================================================
+  Synthesising scratchpad_b16  (top = scratchpad_ram)
+==========================================================
+Command: synth_design -top scratchpad_ram -part xczu7ev-ffvc1156-2-e -mode out_of_context -generic {DATA_WIDTH=32 DEPTH=256 N_PORTS=5 NUM_BANKS=16} -no_iobuf
+Starting synth_design
+Attempting to get a license for feature 'Synthesis' and/or device 'xczu7ev'
+INFO: [Common 17-349] Got license for feature 'Synthesis' and/or device 'xczu7ev'
+INFO: [Synth 8-7079] Multithreading enabled for synth_design using a maximum of 7 processes.
+---------------------------------------------------------------------------------
+Starting Synthesize : Time (s): cpu = 00:00:04 ; elapsed = 00:00:04 . Memory (MB): peak = 4757.816 ; gain = 0.000 ; free physical = 8701 ; free virtual = 12177
+---------------------------------------------------------------------------------
+INFO: [Synth 8-6157] synthesizing module 'scratchpad_ram' [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/scratchpad_ram.sv:27]
+	Parameter DATA_WIDTH bound to: 32'sb00000000000000000000000000100000 
+	Parameter DEPTH bound to: 32'sb00000000000000000000000100000000 
+	Parameter N_PORTS bound to: 32'sb00000000000000000000000000000101 
+	Parameter NUM_BANKS bound to: 32'sb00000000000000000000000000010000 
+INFO: [Synth 8-6155] done synthesizing module 'scratchpad_ram' (0#1) [/home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/sim_framework/rtl/memory/scratchpad_ram.sv:27]
+---------------------------------------------------------------------------------
+Finished Synthesize : Time (s): cpu = 00:00:07 ; elapsed = 00:00:07 . Memory (MB): peak = 4757.816 ; gain = 0.000 ; free physical = 8691 ; free virtual = 12170
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Constraint Validation : Time (s): cpu = 00:00:08 ; elapsed = 00:00:08 . Memory (MB): peak = 4757.816 ; gain = 0.000 ; free physical = 8707 ; free virtual = 12187
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Loading Part and Timing Information
+---------------------------------------------------------------------------------
+Loading part: xczu7ev-ffvc1156-2-e
+INFO: [Synth 8-6742] Reading net delay rules and data
+---------------------------------------------------------------------------------
+Finished Loading Part and Timing Information : Time (s): cpu = 00:00:08 ; elapsed = 00:00:08 . Memory (MB): peak = 4757.816 ; gain = 0.000 ; free physical = 8707 ; free virtual = 12187
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished RTL Optimization Phase 2 : Time (s): cpu = 00:00:14 ; elapsed = 00:00:15 . Memory (MB): peak = 4757.816 ; gain = 0.000 ; free physical = 8769 ; free virtual = 12253
+---------------------------------------------------------------------------------
+No constraint files found.
+---------------------------------------------------------------------------------
+Start RTL Component Statistics 
+---------------------------------------------------------------------------------
+Detailed RTL Component Info : 
++---Adders : 
+	   2 Input   32 Bit       Adders := 1     
+	   5 Input    3 Bit       Adders := 1     
++---Registers : 
+	               32 Bit    Registers := 262   
+	                5 Bit    Registers := 1     
++---Muxes : 
+	   2 Input   32 Bit        Muxes := 2832  
+	   2 Input    5 Bit        Muxes := 5     
+	   2 Input    1 Bit        Muxes := 3358  
+	   5 Input    1 Bit        Muxes := 1     
+---------------------------------------------------------------------------------
+Finished RTL Component Statistics 
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Part Resource Summary
+---------------------------------------------------------------------------------
+Part Resources:
+DSPs: 1728 (col length:144)
+BRAMs: 624 (col length: RAMB18 144 RAMB36 72)
+---------------------------------------------------------------------------------
+Finished Part Resource Summary
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Cross Boundary and Area Optimization
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Cross Boundary and Area Optimization : Time (s): cpu = 00:00:37 ; elapsed = 00:01:01 . Memory (MB): peak = 4757.816 ; gain = 0.000 ; free physical = 2503 ; free virtual = 5990
+---------------------------------------------------------------------------------
+No constraint files found.
+---------------------------------------------------------------------------------
+Start Timing Optimization
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Timing Optimization : Time (s): cpu = 00:01:32 ; elapsed = 00:01:06 . Memory (MB): peak = 4757.816 ; gain = 0.000 ; free physical = 4507 ; free virtual = 7994
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Technology Mapping
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Technology Mapping : Time (s): cpu = 00:01:36 ; elapsed = 00:01:26 . Memory (MB): peak = 4757.816 ; gain = 0.000 ; free physical = 270 ; free virtual = 3762
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start IO Insertion
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Flattening Before IO Insertion
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Flattening Before IO Insertion
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Final Netlist Cleanup
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Final Netlist Cleanup
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished IO Insertion : Time (s): cpu = 00:01:43 ; elapsed = 00:01:32 . Memory (MB): peak = 4757.816 ; gain = 0.000 ; free physical = 287 ; free virtual = 3779
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Renaming Generated Instances
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Renaming Generated Instances : Time (s): cpu = 00:01:43 ; elapsed = 00:01:32 . Memory (MB): peak = 4757.816 ; gain = 0.000 ; free physical = 290 ; free virtual = 3782
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Rebuilding User Hierarchy
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Rebuilding User Hierarchy : Time (s): cpu = 00:01:43 ; elapsed = 00:01:33 . Memory (MB): peak = 4757.816 ; gain = 0.000 ; free physical = 290 ; free virtual = 3782
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Renaming Generated Ports
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Renaming Generated Ports : Time (s): cpu = 00:01:43 ; elapsed = 00:01:33 . Memory (MB): peak = 4757.816 ; gain = 0.000 ; free physical = 290 ; free virtual = 3782
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Handling Custom Attributes
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Handling Custom Attributes : Time (s): cpu = 00:01:51 ; elapsed = 00:01:41 . Memory (MB): peak = 4757.816 ; gain = 0.000 ; free physical = 315 ; free virtual = 3807
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Renaming Generated Nets
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Renaming Generated Nets : Time (s): cpu = 00:01:52 ; elapsed = 00:01:41 . Memory (MB): peak = 4757.816 ; gain = 0.000 ; free physical = 316 ; free virtual = 3809
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Writing Synthesis Report
+---------------------------------------------------------------------------------
+
+Report BlackBoxes: 
++-+--------------+----------+
+| |BlackBox name |Instances |
++-+--------------+----------+
++-+--------------+----------+
+
+Report Cell Usage: 
++------+-------+------+
+|      |Cell   |Count |
++------+-------+------+
+|1     |CARRY8 |     8|
+|2     |LUT1   |     2|
+|3     |LUT2   |   216|
+|4     |LUT3   |   780|
+|5     |LUT4   |  3719|
+|6     |LUT5   | 14743|
+|7     |LUT6   | 20459|
+|8     |MUXF7  |  5440|
+|9     |MUXF8  |  2720|
+|10    |FDCE   |   229|
+|11    |FDRE   |  8192|
++------+-------+------+
+---------------------------------------------------------------------------------
+Finished Writing Synthesis Report : Time (s): cpu = 00:01:52 ; elapsed = 00:01:41 . Memory (MB): peak = 4757.816 ; gain = 0.000 ; free physical = 316 ; free virtual = 3809
+---------------------------------------------------------------------------------
+Synthesis finished with 0 errors, 0 critical warnings and 0 warnings.
+Synthesis Optimization Runtime : Time (s): cpu = 00:01:52 ; elapsed = 00:01:45 . Memory (MB): peak = 4757.816 ; gain = 0.000 ; free physical = 8987 ; free virtual = 12479
+Synthesis Optimization Complete : Time (s): cpu = 00:01:52 ; elapsed = 00:01:45 . Memory (MB): peak = 4757.816 ; gain = 0.000 ; free physical = 8996 ; free virtual = 12482
+INFO: [Project 1-571] Translating synthesized netlist
+Netlist sorting complete. Time (s): cpu = 00:00:00.34 ; elapsed = 00:00:00.33 . Memory (MB): peak = 4757.816 ; gain = 0.000 ; free physical = 8998 ; free virtual = 12483
+INFO: [Netlist 29-17] Analyzing 8168 Unisim elements for replacement
+INFO: [Netlist 29-28] Unisim Transformation completed in 0 CPU seconds
+WARNING: [Netlist 29-101] Netlist 'scratchpad_ram' is not ideal for floorplanning, since the cellview 'scratchpad_ram' contains a large number of primitives.  Please consider enabling hierarchy in synthesis if you want to do floorplanning.
+INFO: [Project 1-570] Preparing netlist for logic optimization
+INFO: [Opt 31-138] Pushed 0 inverter(s) to 0 load pin(s).
+Netlist sorting complete. Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00.01 . Memory (MB): peak = 4757.816 ; gain = 0.000 ; free physical = 9003 ; free virtual = 12490
+INFO: [Project 1-111] Unisim Transformation Summary:
+No Unisim elements were transformed.
+
+Synth Design complete | Checksum: 4d1f483c
+INFO: [Common 17-83] Releasing license: Synthesis
+12 Infos, 1 Warnings, 0 Critical Warnings and 0 Errors encountered.
+synth_design completed successfully
+synth_design: Time (s): cpu = 00:02:01 ; elapsed = 00:01:54 . Memory (MB): peak = 4757.816 ; gain = 0.000 ; free physical = 9004 ; free virtual = 12492
+INFO: [Common 17-2834] synth_design peak Physical Memory [PSS] (MB): overall = 10235.774; main = 3784.965; forked = 6896.296
+INFO: [Common 17-2834] synth_design peak Virtual Memory [VSS] (MB): overall = 18406.410; main = 4692.141; forked = 13722.277
+create_clock: Time (s): cpu = 00:00:05 ; elapsed = 00:00:05 . Memory (MB): peak = 4757.816 ; gain = 0.000 ; free physical = 9006 ; free virtual = 12495
+  -> LUT=37713  FF=8421  BRAM=0  LUTRAM=0  WNS=9.001ns  Fmax=1001.0010010010004MHz
+# puts "\nWrote $out_dir/area_results.csv"
+
+Wrote /home/lahiruni/Downloads/Quadramind_DNN_Accelerator-fix-chooser-accuracy/Integrated_Simulator_Backup_updated/static_hash_and_tagless_memory/synth/work/out/area_results.csv
+INFO: [Common 17-206] Exiting Vivado at Fri Aug  7 01:24:31 2026...

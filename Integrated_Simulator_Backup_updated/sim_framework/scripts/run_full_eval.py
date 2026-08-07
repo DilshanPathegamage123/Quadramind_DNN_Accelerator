@@ -252,43 +252,12 @@ def _casting_traffic(scheme: str, array_h: int, array_w: int,
         it_eff = it / max(1, array_w ** 0.4)
     return wt_eff + it_eff + ot
 
-# Memory management scheme → {normalized_area, cycles_factor, traffic_factor}
-# Static (STAMP) is the baseline reference (cycles_f = 1.00).  All other scheme
-# gains/overheads are expressed relative to STAMP.  The workload-dependent variant
-# _scheme_cyc_factor() adjusts each scheme's effectiveness by layer memory-boundedness.
-# The base cycles_f values represent the "average" case (mem_intensity ≈ 0.50).
-MEMSCHEME_MODEL: Dict[str, Dict] = {
-    "Static":         {"area": 1.00, "cycles_f": 1.00, "traffic_f": 1.00},
-    "Double Buffer":  {"area": 1.18, "cycles_f": 0.76, "traffic_f": 0.90},
-    "Unified Buffer": {"area": 0.86, "cycles_f": 1.11, "traffic_f": 0.95},
-    "Cache-Based":    {"area": 1.35, "cycles_f": 0.65, "traffic_f": 0.80},
-}
-
-# Per-workload memory-access intensity (fraction of runtime bottlenecked by memory).
-# Derived from architectural knowledge, not purely from MAC/byte ratios:
-#   - DLRM: embedding-table lookups are random DRAM reads (extreme memory pressure)
-#   - 3D-UNet / BERT / GPT-2: large activation tensors, mixed memory/compute
-#   - VGG-16 / ResNet: efficient conv kernels, compute-bound
-# Used by _scheme_cyc_factor() to scale scheme effectiveness in exp4.
-# Falls back to analytical _mem_active_fraction() for unknown workload names.
-WORKLOAD_MEM_INTENSITY: Dict[str, float] = {
-    # Cloud workloads
-    "DLRM":               0.88,
-    "3D-UNet":            0.72,
-    "BERT-Large":         0.62,
-    "GPT-2/Transformer":  0.58,
-    "RNN-T":              0.50,
-    "VGG-16":             0.42,
-    "ResNet-50":          0.28,
-    # Edge workloads
-    "U-Net":              0.65,
-    "TinyBERT":           0.55,
-    "DS-CNN-KWS":         0.35,
-    "EfficientDet-Lite0": 0.30,
-    "SSD-MobileNet":      0.32,
-    "ResNet-18":          0.28,
-    "MobileNetV2":        0.25,
-}
+# NOTE: MEMSCHEME_MODEL and WORKLOAD_MEM_INTENSITY used to live here.
+# They were hardcoded literature constants (Double Buffer = 0.76 cycles,
+# Cache-Based = 0.65, plus 14 hand-assigned per-workload 'memory intensity'
+# values) that exp4 presented as if they were results. They have been removed:
+# exp4 now measures static vs dynamic management directly from Vivado
+# synthesis and from real compiler runs. Do not reintroduce them.
 
 # Scheduler performance model relative to FIFO
 # (throughput_factor, offchip_factor, energy_factor)
@@ -852,7 +821,51 @@ def _mem_active_fraction(layer: "LayerConfig", arr: int, dw: int) -> float:
     ) * (dw // 8)
     compute_cyc = macs / max(arr * arr, 1)
     mem_cyc     = bytes_needed / 8.0   # 64-bit DMA bus → 8 B/cycle
-    return min(0.92, max(0.18, mem_cyc / (compute_cyc + mem_cyc + 1.0)))
+    # The clamps that used to sit here -- min(0.92, max(0.18, ...)) -- pinned
+    # every MAC-dominated conv layer to exactly 0.18, so all workloads looked
+    # identical and the difference between, say, a 1x1 pointwise and a 5x5
+    # convolution disappeared. They were arbitrary bounds, so they are gone.
+    # The honest reading of a small value is that the layer is compute-bound
+    # and its memory ports are idle most of the time, which is exactly what
+    # the measured RTL conflict counts in exp4b show.
+    return mem_cyc / (compute_cyc + mem_cyc + 1.0)
+
+
+def _dataflow_port_activity(layer: "LayerConfig", dataflow: str,
+                            arr: int, n_ports: int) -> float:
+    """Fraction of cycles this dataflow keeps the scratchpad read ports busy.
+
+    Derived, not asserted. A dataflow holds one tensor stationary inside the
+    PEs; the other two must stream across the memory interface, and it is that
+    streaming that occupies the ports and creates the opportunity for a bank
+    conflict:
+
+        OS  partial sums stay in the PEs -> inputs and weights stream
+        WS  weights stay in the PEs      -> inputs and partial sums stream
+        IS  inputs stay in the PEs       -> weights and partial sums stream
+
+    The value returned is this dataflow's streamed volume relative to the
+    heaviest of the three, so it lands in (0, 1] and is comparable across
+    dataflows for the same layer.
+
+    An earlier attempt normalised by (cycles x ports) instead. For every real
+    layer that ratio exceeds 1 and saturates the clamp, returning 1.000 for all
+    three dataflows -- no differentiation at all. Normalising against the
+    heaviest dataflow keeps the comparison meaningful and needs no cycle model.
+
+    This replaces a hardcoded {"OS": 0.85, "IS": 0.65, "WS": 0.50} table. The
+    ordering still follows the same physical argument, but the magnitude now
+    comes from the layer's own geometry.
+    """
+    w = float(layer.weight_k * layer.weight_c * layer.weight_kh * layer.weight_kw)
+    i = float(layer.input_channels * layer.input_height * layer.input_width)
+    o = float(layer.output_channels * layer.output_height * layer.output_width)
+
+    volumes = {"OS": i + w, "WS": i + o, "IS": w + o}
+    heaviest = max(volumes.values())
+    if heaviest <= 0:
+        return 0.0
+    return volumes[dataflow] / heaviest
 
 
 def _birthday_conflict_pct(n_ports: int, n_banks: int, active_frac: float) -> float:
@@ -868,32 +881,6 @@ def _birthday_conflict_pct(n_ports: int, n_banks: int, active_frac: float) -> fl
         p_clean *= max(0.0, (n_banks - k) / n_banks)
     p_conflict = 1.0 - p_clean
     return active_frac * p_conflict * 100.0
-
-
-def _scheme_cyc_factor(scheme: str, mem_f: float) -> float:
-    """Effective cycles_f for a memory management scheme at a given memory-bound fraction.
-
-    Latency-hiding schemes (Double Buffer, Cache-Based) are more effective on
-    memory-bound workloads; Unified Buffer overhead shrinks when memory is the bottleneck.
-
-    Formulas are anchored so that at mem_f=0.50 (average case) each scheme
-    returns its MEMSCHEME_MODEL base value:
-      Double Buffer : 0.90 - 0.28 * 0.50 = 0.76 ✓
-      Unified Buffer: 1.18 - 0.14 * 0.50 = 1.11 ✓
-      Cache-Based   : 0.81 - 0.32 * 0.50 = 0.65 ✓
-    """
-    if scheme == "Static":
-        return 1.00
-    if scheme == "Double Buffer":
-        # 0.90 (compute-bound, mem_f→0) → 0.76 (avg, mem_f=0.50) → ~0.65 (memory-bound)
-        return 0.90 - 0.28 * mem_f
-    if scheme == "Unified Buffer":
-        # 1.18 (compute-bound) → 1.11 (avg) → ~1.06 (memory-bound)
-        return 1.18 - 0.14 * mem_f
-    if scheme == "Cache-Based":
-        # 0.81 (compute-bound) → 0.65 (avg) → ~0.53 (memory-bound)
-        return 0.81 - 0.32 * mem_f
-    return MEMSCHEME_MODEL[scheme]["cycles_f"]
 
 
 # ===========================================================================
@@ -914,24 +901,46 @@ def exp3_bank_conflicts(workloads: List[Dict], opt: Dict,
     def bank_conflict_count(weight_elems: float, input_elems: float,
                             n_banks: int) -> float:
         """
-        Expected bank conflicts per total access.
-        Model: random-uniform address mapping; expected collisions per access
-               ≈ (accesses_per_bank - 1) ≈ total / n_banks.
+        Expected number of bank-conflict events over the layer's accesses.
+
+        Model: each of `n_ports` simultaneously active read ports maps to a
+        uniformly random bank. The birthday-problem complement gives the
+        probability that at least one port is stalled in a given cycle; over
+        `total / n_ports` access cycles that yields the expected event count.
+
+        NOTE: the previous expression was
+            total * (total / n_banks - 1) / total
+        which cancels to (total / n_banks - 1). It carried no port model at
+        all, so the number of read ports contending for a bank -- the thing
+        that actually causes a conflict -- did not appear, and at 2 banks it
+        claimed roughly every second access conflicts regardless of port
+        count. It also disagreed with the birthday model used for
+        conflict_pct a few lines below and with
+        pysim.software_ref.estimate_bank_conflicts(), leaving three different
+        conflict models in one codebase. All three now share this one. RTL
+        simulation remains the authority; see exp4b for measured counters.
         """
         total = weight_elems + input_elems
-        return max(0.0, total * (total / n_banks - 1) / total
-                   if total > 0 else 0.0)
+        if total <= 0 or n_banks <= 1 or n_ports <= 1:
+            return 0.0
+        p_clean = 1.0
+        for k in range(n_ports):
+            p_clean *= max(0.0, (n_banks - k) / n_banks)
+        p_conflict = 1.0 - p_clean
+        access_cycles = total / n_ports
+        return access_cycles * p_conflict
 
     n_ports = 4   # scratchpad read ports (matches RTL N_MEM_PORTS default)
     rows = []
     for wl in workloads:
-        wl_active_frac = WORKLOAD_MEM_INTENSITY.get(wl["name"], None)
         for li, layer in enumerate(wl["layers"], 1):
             wt = float(layer.weight_k * layer.weight_c *
                        layer.weight_kh * layer.weight_kw)
             it = float(layer.input_channels * layer.input_height * layer.input_width)
-            active_frac = (wl_active_frac if wl_active_frac is not None
-                           else _mem_active_fraction(layer, arr, dw))
+            # Computed from the layer's own MAC count and byte demand, not
+            # looked up from a hand-assigned per-workload table. The old
+            # WORKLOAD_MEM_INTENSITY dict has been removed.
+            active_frac = _mem_active_fraction(layer, arr, dw)
             for nb in bank_counts:
                 bc = bank_conflict_count(wt, it, nb)
                 conflict_pct = _birthday_conflict_pct(n_ports, nb, active_frac)
@@ -946,12 +955,9 @@ def exp3_bank_conflicts(workloads: List[Dict], opt: Dict,
 
     df_out = pd.DataFrame(rows)
 
-    # Add per-dataflow cycles-lost rows.
-    # Different dataflow schemes have different simultaneous port activity:
-    #   OS: input stream + partial-sum read/write → high contention
-    #   IS: inputs stationary, weight + output ports active → medium
-    #   WS: weights in PE registers during compute, fewer memory ports busy → low
-    DATAFLOW_PORT_ACTIVITY = {"OS": 0.85, "IS": 0.65, "WS": 0.50}
+    # Add per-dataflow cycles-lost rows. The port-activity term is now computed
+    # per layer by _dataflow_port_activity() from the streamed-tensor volume and
+    # the cycle model, replacing a hardcoded {"OS":0.85,"IS":0.65,"WS":0.50}.
     cyc_rows = []
     for wl in workloads:
         for li, layer in enumerate(wl["layers"], 1):
@@ -961,11 +967,12 @@ def exp3_bank_conflicts(workloads: List[Dict], opt: Dict,
             for df_name in dataflows:
                 nb = 4
                 bc = bank_conflict_count(wt, it, nb)
-                bc_df = bc * DATAFLOW_PORT_ACTIVITY[df_name]
+                activity = _dataflow_port_activity(layer, df_name, arr, n_ports)
                 cyc_rows.append({
-                    "workload":    wl["name"],
-                    "dataflow":    df_name,
-                    "cycles_lost": bc_df * 2,
+                    "workload":       wl["name"],
+                    "dataflow":       df_name,
+                    "port_activity":  round(activity, 4),
+                    "cycles_lost":    bc * activity * 2,
                 })
     df_cyc = pd.DataFrame(cyc_rows)
 
@@ -1062,114 +1069,523 @@ def exp3_bank_conflicts(workloads: List[Dict], opt: Dict,
     _savefig(fig, fig_dir / "performance_degradation.png")
     print("  Exp 3 done.")
 
-
 # ===========================================================================
-# SECTION 5 — EXP 4: Alternative Memory Management Schemes
+# SECTION 5 — EXP 4: Static vs dynamic memory management (all measured)
 # ===========================================================================
+#
+# Requirement this answers (evaluation_requirements.pdf):
+#   "The impact of alternative memory management schemes -- area reduction and
+#    performance (execution time, throughput), overhead"
+#   "Tradeoffs Between Static and Dynamic Memory Management Schemes"
+#
+# Static = STAMP (compiler decides placement ahead of time, no runtime table).
+# Dynamic = PAGED (hardware page table translates addresses at runtime).
+#
+# HISTORY / WHY THIS WAS REWRITTEN.  The earlier version of this experiment
+# compared four schemes -- Static, Double Buffer, Unified Buffer, Cache-Based
+# -- whose every number came from a hardcoded dictionary of literature
+# constants (MEMSCHEME_MODEL) and three invented formulas of the form
+# "0.90 - 0.28 * mem_f".  Two problems with that:
+#
+#   1. None of it was measured, which is exactly the deficiency this project
+#      criticises other simulators for.
+#   2. Those three scheme names appear nowhere in the requirements document.
+#      The comparison actually asked for is static vs dynamic, which is the
+#      one this module implements in RTL.
+#
+# Every value below is read from an artefact produced by a tool run:
+#   * area / timing  <- Vivado out-of-context synthesis (synth/area_results.csv)
+#   * off-chip bytes <- the stamp compiler, run over a real sweep
+#                       (sweep_memory_schemes.py -> sweep_stamp.csv)
+#   * cycles         <- the cycle-accurate controller model, replaying the
+#                       compiler's actual delta-op stream
+#   * conflicts      <- Vivado xsim counters (see exp4b)
+# Nothing is a fitted or assumed factor.
 
-def exp4_memory_management(workloads: List[Dict], opt: Dict,
-                            results_dir: Path) -> None:
+def _load_csv_rows(path: Path) -> List[Dict]:
+    if not path.exists():
+        return []
+    import csv as _csv
+    with open(path) as fh:
+        return list(_csv.DictReader(fh))
+
+
+def _fnum(row, key, default=0.0):
+    try:
+        return float(row[key])
+    except (KeyError, TypeError, ValueError):
+        return default
+
+
+def exp4_memory_management(results_dir: Path, repo_root: Path) -> None:
     print(f"\n{'='*60}")
-    print("Exp 4 — Alternative Memory Management Schemes")
+    print("Exp 4 — Static vs Dynamic Memory Management (measured)")
     print(f"{'='*60}")
 
-    arr    = int(opt["array_size"])
-    df_base = opt["dataflow"]
-    dw     = 16
-    schemes = ["Static", "Double Buffer", "Unified Buffer", "Cache-Based"]
-
-    area_norms = {s: MEMSCHEME_MODEL[s]["area"] for s in schemes}
-    rows = []
-    for wl in workloads:
-        # Use architectural memory intensity (per-workload) for scheme effectiveness;
-        # falls back to analytical per-layer estimate for unknown workload names.
-        wl_mem_f = WORKLOAD_MEM_INTENSITY.get(
-            wl["name"], None
-        )
-        for li, layer in enumerate(wl["layers"], 1):
-            m_base = sim_layer(layer, df_base, arr, arr, dw)
-            mem_f  = wl_mem_f if wl_mem_f is not None else _mem_active_fraction(layer, arr, dw)
-            for scheme in schemes:
-                sm = MEMSCHEME_MODEL[scheme]
-                cyc_f    = _scheme_cyc_factor(scheme, mem_f)
-                cyc_eff  = m_base["cycles"] * cyc_f
-                traf_eff = m_base["total_traffic"] * sm["traffic_f"]
-                energy_eff = (traf_eff * (dw // 8) * DRAM_PJ_PER_BYTE
-                              + m_base["macs"] * COMPUTE_PJ_PER_MAC)
-                rows.append({
-                    "workload":               wl["name"],
-                    "layer_idx":              li,
-                    "scheme":                 scheme,
-                    "normalized_area":        sm["area"],
-                    "execution_time_norm":    cyc_f,
-                    "throughput_gops":        (2.0 * m_base["macs"])
-                                              / (cyc_eff / CLOCK_GHZ) / 1e9,
-                    "off_chip_accesses":      traf_eff,
-                    "energy_pJ":              energy_eff,
-                })
-
-    df_out = pd.DataFrame(rows)
     out_dir = results_dir / "exp4_memory_management"
-    _save(df_out, out_dir / "data.csv")
-
     fig_dir = out_dir / "figures"
-    legend_patches_ms = [mpatches.Patch(color=MEMSCHEME_COLORS[s], label=s)
-                          for s in schemes]
+    out_dir.mkdir(parents=True, exist_ok=True)
 
-    # Area reduction bar chart
-    fig, ax = plt.subplots(figsize=(7, 5))
-    x = np.arange(len(schemes))
-    for si, scheme in enumerate(schemes):
-        val = area_norms[scheme]
-        bar = ax.bar(si, val, color=MEMSCHEME_COLORS[scheme], width=0.6)
-        ax.text(si, val + 0.01, f"{val:.2f}", ha="center", va="bottom", fontsize=10)
-    ax.set_xticks(x)
-    ax.set_xticklabels(schemes)
-    ax.set_ylabel("Normalized Area (× Static)")
-    ax.set_title("Area Reduction — Alternative Memory Management Schemes")
-    ax.axhline(1.0, color="grey", linestyle="--", alpha=0.6)
-    ax.set_ylim(0, 1.6)
-    ax.grid(True, alpha=0.3, axis="y")
-    _savefig(fig, fig_dir / "area_reduction.png")
+    synth_csv = repo_root / "static_hash_and_tagless_memory" / "synth" / "work" / "out" / "area_results.csv"
+    sweep_csv = out_dir / "sweep_stamp.csv"
 
-    # Execution time and throughput per DNN
-    per_dnn = df_out.groupby(["workload", "scheme"])[
-        ["execution_time_norm", "throughput_gops"]].mean().reset_index()
-    wl_names = [w["name"] for w in workloads]
+    area = _load_csv_rows(synth_csv)
+    sweep = _load_csv_rows(sweep_csv)
 
-    for metric, ylabel in [
-        ("execution_time_norm", "Normalized Execution Time (× Static)"),
-        ("throughput_gops",     "Throughput (GOPS)"),
-    ]:
+    if not area:
+        print(f"  NOTE: no synthesis results at {_relpath(synth_csv)}")
+        print("  Run static_hash_and_tagless_memory/synth/run_synth.sh to produce them.")
+    if not sweep:
+        print(f"  NOTE: no compiler sweep at {_relpath(sweep_csv)}")
+        print("  Run: PYTHONPATH=. python scripts/sweep_memory_schemes.py")
+    if not area and not sweep:
+        print("  SKIP: nothing measured to plot.")
+        return
+
+    # ---------------------------------------------------------------
+    # 1. Management-logic area: static vs dynamic
+    # ---------------------------------------------------------------
+    if area:
+        stamp_rows = [r for r in area if r["scheme"].startswith("STAMP")]
+        paged_rows = [r for r in area if r["scheme"].startswith("PAGED")]
+        spad_rows = [r for r in area if r["scheme"].startswith("Shared")]
+
+        if stamp_rows and paged_rows:
+            # Compare at each scheme's default capacity: the stamp controller's
+            # 256-entry metadata RAM against a 256-page table.
+            s = next((r for r in stamp_rows if r["knob_value"] == "256"), stamp_rows[0])
+            p = next((r for r in paged_rows if r["knob_value"] == "256"), paged_rows[0])
+
+            metrics = [("luts", "LUTs"), ("ffs", "Registers"), ("brams", "Block RAMs")]
+            fig, ax = plt.subplots(figsize=FIGSIZE_SINGLE)
+            x = np.arange(len(metrics))
+            bw = 0.34
+            for si, (row, label, col) in enumerate([
+                    (s, "STAMP (static)", C_OS), (p, "PAGED (dynamic)", "#4d9c96")]):
+                vals = [_fnum(row, k) for k, _ in metrics]
+                pos = x + (si - 0.5) * bw
+                ax.bar(pos, vals, width=bw * 0.92, color=col, label=label)
+                for xp, v in zip(pos, vals):
+                    ax.text(xp, v, f"{v:,.0f}", ha="center", va="bottom", fontsize=9)
+            ax.set_xticks(x)
+            ax.set_xticklabels([lbl for _, lbl in metrics])
+            ax.set_ylabel("FPGA primitives used")
+            ax.set_title("Memory Management Logic Area — Static vs Dynamic\n"
+                         "(Vivado out-of-context synthesis, ZCU104)")
+            ax.legend()
+            ax.grid(True, alpha=0.3, axis="y")
+            ax.margins(y=0.18)
+            _savefig(fig, fig_dir / "area_static_vs_dynamic.png")
+
+        # ---------------------------------------------------------------
+        # 2. How each scheme's area scales with its capacity knob
+        # ---------------------------------------------------------------
+        if stamp_rows and paged_rows:
+            fig, ax = plt.subplots(figsize=FIGSIZE_WIDE)
+            for rows, label, col, marker in [
+                    (stamp_rows, "STAMP — metadata entries", C_OS, "o"),
+                    (paged_rows, "PAGED — page-table entries", "#4d9c96", "s")]:
+                rows = sorted(rows, key=lambda r: int(r["knob_value"]))
+                xs = [int(r["knob_value"]) for r in rows]
+                ys = [_fnum(r, "luts") + _fnum(r, "ffs") for r in rows]
+                ax.plot(xs, ys, marker=marker, linewidth=2, markersize=7,
+                        color=col, label=label)
+                for xv, yv in zip(xs, ys):
+                    ax.annotate(f"{yv:,.0f}", (xv, yv), textcoords="offset points",
+                                xytext=(0, 8), ha="center", fontsize=8.5)
+            ax.set_xscale("log", base=2)
+            ax.set_xlabel("Capacity (table / metadata entries)")
+            ax.set_ylabel("LUTs + Registers")
+            ax.set_title("Area Scaling of the Two Management Schemes\n"
+                         "(measured; each scheme swept over its own capacity knob)")
+            ax.legend()
+            ax.grid(True, alpha=0.3)
+            _savefig(fig, fig_dir / "area_scaling.png")
+
+        # ---------------------------------------------------------------
+        # 3. Cost of banking: area paid for conflict reduction
+        # ---------------------------------------------------------------
+        if spad_rows:
+            spad_rows = sorted(spad_rows, key=lambda r: int(r["knob_value"]))
+            fig, ax = plt.subplots(figsize=FIGSIZE_WIDE)
+            xs = [r["knob_value"] for r in spad_rows]
+            luts = [_fnum(r, "luts") for r in spad_rows]
+            ffs = [_fnum(r, "ffs") for r in spad_rows]
+            idx = np.arange(len(xs))
+            bw = 0.36
+            ax.bar(idx - bw / 2, luts, width=bw * 0.92, color=C_OS, label="LUTs")
+            ax.bar(idx + bw / 2, ffs, width=bw * 0.92, color="#a8cfe0", label="Registers")
+            ax.set_xticks(idx)
+            ax.set_xticklabels([f"{v} bank" + ("s" if int(v) > 1 else "") for v in xs])
+            ax.set_xlabel("Scratchpad banks")
+            ax.set_ylabel("FPGA primitives used")
+            ax.set_title("Area Cost of Scratchpad Banking\n"
+                         "(measured; pair with the conflict counts in exp4b)")
+            ax.legend()
+            ax.grid(True, alpha=0.3, axis="y")
+            _savefig(fig, fig_dir / "banking_area_cost.png")
+
+        _save(pd.DataFrame(area), out_dir / "area_measured.csv")
+
+    # ---------------------------------------------------------------
+    # 4. Off-chip traffic reduction across the whole sweep
+    # ---------------------------------------------------------------
+    if sweep:
+        df = pd.DataFrame(sweep)
+        for c in ("reduction_pct", "spad_kb", "bytes_dram", "bytes_naive",
+                  "phases", "metadata_bytes", "spad_util_pct"):
+            if c in df.columns:
+                df[c] = pd.to_numeric(df[c], errors="coerce")
+
+        layers = list(dict.fromkeys(df["layer"]))
+        caps = sorted(df["spad_kb"].unique())
+
         fig, ax = plt.subplots(figsize=FIGSIZE_VERY_WIDE)
-        x = np.arange(len(wl_names))
-        bw = 0.2
-        all_vals = []
-        for si, scheme in enumerate(schemes):
-            vals = [per_dnn[(per_dnn["workload"] == wn) &
-                             (per_dnn["scheme"] == scheme)][metric].values
-                    for wn in wl_names]
-            vals = [v[0] if len(v) > 0 else 0.0 for v in vals]
-            all_vals.extend(vals)
-            ax.bar(x + si * bw - 1.5 * bw, vals, width=bw,
-                   color=MEMSCHEME_COLORS[scheme], label=scheme)
-        ax.set_xlabel("DNN Workload")
-        ax.set_ylabel(ylabel)
-        ax.set_title(f"Memory Management — {ylabel}")
+        x = np.arange(len(layers))
+        bw = 0.8 / max(len(caps), 1)
+        shades = ["#a8cfe0", "#6fa8cc", "#3d6f9e", "#1a3a5c"]
+        for ci, cap in enumerate(caps):
+            vals = []
+            for lyr in layers:
+                sel = df[(df["layer"] == lyr) & (df["spad_kb"] == cap)]
+                vals.append(sel["reduction_pct"].mean() if len(sel) else 0.0)
+            ax.bar(x + ci * bw - 0.4 + bw / 2, vals, width=bw * 0.9,
+                   color=shades[ci % len(shades)], label=f"{int(cap)} KB")
         ax.set_xticks(x)
-        ax.set_xticklabels(wl_names, rotation=15, ha="right")
-        ax.legend(handles=legend_patches_ms)
+        ax.set_xticklabels(layers, rotation=12, ha="right")
+        ax.set_ylabel("Off-chip read traffic avoided (%)")
+        ax.set_xlabel("Convolution layer shape")
+        ax.set_title("Static Scheme — Off-Chip Traffic Reduction Across the Design Space\n"
+                     "(each bar is a real compiler run; a missing bar means the "
+                     "layer's working set does not fit that scratchpad)")
+        # Fixed 0-100 range: the quantity is a percentage, and it leaves clear
+        # space for the legend instead of letting it land on top of a bar.
+        ax.set_ylim(0, 100)
+        ax.legend(title="Scratchpad", loc="upper left", ncol=2, framealpha=0.95)
         ax.grid(True, alpha=0.3, axis="y")
-        # Zoom y-axis so workload-to-workload differences within each scheme
-        # are visible (default 0-origin compresses the variation into ~10% of height)
-        if metric == "execution_time_norm":
-            lo = max(0.0, min(all_vals) - 0.08)
-            hi = max(all_vals) + 0.08
-            ax.set_ylim(lo, hi)
-            ax.axhline(1.0, color="grey", linestyle="--", alpha=0.5, linewidth=0.8)
-        _savefig(fig, fig_dir / f"{metric}.png")
+        _savefig(fig, fig_dir / "offchip_reduction_sweep.png")
+
+        # Overhead: metadata RAM the static scheme needs, versus scratchpad size
+        fig, ax = plt.subplots(figsize=FIGSIZE_WIDE)
+        for ci, cap in enumerate(caps):
+            sel = df[df["spad_kb"] == cap].sort_values("phases")
+            if not len(sel):
+                continue
+            ax.scatter(sel["phases"], sel["metadata_bytes"] / 1024.0,
+                       s=46, color=shades[ci % len(shades)],
+                       label=f"{int(cap)} KB scratchpad", zorder=3)
+        ax.set_xlabel("Execution phases in the layer")
+        ax.set_ylabel("Metadata RAM required (KB)")
+        ax.set_title("Overhead of the Static Scheme — Metadata Grows With Phase Count\n"
+                     "(this is the cost of removing the runtime tag/translation structure)")
+        ax.legend()
+        ax.grid(True, alpha=0.3)
+        _savefig(fig, fig_dir / "metadata_overhead.png")
+
+        print(f"  Sweep: {len(df)} configurations, "
+              f"reduction min {df.reduction_pct.min():.1f}% / "
+              f"mean {df.reduction_pct.mean():.1f}% / "
+              f"max {df.reduction_pct.max():.1f}%")
 
     print("  Exp 4 done.")
+
+
+# ===========================================================================
+# SECTION 5b — EXP 4b: STAMP vs PAGED, from measured RTL counters
+# ===========================================================================
+#
+# Experiment Set 3 of the evaluation plan ("Memory Management Scheme
+# Comparison") asks for a head-to-head between the compiler-assisted static
+# tagless (STAMP) scheme and the page-table (PAGED) scheme. exp4 above does not
+# answer it: STAMP is only used there as the 1.00 normalisation anchor and the
+# other three schemes come from hardcoded literature factors, so nothing in it
+# is measured and PAGED does not appear at all.
+#
+# This experiment is driven entirely by cycle-accurate counters captured from
+# real cocotb+Verilator runs under results/golden_check/raw/. Every number it
+# plots is labelled "measured (RTL)". If those JSONs are absent (no simulator on
+# this machine) the experiment reports that and skips, rather than silently
+# substituting a model.
+
+SCHEME_COLORS = {"STAMP": "#1a3a5c", "PAGED": "#76b7b2"}
+
+# Access patterns exercised by the bank sweep testbench, in increasing
+# friendliness to an interleaved banking scheme.
+BANK_PATTERNS = ["same_addr", "stride4", "stride8", "consecutive"]
+BANK_PATTERN_LABELS = {
+    "same_addr":   "All ports → same address",
+    "stride4":     "Stride 4",
+    "stride8":     "Stride 8",
+    "consecutive": "Consecutive",
+}
+
+
+def _load_measured(raw_dir: Path, name: str) -> Optional[Dict]:
+    """Load one measured-RTL JSON, or None when it was never produced."""
+    p = raw_dir / f"{name}.json"
+    if not p.exists():
+        return None
+    import json
+    try:
+        with open(p) as f:
+            return json.load(f)
+    except (OSError, ValueError) as exc:
+        print(f"  WARNING: could not read {p.name}: {exc}")
+        return None
+
+
+def exp4b_stamp_vs_paged(results_dir: Path, golden_raw: Path) -> None:
+    print(f"\n{'='*60}")
+    print("Exp 4b — STAMP vs PAGED (measured RTL counters)")
+    print(f"{'='*60}")
+
+    if not golden_raw.is_dir():
+        print(f"  SKIP: no measured RTL results at {_relpath(golden_raw)}")
+        print("  Run the cocotb golden suite on a machine with Verilator first.")
+        return
+
+    layers = [("tiny_cnn_layer_00", "tiny L0"), ("mnist_cnn_layer_00", "mnist L0")]
+
+    # ---- 1. Head-to-head scheme comparison -------------------------------
+    rows = []
+    for layer_key, layer_label in layers:
+        for scheme in ("STAMP", "PAGED"):
+            d = _load_measured(golden_raw, f"divergence_{layer_key}_{scheme}_b4")
+            if d is None:
+                continue
+            totals = d.get("totals", {})
+            rows.append({
+                "layer":            layer_label,
+                "scheme":           scheme,
+                "compute_cycles":   totals.get("compute_cycles", 0),
+                "program_cycles":   totals.get("program_cycles", 0),
+                "replay_cycles":    totals.get("replay_cycles", 0),
+                "axi_ar_requests":  d.get("axi_ar_requests", 0),
+                "axi_beats":        d.get("axi_beats", 0),
+                "bytes_loaded":     d.get("stats_bytes_loaded", 0),
+                "bank_conflicts":   d.get("stats_bank_conflicts", 0),
+                "stall_port_cycles": d.get("stats_bank_conflict_stall_cycles", 0),
+                "new_words":        totals.get("new_words", 0),
+                "reused_words":     totals.get("reused_words", 0),
+                "source":           "measured (RTL)",
+            })
+
+    if not rows:
+        print("  SKIP: divergence_*.json not found; nothing measured to compare.")
+        return
+
+    df_cmp = pd.DataFrame(rows)
+    out_dir = results_dir / "exp4b_stamp_vs_paged"
+    _save(df_cmp, out_dir / "stamp_vs_paged.csv")
+    fig_dir = out_dir / "figures"
+
+    layer_labels = [lbl for _, lbl in layers
+                    if lbl in set(df_cmp["layer"])]
+    legend_schemes = [mpatches.Patch(color=SCHEME_COLORS[s], label=s)
+                      for s in ("STAMP", "PAGED")]
+
+    # Separate figure per metric rather than a twin-axis chart: off-chip
+    # traffic and stall cycles have unrelated units and a shared axis would
+    # make one of them unreadable.
+    for metric, ylabel, title, scale in [
+        ("axi_beats", "Off-chip beats transferred",
+         "Off-Chip Traffic — STAMP vs PAGED", 1.0),
+        ("axi_ar_requests", "AXI read requests issued",
+         "Off-Chip Request Count — STAMP vs PAGED", 1.0),
+        ("bank_conflicts", "Bank-conflict events",
+         "Bank Conflicts — STAMP vs PAGED (4 banks)", 1.0),
+        ("stall_port_cycles", "Stalled port-cycles",
+         "Bank-Conflict Stall Cost — STAMP vs PAGED (4 banks)", 1.0),
+    ]:
+        fig, ax = plt.subplots(figsize=FIGSIZE_SINGLE)
+        x = np.arange(len(layer_labels))
+        bw = 0.34
+        peak = 0.0
+        for si, scheme in enumerate(("STAMP", "PAGED")):
+            vals = []
+            for lbl in layer_labels:
+                sel = df_cmp[(df_cmp["layer"] == lbl) & (df_cmp["scheme"] == scheme)]
+                vals.append(float(sel[metric].iloc[0]) * scale if len(sel) else 0.0)
+            peak = max(peak, max(vals) if vals else 0.0)
+            pos = x + (si - 0.5) * bw
+            ax.bar(pos, vals, width=bw * 0.92, color=SCHEME_COLORS[scheme])
+            # Few bars, so label each directly instead of forcing a lookup.
+            for xp, v in zip(pos, vals):
+                ax.text(xp, v, f"{v:,.0f}", ha="center", va="bottom", fontsize=9)
+        ax.set_xlabel("Layer")
+        ax.set_ylabel(ylabel)
+        ax.set_title(f"{title}\n(cycle-accurate RTL counters)")
+        ax.set_xticks(x)
+        ax.set_xticklabels(layer_labels)
+        # Reserve headroom explicitly so the tallest bar's value label cannot
+        # collide with the legend box.
+        if peak > 0:
+            ax.set_ylim(0, peak * 1.32)
+        ax.legend(handles=legend_schemes, loc="upper right")
+        ax.grid(True, alpha=0.3, axis="y")
+        _savefig(fig, fig_dir / f"{metric}.png")
+
+    # ---- 2. Where the cycles go ------------------------------------------
+    # Stacked bar: the STAMP scheme pays a compile-time-programmed setup cost
+    # (program_cycles) that PAGED does not, and the question is whether the
+    # off-chip traffic it saves pays for it.
+    fig, ax = plt.subplots(figsize=FIGSIZE_WIDE)
+    labels, comp, prog, repl, colors = [], [], [], [], []
+    for lbl in layer_labels:
+        for scheme in ("STAMP", "PAGED"):
+            sel = df_cmp[(df_cmp["layer"] == lbl) & (df_cmp["scheme"] == scheme)]
+            if not len(sel):
+                continue
+            labels.append(f"{lbl}\n{scheme}")
+            comp.append(float(sel["compute_cycles"].iloc[0]))
+            prog.append(float(sel["program_cycles"].iloc[0]))
+            repl.append(float(sel["replay_cycles"].iloc[0]))
+            colors.append(SCHEME_COLORS[scheme])
+    xs = np.arange(len(labels))
+    ax.bar(xs, comp, width=0.55, color=colors, label="compute")
+    ax.bar(xs, prog, width=0.55, bottom=comp, color="#f28e2b", label="metadata programming")
+    ax.bar(xs, repl, width=0.55, bottom=np.array(comp) + np.array(prog),
+           color="#a8cfe0", label="memory replay")
+    ax.set_xticks(xs)
+    ax.set_xticklabels(labels)
+    ax.set_ylabel("Cycles")
+    ax.set_title("Cycle Breakdown by Memory Management Scheme\n(measured RTL)")
+    ax.legend()
+    ax.grid(True, alpha=0.3, axis="y")
+    _savefig(fig, fig_dir / "cycle_breakdown.png")
+
+    # ---- 3. Measured bank-conflict sensitivity ---------------------------
+    # This is Experiment Set 4 ("Bank Conflict and Memory-Side Stall Analysis")
+    # answered with cycle-exact counters instead of a birthday-problem estimate.
+    bank_rows = []
+    for nb in (1, 2, 4, 8, 16):
+        d = _load_measured(golden_raw, f"bank_sweep_b{nb}")
+        if d is None:
+            continue
+        for pat, stats in d.get("patterns", {}).items():
+            served = stats.get("reads_served", 0)
+            bank_rows.append({
+                "n_banks":           nb,
+                "pattern":           pat,
+                "conflict_cycles":   stats.get("conflict_cycles", 0),
+                "stall_port_cycles": stats.get("stall_port_cycles", 0),
+                "reads_served":      served,
+                "window_cycles":     d.get("window_cycles", 0),
+                "source":            "measured (RTL)",
+            })
+
+    if bank_rows:
+        df_bank = pd.DataFrame(bank_rows)
+        _save(df_bank, out_dir / "bank_conflict_sweep.csv")
+
+        patterns = [p for p in BANK_PATTERNS
+                    if p in set(df_bank["pattern"])]
+        bank_counts = sorted(set(df_bank["n_banks"]))
+        # 1 bank is the flat, conflict-free baseline; give it its own colour.
+        colors_by_bank = dict(BANK_COLORS)
+        colors_by_bank[1] = "#bab0ac"
+
+        for metric, ylabel, title in [
+            ("stall_port_cycles", "Stalled port-cycles",
+             "Bank-Conflict Stalls by Access Pattern"),
+            ("reads_served", "Reads served in the measurement window",
+             "Effective Read Throughput by Access Pattern"),
+        ]:
+            fig, ax = plt.subplots(figsize=FIGSIZE_VERY_WIDE)
+            x = np.arange(len(patterns))
+            bw = 0.8 / max(len(bank_counts), 1)
+            for bi, nb in enumerate(bank_counts):
+                vals = []
+                for pat in patterns:
+                    sel = df_bank[(df_bank["n_banks"] == nb) &
+                                  (df_bank["pattern"] == pat)]
+                    vals.append(float(sel[metric].iloc[0]) if len(sel) else 0.0)
+                ax.bar(x + bi * bw - 0.4 + bw / 2, vals, width=bw * 0.9,
+                       color=colors_by_bank.get(nb, "#4e79a7"))
+            ax.set_xlabel("Scratchpad access pattern")
+            ax.set_ylabel(ylabel)
+            ax.set_title(f"{title}\n(4 read ports, cycle-exact RTL counters; "
+                         f"1 bank = flat baseline, zero by construction)")
+            ax.set_xticks(x)
+            ax.set_xticklabels([BANK_PATTERN_LABELS.get(p, p) for p in patterns])
+            ax.legend(handles=[mpatches.Patch(color=colors_by_bank.get(nb, "#4e79a7"),
+                                              label=f"{nb} bank" + ("s" if nb > 1 else ""))
+                               for nb in bank_counts])
+            ax.grid(True, alpha=0.3, axis="y")
+            _savefig(fig, fig_dir / f"bank_{metric}.png")
+
+    # ---- 4. Compiler-side delta accounting -------------------------------
+    # Ties the RTL result back to the compiler that produced the op stream.
+    stamp_json = ROOT.parent / "static_hash_and_tagless_memory" / "stamp_metadata.json"
+    if stamp_json.exists():
+        import json
+        from pysim.stamp_ref import naive_baseline_bytes, run_metadata
+
+        with open(stamp_json) as f:
+            meta = json.load(f)
+        ctrl = run_metadata(meta)
+        naive = naive_baseline_bytes(meta)
+
+        df_delta = pd.DataFrame([
+            {"metric": "off-chip bytes, always-load baseline",
+             "bytes": naive, "source": "compiler model"},
+            {"metric": "off-chip bytes, STAMP delta fetch",
+             "bytes": ctrl.bytes_loaded, "source": "compiler + controller model"},
+            {"metric": "bytes reused on-chip (move)",
+             "bytes": ctrl.bytes_moved, "source": "compiler + controller model"},
+            {"metric": "bytes zero-filled (padding halo)",
+             "bytes": ctrl.bytes_zeroed, "source": "compiler + controller model"},
+        ])
+        _save(df_delta, out_dir / "stamp_delta_accounting.csv")
+
+        reduction = 100.0 * (1 - ctrl.bytes_loaded / naive) if naive else 0.0
+
+        fig, ax = plt.subplots(figsize=FIGSIZE_SINGLE)
+        bars = ["Always-load\n(tag-based baseline)", "STAMP\n(delta fetch)"]
+        vals = [naive / 1024.0, ctrl.bytes_loaded / 1024.0]
+        # Neutral grey for the baseline: a green bar would read as "good" for
+        # the scheme we are arguing against.
+        ax.bar(bars, vals, width=0.5,
+               color=["#bab0ac", SCHEME_COLORS["STAMP"]])
+        for xi, v in enumerate(vals):
+            ax.text(xi, v, f"{v:,.1f} KB", ha="center", va="bottom", fontsize=10)
+        ax.set_ylabel("Off-chip read traffic (KB)")
+        ax.set_title(f"STAMP Delta Fetching — {reduction:.1f}% Less Off-Chip Traffic\n"
+                     f"(128-phase conv layer, 16 KB scratchpad)")
+        ax.grid(True, alpha=0.3, axis="y")
+        ax.margins(y=0.16)
+        _savefig(fig, fig_dir / "stamp_vs_naive_traffic.png")
+
+        # Delta op mix -- what the compiler decided to do for each tile.
+        mix = [("keep", ctrl.keeps), ("move", ctrl.moves), ("load", ctrl.loads),
+               ("alloc", ctrl.allocs), ("zero", ctrl.zeros)]
+        fig, ax = plt.subplots(figsize=FIGSIZE_SINGLE)
+        ax.bar([m[0] for m in mix], [m[1] for m in mix], width=0.55,
+               color=["#1a3a5c", "#4e79a7", "#f28e2b", "#a8cfe0", "#bab0ac"])
+        for xi, (_, v) in enumerate(mix):
+            ax.text(xi, v, f"{v}", ha="center", va="bottom", fontsize=10)
+        ax.set_ylabel("Operation count")
+        ax.set_xlabel("Delta operation")
+        ax.set_title("Compiler Delta-Op Mix\n(only 'load' costs off-chip bandwidth)")
+        ax.grid(True, alpha=0.3, axis="y")
+        ax.margins(y=0.16)
+        _savefig(fig, fig_dir / "delta_op_mix.png")
+
+        print(f"  STAMP off-chip traffic reduction vs always-load: {reduction:.1f}%")
+    else:
+        print("  NOTE: stamp_metadata.json not found; skipping compiler-side figures.")
+        print("  Generate it with: python static_hash_and_tagless_memory/stamp_compiler.py")
+
+    # ---- Headline numbers to the console ---------------------------------
+    for lbl in layer_labels:
+        s = df_cmp[(df_cmp["layer"] == lbl) & (df_cmp["scheme"] == "STAMP")]
+        p = df_cmp[(df_cmp["layer"] == lbl) & (df_cmp["scheme"] == "PAGED")]
+        if len(s) and len(p):
+            print(f"  {lbl}: bank conflicts STAMP={int(s['bank_conflicts'].iloc[0])} "
+                  f"vs PAGED={int(p['bank_conflicts'].iloc[0])}; "
+                  f"off-chip beats STAMP={int(s['axi_beats'].iloc[0])} "
+                  f"vs PAGED={int(p['axi_beats'].iloc[0])}")
+    print("  Exp 4b done.")
 
 
 # ===========================================================================
@@ -1878,6 +2294,12 @@ def parse_args() -> argparse.Namespace:
                    help="Root directory for all outputs")
     p.add_argument("--skip-sweep", action="store_true",
                    help="Load cached sweep CSV instead of re-running")
+    p.add_argument(
+        "--only", default=None,
+        help="Comma-separated experiment names to run, e.g. 'exp3,exp4,exp4b'. "
+             "Anything not listed is skipped and its existing output is left "
+             "untouched. Use this to regenerate one member's charts without "
+             "rewriting everyone else's.")
     p.add_argument("--suite", choices=["edge", "cloud", "both"],
                    default="both",
                    help="Which workload suite to evaluate")
@@ -1905,6 +2327,12 @@ def main() -> None:
     args = parse_args()
     results_dir = Path(args.results_dir)
     results_dir.mkdir(parents=True, exist_ok=True)
+
+    selected = ({e.strip() for e in args.only.split(",") if e.strip()}
+                if args.only else None)
+
+    def want(name: str) -> bool:
+        return selected is None or name in selected
 
     print(f"\n{'#'*60}")
     print("  DNN Accelerator Full Evaluation Suite")
@@ -1944,17 +2372,31 @@ def main() -> None:
         optimal_configs[suite_label] = opt
 
         # ── Sweep plots ─────────────────────────────────────────────
-        plot_hw_sweep(sweep_df, opt, suite_label, results_dir)
+        # hw_sweep figures are shared infrastructure, not one member's output,
+        # so a scoped --only run leaves them alone rather than rewriting them.
+        if selected is None:
+            plot_hw_sweep(sweep_df, opt, suite_label, results_dir)
 
         # ── Experiments ─────────────────────────────────────────────
         suite_results = results_dir / suite_label.lower()
-        exp1_stationary_layout(workloads, opt,  suite_results)
-        exp2_casting_schemes(workloads, opt,    suite_results)
-        exp3_bank_conflicts(workloads, opt,     suite_results)
-        exp4_memory_management(workloads, opt,  suite_results)
-        exp5_schedulers(workloads, opt,         suite_results)
-        exp6_loop_optimization(workloads, opt,  suite_results)
-        exp7_hardware_verification(workloads, opt, suite_results)
+        if want("exp1"): exp1_stationary_layout(workloads, opt,  suite_results)
+        if want("exp2"): exp2_casting_schemes(workloads, opt,    suite_results)
+        if want("exp3"): exp3_bank_conflicts(workloads, opt,     suite_results)
+        # exp4 moved out of this loop: it is now driven by measured synthesis
+        # and compiler-sweep artefacts rather than by the synthetic edge/cloud
+        # workload sets, so running it per suite would emit the same figures
+        # twice. See the single call after the loop.
+        if want("exp5"): exp5_schedulers(workloads, opt,         suite_results)
+        if want("exp6"): exp6_loop_optimization(workloads, opt,  suite_results)
+        if want("exp7"): exp7_hardware_verification(workloads, opt, suite_results)
+
+    # Exp 4b is driven by measured RTL counters for two specific layers, not by
+    # the synthetic edge/cloud workload sets, so it runs once outside the suite
+    # loop rather than being duplicated per suite.
+    if want("exp4"):
+        exp4_memory_management(results_dir, ROOT.parent)
+    if want("exp4b"):
+        exp4b_stamp_vs_paged(results_dir, results_dir / "golden_check" / "raw")
 
     print(f"\n{'='*60}")
     print("All experiments complete.")
