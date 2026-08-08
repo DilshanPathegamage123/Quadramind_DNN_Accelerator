@@ -319,7 +319,9 @@ module multi_dnn_exec_top
     // ---------------------------------------------------------------------
     // SERIAL DISPATCH (basic schedulers) -- MT then CT, one task at a time.
     // ---------------------------------------------------------------------
-    typedef enum logic [1:0] { B_IDLE, B_MEM, B_COMPUTE, B_RETIRE } bstate_t;
+    typedef enum logic [2:0] {
+        B_IDLE, B_MEM, B_COMPUTE, B_RETIRE, B_ACK
+    } bstate_t;
     bstate_t bstate;
     logic [LAYER_ID_WIDTH-1:0] b_layer;
 
@@ -423,7 +425,24 @@ module multi_dnn_exec_top
                     end
                     B_RETIRE: begin
                         task_complete_to_sched <= 1'b1;
-                        bstate                 <= B_IDLE;
+                        bstate                 <= B_ACK;
+                    end
+                    // Wait for the scheduler to observe task_complete and
+                    // withdraw its offer before looking again.  Returning
+                    // straight to B_IDLE re-latched the SAME selection: the
+                    // completion pulse is only presented to the scheduler on
+                    // the following edge, so for one cycle sched_out still
+                    // advertised the task that had just retired, and the FSM
+                    // dispatched it a second time.  Every basic scheduler
+                    // clears its valid on task_complete, so this cannot hang;
+                    // if the queue is now empty the valid simply stays low and
+                    // the run quiesces.
+                    //
+                    // Measured effect: FIFO ran 13 tasks for a 12-layer mix
+                    // (one redundant re-run), and HRRN additionally starved a
+                    // layer, retiring 11 of 12.
+                    B_ACK: begin
+                        if (!sched_out.valid) bstate <= B_IDLE;
                     end
                     default: bstate <= B_IDLE;
                 endcase

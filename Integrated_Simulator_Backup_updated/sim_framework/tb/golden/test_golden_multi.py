@@ -27,8 +27,17 @@ from cocotb.triggers import RisingEdge
 
 # Canonical select codes (F6 fixed in RTL: the unified wrapper now decodes
 # select-11 for the DNN-aware family, so the documented codes work).
-SCHED_SEL = {"FIFO": 0, "LIFO": 1, "AIMT": 11, "BATCHDNN": 12,
-             "BATCHDNN_PP": 13}
+# All 14 policies the unified wrapper decodes, matching
+# SimConfig.SCHEDULER_NAMES and the decode in unified_scheduler_wrapper.sv:
+#   0..6  basic task_scheduler        7..10  advanced_task_scheduler
+#   11..13 DNN-aware (AI-MT family)
+# Previously only the five instrumented policies were listed, which is why
+# nine of the fourteen had no golden ground truth at all.
+SCHED_SEL = {
+    "FIFO": 0, "LIFO": 1, "SJF": 2, "RR": 3, "PRI": 4, "EDF": 5, "LRU": 6,
+    "SRTF": 7, "HRRN": 8, "MLQ": 9, "MLFQ": 10,
+    "AIMT": 11, "BATCHDNN": 12, "BATCHDNN_PP": 13,
+}
 
 
 def _quant(a, fb):

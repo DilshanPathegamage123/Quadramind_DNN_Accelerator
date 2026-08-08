@@ -85,14 +85,35 @@ module task_scheduler #(
     // =========================================================================
     // NON-PREEMPTIVE LOCK (FIXED)
     // =========================================================================
-    logic is_non_preemptive;
     logic is_locked;
 
-    assign is_non_preemptive = (SCHEDULER_TYPE == 0 || SCHEDULER_TYPE == 1 || SCHEDULER_TYPE == 2 || SCHEDULER_TYPE == 4 || SCHEDULER_TYPE == 5);
-    
-    // Instead of a delayed flip-flop, lock directly onto the output register
-    // If we have a valid task scheduled, and it hasn't completed yet, DO NOT switch.
-    assign is_locked = is_non_preemptive && scheduled_task_valid_delayed && !task_complete;
+    // Lock the selection onto the outstanding task. This MUST apply to EVERY
+    // policy, not just the formally non-preemptive ones (types 0,1,2,4,5 =
+    // FIFO/LIFO/SJF/PRI/EDF), which is what it used to be gated on.
+    //
+    // Why the narrow gate was a bug: `removing_id` tracks
+    // scheduled_task_id_delayed, and the queue removal on `task_complete`
+    // searches for THAT id. The consumer (multi_dnn_top) is run-to-completion,
+    // so it holds a dispatched task while the selector keeps re-deciding. For
+    // any policy whose selection key MUTATES during a run -- RR (`rr_ptr`
+    // advances on completion), LRU (`last_access_time` is touched on dispatch)
+    // -- the registered output drifts off the task that is actually executing.
+    // On completion the WRONG task is then removed: the dispatched one
+    // survives and is dispatched again, while a task that never ran is deleted
+    // and starves.
+    //
+    // Measured on the 3-task golden mix before this fix: RR dispatched
+    // 0->2->0, LRU 0->0->1, both hitting the 200,000-cycle cap, with the
+    // starved task's captured output meaningless (LRU: 100% of full scale).
+    // Policies whose key is static (SJF, MLQ/MLFQ, SRTF here) re-selected the
+    // same task each cycle and so happened to be unaffected.
+    //
+    // Holding the selection costs nothing on this machine: preemption cannot
+    // manifest under run-to-completion dispatch regardless. If a preemptive
+    // dispatch FSM is ever built, THIS is the line to revisit -- and
+    // `removing_id` must then latch the dispatched id at the accept handshake
+    // instead of tracking the live output.
+    assign is_locked = scheduled_task_valid_delayed && !task_complete;
 
     // =========================================================================
     // COMBINATIONAL SELECTOR
@@ -253,7 +274,21 @@ module task_scheduler #(
                 num_tasks <= num_tasks + 1;
             end
 
-            if (scheduled_task_valid && SCHEDULER_TYPE == 6 && num_tasks > 0) begin
+            // LRU access touch. `!removing` is required: this block sits AFTER
+            // the compaction above in the same always_ff, so on a removal edge
+            // compaction assigns task_queue[j] <= task_queue[j+1] while this
+            // assigns task_queue[i].last_access_time <= current_time. Last
+            // assignment wins per field, so the touch landed on the entry that
+            // had just been SHIFTED DOWN into that index -- stamping an
+            // innocent neighbour as most-recently-used.
+            //
+            // Measured effect on the 3-task golden mix: after task 0 retired,
+            // task 1 (shifted into index 0) inherited the stamp and LRU picked
+            // task 2 instead, giving 0->2->1 where least-recently-used order is
+            // 0->1->2. Skipping the touch while removing is safe because the
+            // only entry it could legitimately target is the one being deleted.
+            if (scheduled_task_valid && SCHEDULER_TYPE == 6 && num_tasks > 0
+                && !removing) begin
                 for (int i = 0; i < MAX_TASKS; i++) begin
                     if (i < num_tasks && task_queue[i].id == scheduled_task_id) begin
                         task_queue[i].last_access_time <= current_time;
@@ -291,12 +326,31 @@ module task_scheduler #(
                     quantum_left <= quantum_left - 1;
                     
                 end else begin
-                    // 3. Quantum Expired: Context Switch
+                    // 3. Quantum expired: context switch.
+                    //
+                    // `!is_locked` is required on this integration. The
+                    // quantum cannot actually preempt here -- dispatch is
+                    // run-to-completion -- so rotating mid-task does not
+                    // switch anything; it only spins the pointer. A dispatched
+                    // task runs for thousands of cycles while TIME_QUANTUM is
+                    // 10, so the quantum expired hundreds of times per task and
+                    // left rr_ptr at an essentially arbitrary offset by the
+                    // time that task retired. Measured on the 3-task golden
+                    // mix: round robin came out 0->2->1, skipping a task
+                    // entirely, rather than the 0->1->2 that rotating once per
+                    // completion gives.
+                    //
+                    // Branch 1 above already performs the correct per-task
+                    // advance: on removal the queue compacts left, so holding
+                    // rr_ptr lands it on the next task. Rotation is therefore
+                    // only meaningful when nothing is outstanding.
+                    //
+                    // On a genuinely preemptive dispatch FSM this gate must be
+                    // removed -- there, quantum expiry IS the preemption
+                    // trigger. See the lock note above; revisit both together.
                     quantum_left <= TIME_QUANTUM;
-                    if (num_tasks > 0) begin
+                    if (!is_locked && num_tasks > 0) begin
                         rr_ptr <= (rr_ptr + 1) % num_tasks;
-                    end else begin
-                        rr_ptr <= '0;
                     end
                 end
                 

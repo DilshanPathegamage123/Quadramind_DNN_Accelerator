@@ -1,0 +1,15 @@
+scheduler,select,family,rtl_order,model_order,order_match,cycles,max_err_pct_fs,golden_pass
+FIFO,0,basic,0->1->2,0->1->2,True,13412,0.01678,True
+LIFO,1,basic,2->1->0,2->1->0,True,13412,0.01678,True
+SJF,2,basic,0->1->2,0->1->2,True,13412,0.01678,True
+RR,3,basic,0->1->2,0->1->2,True,13412,0.01678,True
+PRI,4,basic,2->1->0,2->1->0,True,13412,0.01678,True
+EDF,5,basic,0->1->2,0->1->2,True,13412,0.01678,True
+LRU,6,basic,0->1->2,0->1->2,True,13412,0.01678,True
+SRTF,7,advanced,0->1->2,0->1->2,True,13412,0.01678,True
+HRRN,8,advanced,0->1->2,0->1->2,True,13412,0.01678,True
+MLQ,9,advanced,0->1->2,0->1->2,True,13412,0.01678,True
+MLFQ,10,advanced,0->1->2,0->1->2,True,13412,0.01678,True
+AIMT,11,DNN-aware,0->1->2,0->1->2,True,13413,0.01678,True
+BATCHDNN,12,DNN-aware,0->1->2,0->1->2,True,13413,0.01678,True
+BATCHDNN_PP,13,DNN-aware,0->1->2,0->1->2,True,13413,0.01678,True

@@ -138,7 +138,24 @@ module advanced_task_scheduler #(
                 task_running <= 1'b0;
                 scheduled_task_valid <= 1'b0;
 
-            end else if (!queue_empty) begin
+            // `!task_running` is the dispatch lock, and it is required.
+            // Without it the selector re-ran EVERY cycle and overwrote
+            // scheduled_task_id while a task was still executing. Since
+            // `removing_id` tracks that output and the removal on
+            // task_complete searches for it, a policy whose ranking key
+            // changes during a run removed the WRONG task -- the running one
+            // survived and was re-dispatched while an unrun task was deleted.
+            //
+            // HRRN is exactly that case: its ratio (wait_time + burst)/burst
+            // changes every cycle because wait_time increments above. Measured
+            // before this fix it dispatched 0->0->2 and hit the 200,000-cycle
+            // cap. SRTF/MLQ/MLFQ were unaffected only because their keys are
+            // static here (remaining_time is not decremented; queue_level is
+            // always 0), so they re-selected the same task each cycle.
+            //
+            // Same reasoning as the unconditional lock in task_scheduler.sv;
+            // revisit both together if real preemption is ever implemented.
+            end else if (!queue_empty && !task_running) begin
                 case (SCHEDULER_TYPE)
                     0: schedule_srtf();
                     1: schedule_hrrn();

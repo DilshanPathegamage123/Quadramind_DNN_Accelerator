@@ -358,30 +358,52 @@ validated**, and the gap is specific.
 
 ### 7.1 Established
 
-**Anchor A — policy transcription vs. measured RTL.** Dispatch order
-predicted by $\Phi_\sigma$ compared against five measured RTL golden runs
-(`results/golden_check/raw/multi_*.json`):
+**Anchor A — policy transcription and TF-golden output, all 14 policies.**
+Re-run under Verilator 5.050 + cocotb 2.0.1 against `multi_dnn_top` with the
+§7.4 scheduler fixes in place. Each policy runs the 3-task golden mix and each
+task's RTL output is compared to its TensorFlow-dumped `expected.npy`. Raw
+data: `results/golden_check/raw/multi_*.json`; summary:
+`results/golden_check/multi_dnn_golden_all14.csv`. The pre-fix artefacts are
+preserved in `results/golden_check/raw_prefix_backup/`.
 
-| Policy | Measured order | Model order | Match |
-|---|---|---|---|
-| FIFO | T0→T1→T2 | T0→T1→T2 | ✅ |
-| LIFO | T2→T1→T0 | T2→T1→T0 | ✅ |
-| AI-MT | T0→T1→T2 | T0→T1→T2 | ✅ |
-| BatchDNN | T0→T1→T2 | T0→T1→T2 | ✅ |
-| BatchDNN++ | T0→T1→T2 | T0→T1→T2 | ✅ |
+| Policy | Sel | RTL order | Model order | Cycles | max err %FS | Verdict |
+|---|---|---|---|---|---|---|
+| FIFO | 0 | 0→1→2 | 0→1→2 | 13,412 | 0.017 | ✅ |
+| LIFO | 1 | 2→1→0 | 2→1→0 | 13,412 | 0.017 | ✅ |
+| SJF | 2 | 0→1→2 | 0→1→2 | 13,412 | 0.017 | ✅ |
+| RR | 3 | 0→1→2 | 0→1→2 | 13,412 | 0.017 | ✅ |
+| PRI | 4 | 2→1→0 | 2→1→0 | 13,412 | 0.017 | ✅ |
+| EDF | 5 | 0→1→2 | 0→1→2 | 13,412 | 0.017 | ✅ |
+| LRU | 6 | 0→1→2 | 0→1→2 | 13,412 | 0.017 | ✅ |
+| SRTF | 7 | 0→1→2 | 0→1→2 | 13,412 | 0.017 | ✅ |
+| HRRN | 8 | 0→1→2 | 0→1→2 | 13,412 | 0.017 | ✅ |
+| MLQ | 9 | 0→1→2 | 0→1→2 | 13,412 | 0.017 | ✅ |
+| MLFQ | 10 | 0→1→2 | 0→1→2 | 13,412 | 0.017 | ✅ |
+| AI-MT | 11 | 0→1→2 | 0→1→2 | 13,413 | 0.017 | ✅ |
+| BatchDNN | 12 | 0→1→2 | 0→1→2 | 13,413 | 0.017 | ✅ |
+| BatchDNN++ | 13 | 0→1→2 | 0→1→2 | 13,413 | 0.017 | ✅ |
 
-**5/5 exact.** The replay uses the golden harness's *declared* synthetic
-attributes ($b = 10/20/30$) verbatim, because those — not the real costs —
-are what the RTL decides on.
+**14/14 golden pass, and 14/14 exact dispatch-order match against the
+transcribed $\Phi_\sigma$.** Every task reproduces its TensorFlow golden to
+≤ 0.017% of full scale, and the measured makespan spread across all fourteen
+policies is **1 cycle** (13,412 vs 13,413). The replay uses the golden
+harness's *declared* synthetic attributes ($b = 10/20/30$) verbatim, because
+those — not the real costs — are what the RTL decides on.
 
-> **Caveat added after the scheduler fixes (§7.4).** These artefacts predate
-> those fixes, and all three DNN-aware files record `is_ct: [0, 0, 0]` — every
-> logged dispatch is a *memory* task (the FIFO/LIFO files carry no such flag,
-> the basic family having no MT/CT distinction). Given that two of the four
-> defects stopped the compute path dispatching at all, this anchor should be
-> read as confirming **MT ordering only**, and **regenerated** now that
-> Verilator is available. The agreement is real but narrower than the table
-> implies.
+> **This required fixing the hardware, not the model.** The first all-14 run
+> had RR, LRU and HRRN failing outright — each dispatching one task twice,
+> starving another, and hitting the 200,000-cycle cap with the starved task's
+> output meaningless (LRU: 100% of full scale). Root cause and the four fixes
+> are in §8.2. The model needed no change: it had transcribed the selection
+> rules correctly all along, and once the RTL stopped re-deciding mid-flight
+> the two agreed exactly.
+
+> **On the pre-fix artefacts.** They recorded `is_ct: [0, 0, 0]` for the three
+> DNN-aware policies — every logged dispatch a *memory* task — which is
+> consistent with two of the §7.4 defects stopping the compute path
+> dispatching. That they nonetheless passed golden is explained in §7.5:
+> `single_dnn_top` computes on any dispatch regardless of the MT/CT flag, so
+> this test cannot detect a broken CT path.
 
 **Anchor B — makespan invariance (single-issue machine).** The theory says
 makespan is identical under every order on a single work-conserving machine.
@@ -412,20 +434,26 @@ and conflating them would be the central weakness of any write-up:
 
 | Component | Validated against RTL? |
 |---|---|
-| $\Phi_\sigma$ — selection rules | **Partially.** 5 of 14 policies, on 1 mix, MT ordering only (see 7.1 caveat). |
+| $\Phi_\sigma$ — selection rules | **14 of 14 policies**, on 1 mix: exact dispatch-order match plus TF-golden output. |
 | $\tau_d(\ell)$ — cost estimator | **No.** Never compared to RTL cycle counts in the multi-DNN setting. Documented as a rank score. |
 
 Specifically missing:
 
-1. **9 of 14 policies have no RTL ground truth** — SJF, RR, PRI, EDF, LRU,
-   SRTF, HRRN, MLQ, MLFQ were never run against the single-issue RTL.
+1. ~~9 of 14 policies have no RTL ground truth~~ — **closed.** All 14 have it,
+   and after the §8.2 hardware fixes all 14 pass and match the model exactly.
 2. **Only one mix has ground truth** — the golden 3-task mix, not the six
-   representative mixes.
+   representative mixes. Still open, and now **the** binding limitation.
 3. **No rank correlation has been computed** — the claim "the model's
    ranking matches the RTL's ranking" is currently untested. There is no
-   Spearman $\rho$ to quote.
+   Spearman $\rho$ to quote. Still open.
 4. **Absolute timing is unvalidated by construction** and must never be
    presented as a cycle prediction.
+
+A caution that the exercise earned: on the 3-task mix eleven of the fourteen
+policies produce the *same* dispatch order, so order agreement is a weak
+discriminator. It is strong evidence for LIFO and PRI (which invert) and for
+catching gross failure, but a mix with real reordering pressure is what would
+make Anchor A load-bearing. That is item 2.
 
 **What the dual-issue work does and does not contribute here.** It supplies
 RTL measurements for 5 policies × 6 mixes — but on a *different machine*, so
@@ -488,6 +516,24 @@ Stage 3) and should be re-synthesised.
 Regression-guarded by `tb/unit/test_dnn_scheduler_exec.py` (10 tests; skips
 cleanly when the simulator is not built).
 
+### 7.5 Why the golden test did not catch any of this
+
+Worth stating plainly, because it bounds what a passing golden run means here.
+In `multi_dnn_top` the dispatch FSM starts `single_dnn_top` on **any**
+`sched_out.valid`, and `single_dnn_top` then runs `S_MEM → S_COMPUTE`
+internally *regardless of whether the scheduler flagged that dispatch as a
+memory or a compute task*. Numerical correctness therefore comes from the
+datapath, not from the scheduler's CT decisions.
+
+That is exactly why all five instrumented policies passed golden while
+BatchDNN and BatchDNN++ were carrying defects 1–3, which stopped them issuing
+compute tasks at all.
+
+> **A passing multi-DNN golden run is evidence the datapath is right. It is
+> not evidence the scheduler is right.** The two failure classes this test
+> *can* catch are a wrong dispatch *order* and a task that never gets
+> dispatched — which is how RR, LRU and HRRN were caught.
+
 ---
 
 ## 8. Findings that follow from the model
@@ -516,14 +562,20 @@ mixes, only four distinct dispatch-order signatures exist:
 
 | Class | Policies |
 |---|---|
-| Arrival-order | FIFO, MLQ, RR, EDF, LRU, MLFQ, AI-MT, BatchDNN, BatchDNN++ |
+| Arrival-order | FIFO, MLQ, RR, EDF, LRU, MLFQ, HRRN, AI-MT, BatchDNN, BatchDNN++ |
 | Reverse-order | LIFO, PRI |
 | Shortest-first | SJF, SRTF |
-| Response-ratio | HRRN |
 
-This is a direct consequence of run-to-completion dispatch plus default task
-attributes, and it means the effective design space is far smaller than the
-policy count suggests. It also explains why hardware cost (area, power,
+> **Now confirmed on hardware for all 14** (§7.1), but only after the §8.2
+> fixes: before them RR, LRU and HRRN produced no valid schedule at all, so
+> their class membership was a property of the model rather than the RTL. The
+> collapse is real, and on this mix it is severe — eleven of fourteen policies
+> emit the identical order, which is why hardware cost is usually the only
+> discriminator.
+
+This collapse is a direct consequence of run-to-completion dispatch plus
+default task attributes, and it means the effective design space is far
+smaller than the policy count suggests. It also explains why hardware cost (area, power,
 $F_{max}$) is usually the *only* discriminator between co-optimal policies.
 Note the collapse is about **dispatch order**: on a dual-issue machine the
 three DNN-aware policies still scan the table in order yet no longer perform
@@ -599,6 +651,63 @@ Two further measured results bear on the model's design:
 
 ---
 
+### 8.2 F7 — Dispatch must be locked: a scheduler that re-decides mid-flight removes the wrong task
+
+Found by the all-14 golden run (§7.1), fixed, and re-verified. This is a
+hardware finding, not a modelling one.
+
+**Mechanism.** `removing_id` tracks the *live* scheduler output, and the queue
+removal on `task_complete` searches for that id. So if a selector is free to
+re-decide while a dispatched task is still executing, the registered output
+drifts off the running task and the **wrong entry is removed**: the dispatched
+task survives and is re-dispatched, while a task that never ran is deleted and
+starves. The run then hits the cycle cap, and the starved task's captured
+output is meaningless.
+
+**Why only three policies failed.** The defect only bites when the selection
+key *changes* during a run:
+
+| Policy | Selection key | Mutates mid-run? | Before fix |
+|---|---|---|---|
+| SJF, SRTF | `burst_time` / `remaining_time` (not decremented here) | no | ✅ |
+| MLQ, MLFQ | `queue_level` (always 0, cf. F4) | no | ✅ |
+| **RR** | `rr_ptr` | **yes** | ❌ 0→2→0, capped |
+| **LRU** | `last_access_time` | **yes** | ❌ 0→0→1, capped |
+| **HRRN** | $(\theta_{wait}+b)/b$ | **yes** | ❌ 0→0→2, capped |
+
+FIFO/LIFO/SJF/PRI/EDF were already locked (`is_non_preemptive`); the other nine
+were not.
+
+**Four fixes, one idea — nothing may re-select while a task is outstanding:**
+
+1. `task_scheduler.sv` — dispatch lock made **unconditional** (was gated on
+   `is_non_preemptive`, which excluded RR and LRU).
+2. `advanced_task_scheduler.sv` — re-selection gated on `!task_running` (it
+   re-ran `schedule_*()` every cycle).
+3. `task_scheduler.sv` — LRU access touch guarded with `!removing`. It sat
+   after compaction in the same `always_ff`, so on a removal edge it stamped
+   the entry that had just shifted down, marking an innocent neighbour
+   most-recently-used (LRU order 0→2→1 instead of 0→1→2).
+4. `task_scheduler.sv` — RR quantum rotation gated on `!is_locked`. The quantum
+   cannot preempt on a run-to-completion machine, yet a ~4,400-cycle task
+   expires a 10-cycle quantum hundreds of times, leaving `rr_ptr` at an
+   arbitrary offset (RR order 0→2→1, skipping a task).
+
+A fifth instance lived in the dual-issue top: its basic FSM returned
+`B_RETIRE → B_IDLE` on the same cycle `task_complete` was presented, re-latching
+the stale offer. Fixed with a `B_ACK` state that waits for the scheduler to
+withdraw. That one had been inflating the FIFO baseline of §8.1 by a full
+redundant task per mix.
+
+**Result:** 14/14 golden pass, 14/14 model-order match, makespan spread 1 cycle.
+RR is now genuine round-robin and LRU genuine least-recently-used.
+
+> **If real preemption is ever implemented, all four gates must be revisited
+> together** — there, quantum expiry *is* the preemption trigger, and
+> `removing_id` must latch the dispatched id at an accept handshake rather than
+> tracking the live output. The lock is correct for a run-to-completion
+> machine, not in general.
+
 ## 9. Limitations and threats to validity
 
 1. **Cost model is a rank score.** $\tau_d$ has no validated absolute
@@ -616,9 +725,12 @@ Two further measured results bear on the model's design:
 3. **Memory provision does not enter the model.** Consequence of (2) for the
    single-issue machine. `--mem` is provenance only *here*; on the dual-issue
    machine capacity demonstrably changes the winner (§8.1).
-4. **Run-to-completion erases preemption.** RR, LRU, SRTF and MLFQ are
-   preemptive in RTL but cannot preempt here. Results do not generalise to a
-   preemptive dispatch FSM.
+4. **Run-to-completion erases preemption, and the RTL now enforces that.**
+   RR, LRU, SRTF, HRRN and MLFQ are preemptive selectors that cannot preempt
+   here; §8.2 added the dispatch locks that make the hardware consistent with
+   that fact (before them, three of the five actively broke). Results do not
+   generalise to a preemptive dispatch FSM, and those locks are the first
+   thing to remove if one is built.
 5. **Arrivals are simultaneous by default** ($a_i = 0$). Staggered arrivals
    are supported via JSON mixes but are not part of the representative set,
    so the reported stability is conditioned on batch arrival.
@@ -638,6 +750,17 @@ Two further measured results bear on the model's design:
     Until that exists, the chooser must not be applied to
     `multi_dnn_exec_top`; doing so would return an answer for the wrong
     machine.
+11. **Order agreement is a weak discriminator on the golden mix.** Eleven of
+    the fourteen policies emit the same dispatch order there (F3), so Anchor A
+    mostly demonstrates absence of gross failure. It is genuinely
+    discriminating only for LIFO/PRI, which invert. A mix with real reordering
+    pressure is needed before "the model matches the RTL" carries much weight
+    — the same gap as §7.2 item 2.
+12. **The §8.2 fixes changed measured timings slightly.** Locking the
+    advanced family cost SRTF/MLQ/MLFQ two cycles (13,410 → 13,412), and the
+    dual-issue `B_ACK` fix removed a redundant task from every basic-scheduler
+    baseline, lowering the §8.1 speedups (mix 3: 1.45× → 1.41×). Any figure or
+    table quoting the earlier numbers is stale.
 
 ---
 
@@ -657,6 +780,15 @@ PYTHONPATH=. python scripts/sched_objective_matrix.py
 
 # validation anchors (the §7.1 tables)
 PYTHONPATH=. python scripts/eval_sched_chooser.py
+
+# --- RTL output vs TensorFlow golden, all 14 policies (§7.1) ---
+# Needs verilator on PATH + cocotb in the venv:
+#   pip install cocotb
+# TensorFlow is NOT needed: expected.npy is already dumped under models/.
+for S in FIFO LIFO SJF RR PRI EDF LRU SRTF HRRN MLQ MLFQ \
+         AIMT BATCHDNN BATCHDNN_PP; do
+    PYTHONPATH=. python tb/golden/run_golden_multi.py --sched $S
+done
 
 # --- the dual-issue measurements (the §8.1 table) ---
 
@@ -681,20 +813,24 @@ scheduling policies, the one best serving a stated optimisation objective
 for a given multi-DNN workload on a fixed accelerator — at design time, in
 milliseconds, without RTL simulation and without per-query synthesis.
 
-**Evidence in hand.** Policy transcription matches measured RTL dispatch
-order 5/5 (MT ordering, on artefacts predating the §7.4 fixes); the model
-reproduces measured makespan invariance to 0.0000% against a measured
-0.0075%; full 504-combination sweep in 8.2 ms against a ~31-minute one-off
-synthesis table; recommendations are stable across six representative mixes
-for five of six objectives.
+**Evidence in hand.** Policy transcription matches measured RTL dispatch order
+for **all 14 policies** on the golden mix, each reproducing its TensorFlow
+golden output to ≤ 0.017% FS. Getting there required four hardware fixes, not
+model changes (§8.2): three policies had been unable to complete a schedule at
+all. The model reproduces measured makespan invariance to 0.0000% against a
+measured 0.0075% (1 cycle across all fourteen); full 504-combination sweep in
+8.2 ms against a ~31-minute one-off synthesis table; recommendations are stable
+across six representative mixes for five of six objectives.
 
-**Evidence still required.** Verilator-based RTL comparison across all 14
-policies × 6 mixes on `multi_dnn_top`, yielding decision accuracy and
-Spearman rank correlation (§7.3). This is now **executable** — Verilator is
-built and working — so it is scheduled work rather than a blocked
-dependency. Until it is run, the correct phrasing is *"validated against
-measured RTL for five policies on one mix, and consistent with the measured
-makespan invariance"* — not *"validated"*.
+**Evidence still required.** RTL comparison across all 14 policies × **6
+mixes** (only the golden 3-task mix has ground truth today), yielding decision
+accuracy and Spearman rank correlation (§7.3). Now **executable** — Verilator
+5.050 is built and cocotb installed — so it is scheduled work, not a blocked
+dependency. It matters more than the raw 14/14 suggests: on the golden mix
+eleven policies emit the *same* order, so that result mostly shows absence of
+gross failure. Until a reordering-heavy mix is run, the correct phrasing is
+*"validated against measured RTL for all 14 policies on one mix, on which most
+policies coincide"* — not *"validated"*.
 
 **One claim to retire.** Any sentence asserting that this project cannot
 show the benefit AI-MT / BATCH-DNN / BATCH-DNN++ were designed for is now
@@ -704,3 +840,10 @@ mechanisms: overlap peaks when memory and compute are balanced, batching
 amortises weight traffic 1.87× at B=16, and adaptive batching separates only
 when on-chip memory is tight. The single-issue flatness was a property of the
 machine, not of the policies.
+
+**One claim to add.** Dispatch on a run-to-completion machine must be locked.
+Three policies (RR, LRU, HRRN) could not complete a schedule until it was,
+because a selector that re-decides mid-flight causes the *wrong* task to be
+removed from the queue. That is a reusable design rule, and it is the reason
+the all-14 golden sweep was worth running: the five-policy version had passed
+for years while three of the fourteen were broken.

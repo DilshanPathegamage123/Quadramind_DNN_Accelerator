@@ -19,7 +19,9 @@ sys.path.insert(0, str(FRAMEWORK))
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--sched", default="FIFO",
-                    choices=["FIFO", "LIFO", "AIMT", "BATCHDNN", "BATCHDNN_PP"])
+                    choices=["FIFO", "LIFO", "SJF", "RR", "PRI", "EDF", "LRU",
+                             "SRTF", "HRRN", "MLQ", "MLFQ",
+                             "AIMT", "BATCHDNN", "BATCHDNN_PP"])
     ap.add_argument("--array", default="8x8")
     args = ap.parse_args()
     H, W = (int(t) for t in args.array.split("x"))

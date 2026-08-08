@@ -55,15 +55,15 @@ WLDIR = RESULTS / "workloads"
 
 # scheduler_select -> label.  Basic family runs the serial MT->CT channel;
 # DNN-aware family runs the dual-issue channels.
-# RR (select 3) is deliberately absent: on this machine it fails to retire
-# every layer (10-11 of 12) because the legacy task_scheduler round-robin
-# pointer can re-select an already-dispatched slot. That is a pre-existing
-# defect in the basic family, unrelated to the MT/CT work here, and an
-# incomplete run is not comparable -- so it is excluded rather than shown
-# with a flattering short cycle count.
+# RR (select 3) is back in the set. It used to retire only 10-11 of 12 layers
+# and was excluded as incomparable; the cause was two dispatch-lock defects
+# (task_scheduler's quantum rotation spinning rr_ptr mid-task, and this top's
+# basic FSM re-latching a stale offer). Both are fixed, and all 14 policies now
+# retire every layer.
 SCHEDULERS: Dict[int, str] = {
     0:  "FIFO",
     2:  "SJF",
+    3:  "RR",
     11: "AI-MT",
     12: "BATCH-DNN",
     13: "BATCH-DNN++",

@@ -81,6 +81,31 @@ bug: `MAX_DNNS` defaults to 4 while Workload mix 6 co-schedules six networks,
 so per-DNN state was indexed out of range; the testbench now elaborates with
 `MAX_DNNS = 8`.
 
+### A second class: stale dispatch selection
+
+Running the multi-DNN TF-golden test across **all 14** schedulers (not the 5 it
+previously covered) exposed a second, independent defect class. Every instance
+is the same mistake: *something re-selects while a task is already in flight*.
+Because `removing_id` tracks the live scheduler output and the queue removal
+searches for it, the wrong task gets removed — the running one survives and is
+re-dispatched, while a task that never ran is deleted and starves.
+
+| # | Where | Defect | Symptom |
+|---|---|---|---|
+| 5 | `task_scheduler.sv` | Dispatch lock gated on `is_non_preemptive`, so RR and LRU were never locked | RR dispatched 0→2→0, LRU 0→0→1, both hitting the 200,000-cycle cap; starved task's output garbage (LRU 100% FS error) |
+| 6 | `advanced_task_scheduler.sv` | Re-ran `schedule_*()` every cycle without checking its own `task_running` flag | HRRN (ratio changes every cycle as `wait_time` increments) dispatched 0→0→2 and hit the cap |
+| 7 | `task_scheduler.sv` | LRU access touch sits after compaction in the same `always_ff`; on a removal edge it stamped the entry that had just shifted down | LRU order 0→2→1 instead of 0→1→2 — an innocent neighbour marked most-recently-used |
+| 8 | `task_scheduler.sv` | RR quantum rotation ran mid-task, but the quantum cannot preempt here; a ~4,400-cycle task expires a 10-cycle quantum hundreds of times | `rr_ptr` left at an arbitrary offset — RR came out 0→2→1, skipping a task |
+| 9 | `multi_dnn_exec_top.sv` | Basic FSM returned `B_RETIRE → B_IDLE` on the same cycle `task_complete` was presented, re-latching the stale offer | FIFO ran 13 tasks for a 12-layer mix; HRRN additionally starved a layer |
+
+Policies whose selection key is *static* (SJF, SRTF, MLQ, MLFQ) re-selected the
+same task each cycle and so were unaffected — which is why only three of the
+fourteen failed and why the defects survived the five-scheduler test.
+
+Result: **14/14 pass the TF-golden test, and 14/14 match the analytical model's
+predicted dispatch order** (`results/golden_check/multi_dnn_golden_all14.csv`).
+Measured makespan spread across all 14 is 1 cycle (13,412–13,413).
+
 Guarded by `tb/unit/test_dnn_scheduler_exec.py` (10 tests, skips cleanly when
 the simulator is not built).
 
@@ -92,14 +117,23 @@ the simulator is not built).
 
 | Mix | mem/compute | FIFO | AI-MT | Speedup | Array util FIFO → AI-MT |
 |---|---|---|---|---|---|
-| 1 | 1.19 | 129,702 | 77,496 | **1.67×** | 46% → 76% |
-| 2 | 0.85 | 156,383 | 96,531 | **1.62×** | 54% → 87% |
-| 3 | 0.61 | 331,621 | 229,100 | **1.45×** | 61% → 87% |
-| 4 | 2.29 | 253,632 | 152,393 | **1.66×** | 37% → 44% |
-| 5 | 0.33 | 182,369 | 147,306 | **1.24×** | 73% → 90% |
-| 6 | 0.62 | 353,564 | 264,389 | **1.34×** | 61% → 81% |
+| 1 | 1.19 | 129,104 | 77,496 | **1.67×** | 46% → 76% |
+| 2 | 0.85 | 156,188 | 96,531 | **1.62×** | 54% → 87% |
+| 3 | 0.61 | 322,042 | 229,100 | **1.41×** | 62% → 87% |
+| 4 | 2.29 | 217,949 | 152,393 | **1.43×** | 30% → 44% |
+| 5 | 0.33 | 176,686 | 147,306 | **1.20×** | 75% → 90% |
+| 6 | 0.62 | 347,913 | 264,389 | **1.32×** | 62% → 81% |
 
-All six mixes complete on every scheduler, no rejections.
+All six mixes complete on **all 14 schedulers**, no rejections. FIFO, SJF and
+RR are bit-identical per mix, as they must be: on the serial channel the order
+cannot change the total, which is the single-issue makespan invariance showing
+through.
+
+> **These numbers superseded an earlier, slightly higher set** (1.45× on mix 3,
+> 1.66× on mix 4). The baseline was inflated: the basic dispatch FSM re-latched
+> a stale offer after `task_complete` and re-ran one task per mix, so FIFO paid
+> for 13 tasks on a 12-layer workload. Fixed (`B_ACK` state); every speedup here
+> is against the corrected, faster baseline.
 
 ### B — The mechanism
 
@@ -119,7 +153,7 @@ decays in both directions:
 
 | mem/compute | 4.88 | 2.44 | 1.22 | 0.61 | 0.31 | 0.15 | 0.08 |
 |---|---|---|---|---|---|---|---|
-| AI-MT speedup | 1.17 | 1.28 | 1.43 | **1.45** | 1.31 | 1.17 | 1.09 |
+| AI-MT speedup | 1.12 | 1.22 | 1.38 | **1.41** | 1.28 | 1.15 | 1.07 |
 | overlap % | 12.0 | 22.4 | 37.6 | **40.5** | 28.2 | 14.4 | 7.3 |
 
 This is the result that proves the numbers are not a lookup table: a hardcoded
@@ -133,7 +167,7 @@ compute-bound, nothing to hide *behind* when memory-bound.
 Batching is **inert at B=1** (all three identical, reproducing the original
 golden observation) and grows with B. At B=16 BATCH-DNN moves 66.8 MB against
 AI-MT's 124.8 MB — **1.87× less off-chip traffic for identical compute**.
-BATCH-DNN++ separates from BATCH-DNN at B=16 (1.67× vs 1.59×) where batch
+BATCH-DNN++ separates from BATCH-DNN at B=16 (1.62× vs 1.54×) where batch
 slicing engages.
 
 ### E — On-chip capacity
@@ -161,12 +195,13 @@ binding and the three converge. Below 24 MB the batching schedulers deadlock
   buffer smaller than one full-batch layer. AI-MT degrades gracefully there.
   This is a real limitation of the implementations, left unfixed and reported
   rather than hidden.
-- **RR (select 3) is excluded** — it retires only 10–11 of 12 layers because the
-  legacy round-robin pointer can re-select an already-dispatched slot. A
-  pre-existing defect in the basic family, unrelated to this work.
-- **FIFO dispatches 13 tasks for 12 layers** (one redundant re-dispatch). It is
-  counted honestly in its cycle total, so the baseline is if anything slightly
-  pessimistic.
+- ~~RR is excluded~~ and ~~FIFO dispatches 13 tasks for 12 layers~~ — **both
+  fixed.** They were two faces of one defect class: a scheduler or dispatcher
+  re-selecting while a task was already in flight. Four fixes now cover it —
+  an unconditional dispatch lock in `task_scheduler.sv`, a `!task_running`
+  gate in `advanced_task_scheduler.sv`, an `!removing` guard on the LRU access
+  touch, and a `B_ACK` handshake state in this top. All 14 schedulers retire
+  every layer and dispatch exactly one task per layer.
 - **No Vivado.** Area/power/Fmax for the new engines are not measured; only
   cycles are.
 - `run_full_eval.py`'s Exp 5 still uses the hardcoded `SCHEDULER_MODEL`. It was
