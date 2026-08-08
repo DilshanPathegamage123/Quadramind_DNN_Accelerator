@@ -22,10 +22,88 @@ Do not edit the legacy directories. If you need to verify behaviour of an
 original module, read it as reference, then change the copy under
 `sim_framework/rtl/`.
 
+## Dual-issue execution top — how the DNN-aware schedulers earn their keep
+
+`rtl/exec/` holds a second execution top, `multi_dnn_exec_top.sv`, built
+specifically so AI-MT / BATCH-DNN / BATCH-DNN++ can deliver the benefit they
+were designed for. Read `results/aimt_exec/REPORT.md` before touching any of
+it — it records the measurements and the limitations.
+
+The three schedulers were always implemented correctly (each drives an
+independent `mt_valid` and `ct_valid`). Three things downstream serialised
+them, which is why the golden runs showed all five schedulers within one cycle:
+
+1. `unified_scheduler_wrapper` collapsed the concurrent `{mt_valid, ct_valid}`
+   pair into a single tagged union with CT priority
+2. `multi_dnn_top`'s dispatch FSM is single-issue run-to-completion
+3. `single_dnn_top` runs `S_MEM → S_COMPUTE` strictly in sequence
+
+**Do not "simplify" `multi_dnn_exec_top` back onto `sched_out`.** It consumes
+the `mt_*_o` / `ct_*_o` passthroughs precisely because the tagged union can
+only carry one task per cycle. The legacy union is still there and
+`multi_dnn_top` still uses it; both paths are intentional.
+
+`dram_model.sv` gives memory a real time cost (`latency + bytes/bandwidth`).
+Without it memory is free, and hiding a zero-cost operation saves nothing —
+that is the other half of why the benefit never appeared.
+
+### Scheduler bug fixes — do not re-break these
+
+Four defects were fixed in the DNN-aware schedulers. Each produced a *fast but
+wrong* run (short cycle count, workload silently half-dropped):
+
+- **`prev_batch` / `prev_batch_reg` seeding** at table load. They reset to 0 and
+  are otherwise written only inside the dispatch path, but `max_batch_size()`
+  clamps its result to them — leaving them at 0 pins `feasible_b` to 0 and the
+  CT path stalls forever.
+- **OFMAP release.** `mem_req` reserves `weight + (ifmap+ofmap)*batch`, so the
+  completion path must return the OFMAP share too. The batching pair also
+  reserved OFMAP a *second* time at CT dispatch; that duplicate is removed.
+  Allocation and free must stay balanced or `avail_mem_reg` drains and the
+  balance check fails permanently.
+- **Queue counters** (`ct_cq_cnt`, `sct_cnt`) use the collected-flag pattern
+  applied once at block end — the same "finding F7" fix already on `mt_cq`. A
+  raw `+1`/`-1` pair loses the enqueue when it coincides with a pop.
+- **`ct_current_layer` seeding** in BATCH-DNN++. `layer_distance()` compares
+  *global* layer indices, so a DNN whose first layer sits beyond
+  `MAX_LAYER_DISTANCE` is throttled forever unless the reference is anchored at
+  that DNN's own first layer.
+
+Also: `MAX_DNNS` defaults to 4, but Workload mix 6 co-schedules six networks.
+Elaborate with `MAX_DNNS = 8` (as `tb/exec/tb_multi_dnn_exec.sv` does) or
+per-DNN state is indexed out of range.
+
+Guarded by `tb/unit/test_dnn_scheduler_exec.py` (skips when the simulator is
+not built).
+
+### Running it
+
+```bash
+./tb/exec/build_exec.sh [onchip_bytes] [compute_bal_thresh]  # verilator --binary
+PYTHONPATH=. python scripts/run_aimt_eval.py --exp all       # sweeps -> CSV
+PYTHONPATH=. python scripts/gen_aimt_figs.py                 # figures
+```
+
+Every sweep dimension is a runtime plusarg except on-chip capacity, which is a
+scheduler parameter and re-elaborates per point.
+
+**Completion is checked, not assumed.** `stat_layers_completed` counts distinct
+layers retired; incomplete runs are rejected rather than credited with a fast
+time. Keep that discipline — three of the four bugs above would otherwise have
+read as speedups.
+
 ## Toolchain availability
 
-This environment **does not have Verilator or Vivado** (no sudo, no apt
-install). The framework was designed to cope:
+Verilator can be **built from source** into the scratchpad when absent (no sudo
+required; ~4 min with `-j12`, needs only gcc/make/autoconf/flex/bison, all of
+which are present). `tb/exec/build_exec.sh` looks for `$VERILATOR_INSTALL`
+first, then `verilator` on PATH. The results in `results/aimt_exec/` were
+produced this way with Verilator 5.050.
+
+Vivado is still unavailable, so area/power/Fmax for the new engines are not
+measured.
+
+The rest of the framework was designed to cope without either tool:
 
 - `pysim/runner.py` auto-detects Verilator; if missing it transparently
   falls back to `pysim/software_ref.py` (a bit-accurate NumPy

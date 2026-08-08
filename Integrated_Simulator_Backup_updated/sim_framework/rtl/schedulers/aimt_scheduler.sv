@@ -314,8 +314,18 @@ module aimt_scheduler #(
             // -----------------------------------------------------------
             if (ct_active && compute_done) begin
                 automatic logic [MEM_WIDTH-1:0] freed; //It holds the amount of on-chip memory that is released by the completed layer.
+                // The MT path reserves weight_fp + ifmap_fp + ofmap_fp, so all
+                // three must be returned here or the accounting does not close.
+                // Releasing only weight+ifmap leaked one OFMAP per layer:
+                // avail_mem_reg drained monotonically and, on a long enough
+                // mix, the balance check `mem_req <= avail_mem_reg` failed
+                // permanently and the scheduler wedged with layers pending.
+                // "OFMAP becomes next IFMAP" is still true physically, but the
+                // successor's own MT reserves its IFMAP independently, so
+                // holding the producer's OFMAP as well double-counts it.
                 freed = sched_table[ct_active_layer].weight_fp +
-                        sched_table[ct_active_layer].ifmap_fp;   // OFMAP becomes next IFMAP
+                        sched_table[ct_active_layer].ifmap_fp  +
+                        sched_table[ct_active_layer].ofmap_fp;
                 avail_mem_reg <= avail_mem_reg + freed;
                 cycles_to_fill_remaining <= cycles_to_fill_remaining +
                                             (freed / (WORD_BITS/8));

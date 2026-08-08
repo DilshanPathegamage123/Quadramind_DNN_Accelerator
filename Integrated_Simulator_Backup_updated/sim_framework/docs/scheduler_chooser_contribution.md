@@ -10,6 +10,20 @@ Implementation: [`pysim/scheduler_chooser.py`](../pysim/scheduler_chooser.py),
 [`scripts/choose_scheduler.py`](../scripts/choose_scheduler.py),
 [`scripts/sched_objective_matrix.py`](../scripts/sched_objective_matrix.py).
 
+> **Revision note — the accelerator this document models is now one of two.**
+> Every claim below is scoped to the **single-issue** integration
+> (`rtl/tops/multi_dnn_top.sv`), which dispatches one task at a time and holds
+> it to completion. A second execution top,
+> **`rtl/exec/multi_dnn_exec_top.sv`**, now exists: it is *dual-issue*, with
+> independent memory and compute engines that can both be busy in the same
+> cycle. On that machine several conclusions here **invert** — most
+> importantly §9.2, the limitation that this framework cannot demonstrate the
+> AI-MT / BATCH-DNN benefit. It can now, and does; see
+> [`results/aimt_exec/REPORT.md`](../results/aimt_exec/REPORT.md).
+> The chooser itself is unchanged and still models the single-issue machine.
+> Findings F1 and F3 are therefore properties of *that* machine, not of
+> scheduling in general, and are labelled accordingly.
+
 ---
 
 ## 1. The claim
@@ -38,6 +52,11 @@ Similarly, the timing metrics are **rank scores, not cycle predictions**.
 `estimate_cycles` is documented as such (`GOLDEN_CHECK_SUMMARY.md` §7). The
 claim is about *which policy wins*, never about how many cycles it takes.
 
+**And one more scoping clause, now load-bearing:** the claim is about the
+policy that wins **on the accelerator being modelled**. The dual-issue
+results show the winner can change when the machine changes, so "best
+scheduler" is never a property of the policy alone.
+
 ---
 
 ## 2. Scope — what is and is not claimed as novel
@@ -47,6 +66,7 @@ claim is about *which policy wins*, never about how many cycles it takes.
 | The 14 scheduling policies (FIFO, LIFO, SJF, RR, PRI, EDF, LRU, SRTF, HRRN, MLQ, MLFQ, AI-MT, BatchDNN, BatchDNN++) | **No** | Standard operating-systems policies; AI-MT and BatchDNN are from the literature. |
 | Their RTL implementations | **No** | Engineering work, not a research result. |
 | The systolic-array simulator | **No** | Infrastructure. |
+| The dual-issue execution top (`rtl/exec/`) | **No** | Engineering work; it is what makes the literature's policies behave as published. |
 | **The selection algorithm** — workload + objective → policy, at design time, from a closed-form cost model plus a policy-replay model, joined to a measured hardware table | **Yes** | This is the contribution. |
 | The measured hardware table itself (13/14 policies synthesised) | Supporting | Evidence, not the claim. |
 
@@ -64,7 +84,8 @@ Let
 - $W = \langle w_1, \dots, w_n \rangle$ = a workload mix of $n$ DNN inference
   tasks, each $w_i$ a sequence of layers $\ell_{i,1..L_i}$.
 - $H$ = a fixed hardware configuration: array geometry $(H_a, W_a)$,
-  dataflow $d \in \{\mathrm{OS}, \mathrm{IS}, \mathrm{WS}\}$, data width.
+  dataflow $d \in \{\mathrm{OS}, \mathrm{IS}, \mathrm{WS}\}$, data width,
+  **and the dispatch discipline** (single-issue run-to-completion here).
 - $g$ = an optimisation objective drawn from
   $G = \{$turnaround, turnaround_us, wait, throughput, area, power,
   makespan, weighted$\}$.
@@ -122,8 +143,10 @@ $b_i = \tau_i$, $p_i = i$, $D_i = 1000(i{+}1)$, $a_i = 0$.
 > function of layer shape, dataflow and array geometry **only**. It takes no
 > memory-capacity argument. The CLI's `--mem` flag is recorded for
 > provenance and provably does not change the ranking, because MT/CT overlap
-> is deliberately not modelled (§8). Any write-up claiming memory provision
-> feeds the cost model is wrong.
+> is not modelled on the single-issue machine (§9.2). Any write-up claiming
+> memory provision feeds *this* cost model is wrong. (On the dual-issue top
+> memory provision does change the outcome — measurably, see §8.1 — which is
+> a reason to extend the model, not a reason to reinterpret it.)
 
 ### Stage 2 — Policy replay
 
@@ -148,10 +171,19 @@ dispatch. Each is transcribed from the corresponding RTL case arm, and each
 | AI-MT / BatchDNN / BatchDNN++ | first table entry passing the memory-balance check | `aimt_scheduler.sv` |
 
 The dispatch loop is work-conserving and **run-to-completion**: this is a
-property of the integration, not a modelling shortcut. `multi_dnn_top`'s
-dispatch FSM holds a dispatched task until its `task_complete` pulse, so
-although RR, LRU, SRTF and MLFQ are preemptive selectors, preemption cannot
-manifest. $\Phi_\sigma$ is therefore applied at dispatch points only.
+property of the single-issue integration, not a modelling shortcut.
+`multi_dnn_top`'s dispatch FSM holds a dispatched task until its
+`task_complete` pulse, so although RR, LRU, SRTF and MLFQ are preemptive
+selectors, preemption cannot manifest. $\Phi_\sigma$ is therefore applied at
+dispatch points only.
+
+> **This is where the two machines diverge.** `multi_dnn_exec_top` runs two
+> independent dispatch channels, so for AI-MT / BatchDNN / BatchDNN++ a
+> memory task and a compute task can be in flight at once. The single-index
+> $\Phi_\sigma$ above cannot express that — a faithful model of the
+> dual-issue machine needs a *pair* of predicates over two resources plus a
+> buffer-occupancy constraint. Extending the chooser that way is open work
+> (§9.10).
 
 Given a dispatch order, per-task start $s_i$ and finish $f_i$ follow, and:
 
@@ -178,6 +210,13 @@ from hardware-dependent objectives. No value is ever interpolated,
 substituted, or estimated. This is why `BATCHDNN_PP` currently drops out of
 `--goal area/power/throughput/turnaround_us` (its last synthesis predates
 the multi-driven-reset fix and re-synthesis exceeds this machine's RAM).
+
+> The measured hardware table also **predates the four scheduler RTL fixes of
+> §7.4**. Those fixes add a small amount of logic (a seeded register, a guard
+> flag, restructured queue-counter updates), so the LUT/FF/power/$F_{max}$
+> rows for AI-MT, BatchDNN and BatchDNN++ should be re-synthesised before
+> being quoted again. Objectives that depend only on the model (turnaround,
+> wait, makespan) are unaffected.
 
 ### Stage 4 — Ranking and tie-break
 
@@ -272,11 +311,18 @@ separated from one-time import cost.
 **Honest comparator.** Synthesis is per-policy, not per-workload, so it is
 paid once (~31 min for all 14) and reused. What the method eliminates per
 query is the **RTL simulation** of $\lvert S\rvert \times \lvert
-\mathcal{M}\rvert$ combinations. That RTL simulation time is **not measured
-here** — Verilator is unavailable in this environment — so no speedup ratio
-against RTL simulation is quoted. Quoting one would be fabrication. The
-defensible statement is the absolute figure: full 504-combination sweep in
-8.2 ms, versus a hardware table that costs ~31 min to build once.
+\mathcal{M}\rvert$ combinations.
+
+> **Updated:** Verilator is no longer unavailable — it is built from source
+> into the scratchpad (v5.050, ~4 min with `-j12`, no sudo; see
+> `tb/exec/build_exec.sh`). An RTL-simulation comparator is therefore now
+> *measurable*, and the earlier refusal to quote a speedup ratio no longer
+> needs to be permanent. It is still not quoted here, because the runs that
+> exist are on the **dual-issue** top, not the single-issue machine this
+> chooser models; a like-for-like comparator requires the §7.3 experiment.
+> Until it is run, the defensible statement remains the absolute figure:
+> full 504-combination sweep in 8.2 ms, versus a hardware table that costs
+> ~31 min to build once.
 
 ---
 
@@ -295,7 +341,13 @@ axes that change a scheduling decision — queue depth and task-size skew:
 | 6 — Deep Mixed Queue | 6 | 1,620 … 131,412 (deepest queue, full cost range) |
 
 Workloads are drawn from MLPerf Inference v3.0, MLPerf Tiny v1.0 and
-DeepBench.
+DeepBench. Each network contributes 4 representative layers, so a "task"
+here is a 4-layer stage sequence, not a full network.
+
+The dual-issue evaluation uses **these same six mixes**, expanded to
+per-layer scheduling tables (12–24 layers) rather than collapsed to one
+service time per task — which is what lets memory and compute be scheduled
+separately. Generator: `scripts/aimt_workload_gen.py`.
 
 ---
 
@@ -322,12 +374,29 @@ predicted by $\Phi_\sigma$ compared against five measured RTL golden runs
 attributes ($b = 10/20/30$) verbatim, because those — not the real costs —
 are what the RTL decides on.
 
-**Anchor B — makespan invariance.** The theory says makespan is identical
-under every order on a single work-conserving machine. Measured RTL spread
-across five policies: 13,412–13,413 cycles (0.0075%, one cycle, attributable
-to dispatch handshake). Model spread: 0.0000%. The model reproduces the
-invariance instead of predicting a speedup — this is the check that would
-catch a fabricated performance claim.
+> **Caveat added after the scheduler fixes (§7.4).** These artefacts predate
+> those fixes, and all three DNN-aware files record `is_ct: [0, 0, 0]` — every
+> logged dispatch is a *memory* task (the FIFO/LIFO files carry no such flag,
+> the basic family having no MT/CT distinction). Given that two of the four
+> defects stopped the compute path dispatching at all, this anchor should be
+> read as confirming **MT ordering only**, and **regenerated** now that
+> Verilator is available. The agreement is real but narrower than the table
+> implies.
+
+**Anchor B — makespan invariance (single-issue machine).** The theory says
+makespan is identical under every order on a single work-conserving machine.
+Measured RTL spread across five policies: 13,412–13,413 cycles (0.0075%, one
+cycle, attributable to dispatch handshake). Model spread: 0.0000%. The model
+reproduces the invariance instead of predicting a speedup — this is the check
+that would catch a fabricated performance claim.
+
+> **Scope.** This invariance is a property of the *single-issue* machine, and
+> the identical measured numbers are its signature. On the dual-issue top the
+> same five policies span 331,621 → 229,100 cycles on mix 3 (a 1.45× spread),
+> because there the scheduler controls how much memory time hides behind
+> compute, not merely the order of a fixed amount of work. Anchor B is
+> therefore evidence that the model is faithful *to the machine it models* —
+> not evidence that scheduling cannot matter.
 
 **Determinism / argmin consistency.** Every $(\text{mix}, \text{goal})$
 pick re-verified against independent exhaustive re-scoring: all match. Note
@@ -343,13 +412,13 @@ and conflating them would be the central weakness of any write-up:
 
 | Component | Validated against RTL? |
 |---|---|
-| $\Phi_\sigma$ — selection rules | **Partially.** 5 of 14 policies, on 1 mix. |
+| $\Phi_\sigma$ — selection rules | **Partially.** 5 of 14 policies, on 1 mix, MT ordering only (see 7.1 caveat). |
 | $\tau_d(\ell)$ — cost estimator | **No.** Never compared to RTL cycle counts in the multi-DNN setting. Documented as a rank score. |
 
 Specifically missing:
 
 1. **9 of 14 policies have no RTL ground truth** — SJF, RR, PRI, EDF, LRU,
-   SRTF, HRRN, MLQ, MLFQ were never run against the RTL.
+   SRTF, HRRN, MLQ, MLFQ were never run against the single-issue RTL.
 2. **Only one mix has ground truth** — the golden 3-task mix, not the six
    representative mixes.
 3. **No rank correlation has been computed** — the claim "the model's
@@ -358,10 +427,15 @@ Specifically missing:
 4. **Absolute timing is unvalidated by construction** and must never be
    presented as a cycle prediction.
 
+**What the dual-issue work does and does not contribute here.** It supplies
+RTL measurements for 5 policies × 6 mixes — but on a *different machine*, so
+it does **not** close items 1–3. Its contribution to this gap is that the
+blocker was tooling, and the tooling now exists.
+
 ### 7.3 The experiment that closes the gap
 
-Requires Verilator (unavailable in this environment; the cocotb tests are
-written to run unmodified once it is present).
+**Now executable** — Verilator is available (§5). This is the single highest-value
+piece of outstanding work in the scheduler section.
 
 - **Design:** for each mix $m \in \mathcal{M}$ (6) and each policy
   $\sigma \in S$ (14), run `multi_dnn_top` under Verilator and record
@@ -374,30 +448,68 @@ written to run unmodified once it is present).
   rankings of the 14 policies, per $(m, g)$; report mean and worst case.
   This is the number the claim actually rests on.
 - **Metric 3 — order fidelity.** Exact dispatch-order match rate across all
-  84 runs, extending Anchor A from 5/14 to 14/14.
+  84 runs, extending Anchor A from 5/14 to 14/14 and from MT-only to MT+CT.
 - **Falsifier, stated in advance:** if mean $\rho < 0.8$, or if decision
   accuracy is below the rate obtainable by always answering with the
   co-optimal set from §5, the method does not support the claim and the
   cost model needs revision rather than reinterpretation.
+
+**Practical note:** budget for RR being excluded or fixed first — on the
+dual-issue harness it retires only 10–11 of 12 layers, because the legacy
+round-robin pointer can re-select an already-dispatched slot. Any policy that
+fails to retire the whole workload must be **rejected, not credited with a
+fast time**; the dual-issue harness enforces this with an explicit
+completion counter, and the §7.3 experiment should do the same.
+
+### 7.4 Scheduler RTL defects found and fixed
+
+Building the dual-issue machine exposed four genuine bugs in the DNN-aware
+schedulers. Each produced a *fast but wrong* run — a short cycle count for a
+workload that had been silently half-dropped — which is precisely why they
+survived the existing checks.
+
+| # | Scheduler | Defect | Symptom |
+|---|---|---|---|
+| 1 | BatchDNN, ++ | `prev_batch` / `prev_batch_reg` reset to 0 and written only inside the dispatch path, while `max_batch_size()` clamps to them | feasible batch pinned at 0 → CT path stalled forever |
+| 2 | all three | OFMAP reserved but never released; the batching pair reserved it twice (MT `mem_req` *and* CT dispatch) | `avail_mem` drained until the balance check failed permanently |
+| 3 | BatchDNN, ++ | `ct_cq_cnt` / `sct_cnt` used a raw `+1`/`-1`; a same-edge enqueue+pop lost the enqueue | layers stranded in the queue — BatchDNN finished 8 of 12 |
+| 4 | BatchDNN++ | `layer_distance()` compares *global* layer indices against a `ct_current_layer[]` that resets to 0 | any DNN whose first layer index > `MAX_LAYER_DISTANCE` throttled forever — a whole network never ran |
+
+Defect 3 is the "finding F7" pattern already applied to `mt_cq` but never
+extended to the other two queues. Separately, `MAX_DNNS` defaults to 4 while
+mix 6 co-schedules six networks, so per-DNN state was indexed out of range;
+the dual-issue testbench elaborates with `MAX_DNNS = 8`.
+
+**Consequence for this document:** the transcribed $\Phi_\sigma$ for the
+DNN-aware family mirrors the *table-scan* logic, which was never the broken
+part, so Stage 2 is unaffected. The measured hardware rows are affected (§4,
+Stage 3) and should be re-synthesised.
+
+Regression-guarded by `tb/unit/test_dnn_scheduler_exec.py` (10 tests; skips
+cleanly when the simulator is not built).
 
 ---
 
 ## 8. Findings that follow from the model
 
 These are results, not caveats — each is a statement about the hardware that
-the model makes explicit and the measurements corroborate.
+the model makes explicit and the measurements corroborate. **F1–F4 are
+properties of the single-issue machine**; §8.1 records what changes when the
+machine does.
 
-**F1 — Makespan cannot discriminate policies on this accelerator.** On a
-single work-conserving machine, reordering moves *which* task runs when,
-never total busy time nor forced idle. `--goal makespan` is therefore
-provably an all-way 14-way tie. Measured RTL agrees (1-cycle spread). Any
-paper claiming a makespan speedup from scheduling on this integration would
-be wrong.
+**F1 — Makespan cannot discriminate policies on the single-issue
+accelerator.** On a single work-conserving machine, reordering moves *which*
+task runs when, never total busy time nor forced idle. `--goal makespan` is
+therefore provably an all-way 14-way tie. Measured RTL agrees (1-cycle
+spread). Any paper claiming a makespan speedup from scheduling **on this
+integration** would be wrong — but see §8.1 before generalising the
+statement, because on a dual-resource machine it is false.
 
 **F2 — `--goal throughput` reduces exactly to ranking by measured
 $F_{max}$.** Since throughput $= n F_{max} / \mathrm{makespan}$, makespan is
 invariant (F1) and $n$ is fixed, the objective selects the policy with the
-fastest clock, not the best dispatch order. The CLI now states this.
+fastest clock, not the best dispatch order. The CLI now states this. This
+reduction is inherited from F1 and so is likewise single-issue-only.
 
 **F3 — The 14 policies collapse to 4 behavioural classes.** Across all six
 mixes, only four distinct dispatch-order signatures exist:
@@ -413,6 +525,9 @@ This is a direct consequence of run-to-completion dispatch plus default task
 attributes, and it means the effective design space is far smaller than the
 policy count suggests. It also explains why hardware cost (area, power,
 $F_{max}$) is usually the *only* discriminator between co-optimal policies.
+Note the collapse is about **dispatch order**: on a dual-issue machine the
+three DNN-aware policies still scan the table in order yet no longer perform
+identically to FIFO, because order is not the only thing that varies.
 
 **F4 — MLQ is behaviourally FIFO in this RTL.** Every task is inserted at
 queue level 0 and MLQ never changes a level, so its high-to-low scan always
@@ -443,23 +558,64 @@ comparator-tree policies buy fewer cycles at a much lower $F_{max}$
 (SJF 20.3 MHz vs MLQ 112.4 MHz). Reporting cycle-domain results alone would
 invert the engineering conclusion.
 
+### 8.1 F6 — The machine, not the policy, decides whether scheduling matters
+
+Measured on `multi_dnn_exec_top` under Verilator 5.050, same six mixes, same
+array geometry and dataflow; full detail in
+[`results/aimt_exec/REPORT.md`](../results/aimt_exec/REPORT.md).
+
+| Mix | mem/compute | FIFO cycles | AI-MT cycles | Speedup | Array util |
+|---|---|---|---|---|---|
+| 1 | 1.19 | 129,702 | 77,496 | **1.67×** | 46% → 76% |
+| 2 | 0.85 | 156,383 | 96,531 | **1.62×** | 54% → 87% |
+| 3 | 0.61 | 331,621 | 229,100 | **1.45×** | 61% → 87% |
+| 4 | 2.29 | 253,632 | 152,393 | **1.66×** | 37% → 44% |
+| 5 | 0.33 | 182,369 | 147,306 | **1.24×** | 73% → 90% |
+| 6 | 0.62 | 353,564 | 264,389 | **1.34×** | 61% → 81% |
+
+Three consequences for this document:
+
+1. **F1 is machine-specific, not general.** Makespan discriminates strongly
+   once there are two resources to keep busy.
+2. **The single-issue result was never evidence against AI-MT.** It was
+   evidence that the machine could not express what AI-MT does — which §9.2
+   previously said, and which is now demonstrated rather than argued.
+3. **The chooser's objective set is incomplete for the new machine.**
+   Utilisation and overlap are first-class outcomes there and have no
+   corresponding goal in $G$.
+
+Two further measured results bear on the model's design:
+
+- **Overlap gain is non-monotone in arithmetic intensity.** Sweeping DRAM
+  bandwidth (mem/compute 4.88 → 0.08), AI-MT's speedup peaks at **1.45× at a
+  ratio of 0.61** and decays to 1.17× and 1.09× at the two extremes. Any
+  future overlap term must be non-monotone; a constant factor is falsified by
+  this curve.
+- **Memory provision changes the ranking.** At 24 MB on-chip, BatchDNN++
+  needs 541,614 cycles against AI-MT's 1,001,330 (**1.85×**); past ~32 MB the
+  three converge. So the `--mem` flag, provenance-only today (§4 Stage 1),
+  corresponds to a real effect on the dual-issue machine and would need to
+  become a live model input there.
+
 ---
 
 ## 9. Limitations and threats to validity
 
 1. **Cost model is a rank score.** $\tau_d$ has no validated absolute
    accuracy. All conclusions are ordinal.
-2. **MT/CT overlap is not modelled.** AI-MT's memory/compute overlap and
-   BatchDNN's sub-batch pipelining are the designed benefit of those
-   policies, but this integration serialises MT and CT, and the measured
-   golden runs show all five instrumented policies within one cycle.
-   Modelling an overlap speedup would produce a number no measurement
-   supports, so no overlap term exists. **Consequence:** this framework
-   cannot demonstrate the advantage AI-MT and BatchDNN were designed for.
-   That is a limitation of the integration, not evidence against those
-   policies.
-3. **Memory provision does not enter the model.** Direct consequence of (2).
-   `--mem` is provenance only.
+2. **MT/CT overlap is not modelled — and this now bounds the chooser's
+   applicability, not the hardware's capability.** The single-issue
+   integration serialises MT and CT, so the chooser correctly carries no
+   overlap term for it. **This is no longer a statement about the framework
+   as a whole:** on `multi_dnn_exec_top` the overlap is real and measured
+   (1.24–1.67×, up to 40.5% of cycles with both engines busy). The former
+   wording — "this framework cannot demonstrate the advantage AI-MT and
+   BatchDNN were designed for" — is **superseded**; it can, and does. What
+   remains true is that *this chooser* cannot predict that advantage, because
+   its machine model has one resource.
+3. **Memory provision does not enter the model.** Consequence of (2) for the
+   single-issue machine. `--mem` is provenance only *here*; on the dual-issue
+   machine capacity demonstrably changes the winner (§8.1).
 4. **Run-to-completion erases preemption.** RR, LRU, SRTF and MLFQ are
    preemptive in RTL but cannot preempt here. Results do not generalise to a
    preemptive dispatch FSM.
@@ -467,11 +623,21 @@ invert the engineering conclusion.
    are supported via JSON mixes but are not part of the representative set,
    so the reported stability is conditioned on batch arrival.
 6. **Single machine.** Every conclusion, especially F1, depends on there
-   being exactly one compute engine.
-7. **13/14 hardware coverage.** BatchDNN++ lacks a current measured row;
-   it is excluded from hardware objectives rather than estimated.
+   being exactly one compute engine — an assumption a second top now
+   violates by design.
+7. **13/14 hardware coverage, and the table is stale.** BatchDNN++ lacks a
+   current measured row; additionally all three DNN-aware rows predate the
+   §7.4 fixes and should be re-synthesised.
 8. **Vectorless power.** Dynamic power is Vivado's vectorless estimate, not
    activity-annotated from real switching.
+9. **Anchor A is narrower than it reads.** MT ordering only, on artefacts
+   predating the scheduler fixes (§7.1 caveat).
+10. **Open work — a dual-resource chooser.** Predicting the §8.1 results
+    analytically needs a pair of selection predicates over two resources, a
+    bandwidth-derived memory service time, and a buffer-occupancy constraint.
+    Until that exists, the chooser must not be applied to
+    `multi_dnn_exec_top`; doing so would return an answer for the wrong
+    machine.
 
 ---
 
@@ -479,6 +645,8 @@ invert the engineering conclusion.
 
 ```bash
 cd sim_framework && source .venv/bin/activate
+
+# --- the chooser (single-issue machine; this document's subject) ---
 
 # single query
 PYTHONPATH=. python scripts/choose_scheduler.py --mix mix3 --array 8x8 \
@@ -489,12 +657,20 @@ PYTHONPATH=. python scripts/sched_objective_matrix.py
 
 # validation anchors (the §7.1 tables)
 PYTHONPATH=. python scripts/eval_sched_chooser.py
+
+# --- the dual-issue measurements (the §8.1 table) ---
+
+./tb/exec/build_exec.sh                                # verilator --binary
+PYTHONPATH=. python scripts/run_aimt_eval.py --exp all # sweeps -> CSV
+PYTHONPATH=. python scripts/gen_aimt_figs.py           # figures
+PYTHONPATH=. python -m pytest tb/unit/test_dnn_scheduler_exec.py -q
 ```
 
 Artefacts: `results/sched_chooser/objective_matrix.{csv,md}`,
 `objective_recommendation.csv`, `eval_anchor_order.csv`,
 `eval_anchor_flatness.csv`, `eval_speed.csv`,
-`eval_decision_accuracy.csv`.
+`eval_decision_accuracy.csv`; and for §8.1,
+`results/aimt_exec/exp{A,C,D,E}_*.csv` plus `results/aimt_exec/REPORT.md`.
 
 ---
 
@@ -506,13 +682,25 @@ for a given multi-DNN workload on a fixed accelerator — at design time, in
 milliseconds, without RTL simulation and without per-query synthesis.
 
 **Evidence in hand.** Policy transcription matches measured RTL dispatch
-order 5/5; the model reproduces measured makespan invariance to 0.0000%
-against a measured 0.0075%; full 504-combination sweep in 8.2 ms against a
-~31-minute one-off synthesis table; recommendations are stable across six
-representative mixes for five of six objectives.
+order 5/5 (MT ordering, on artefacts predating the §7.4 fixes); the model
+reproduces measured makespan invariance to 0.0000% against a measured
+0.0075%; full 504-combination sweep in 8.2 ms against a ~31-minute one-off
+synthesis table; recommendations are stable across six representative mixes
+for five of six objectives.
 
 **Evidence still required.** Verilator-based RTL comparison across all 14
-policies × 6 mixes, yielding decision accuracy and Spearman rank
-correlation (§7.3). Until then the correct phrasing is *"validated against
+policies × 6 mixes on `multi_dnn_top`, yielding decision accuracy and
+Spearman rank correlation (§7.3). This is now **executable** — Verilator is
+built and working — so it is scheduled work rather than a blocked
+dependency. Until it is run, the correct phrasing is *"validated against
 measured RTL for five policies on one mix, and consistent with the measured
 makespan invariance"* — not *"validated"*.
+
+**One claim to retire.** Any sentence asserting that this project cannot
+show the benefit AI-MT / BATCH-DNN / BATCH-DNN++ were designed for is now
+false. On the dual-issue top the benefit is measured at 1.24–1.67× with array
+utilisation rising from 37–73% to 44–90%, and it reproduces the published
+mechanisms: overlap peaks when memory and compute are balanced, batching
+amortises weight traffic 1.87× at B=16, and adaptive batching separates only
+when on-chip memory is tight. The single-issue flatness was a property of the
+machine, not of the policies.

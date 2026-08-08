@@ -29,7 +29,12 @@ module unified_scheduler_wrapper
     parameter int DNN_ID_WIDTH     = 4,
     parameter int BATCH_WIDTH      = 8,
     parameter int CYCLE_WIDTH      = 32,
-    parameter int MEM_WIDTH        = 32
+    parameter int MEM_WIDTH        = 32,
+    parameter     ONCHIP_MEM_SIZE    = 44*1024*1024,
+    parameter     WORD_BITS          = 16,
+    parameter     COMPUTE_BAL_THRESH = 1000,
+    parameter     MAX_LAYER_DISTANCE = 5,
+    parameter     STACK_DEPTH        = 16
 ) (
     input  logic clk,
     input  logic rst_n,
@@ -64,6 +69,22 @@ module unified_scheduler_wrapper
     //--- Tagged-union output
     output sched_output_t              sched_out,
     output logic [BATCH_WIDTH-1:0]     ct_batch_size,
+
+    //--- CONCURRENT MT/CT pair (dual-issue execution tops use these).
+    //    sched_out above is a tagged union that can only carry ONE task per
+    //    cycle and gives the CT priority, which silently serialises the very
+    //    memory/compute overlap AI-MT exists to create.  These passthroughs
+    //    keep both valids live at once so a dual-issue dispatcher can start a
+    //    memory task and a compute task in the same cycle.
+    output logic                       mt_valid_o,
+    output logic [LAYER_ID_WIDTH-1:0]  mt_layer_id_o,
+    output logic [DNN_ID_WIDTH-1:0]    mt_dnn_id_o,
+    output logic                       ct_valid_o,
+    output logic [LAYER_ID_WIDTH-1:0]  ct_layer_id_o,
+    output logic [DNN_ID_WIDTH-1:0]    ct_dnn_id_o,
+    output logic [BATCH_WIDTH-1:0]     ct_batch_size_o,
+    output logic [CYCLE_WIDTH-1:0]     dnn_available_memory,
+    output logic [CYCLE_WIDTH-1:0]     dnn_total_stall_cycles,
 
     //--- Stats (basic only, for now)
     output logic [31:0] basic_total_tasks_processed,
@@ -128,7 +149,12 @@ module unified_scheduler_wrapper
         .DNN_ID_WIDTH    (DNN_ID_WIDTH),
         .BATCH_WIDTH     (BATCH_WIDTH),
         .CYCLE_WIDTH     (CYCLE_WIDTH),
-        .MEM_WIDTH       (MEM_WIDTH)
+        .MEM_WIDTH       (MEM_WIDTH),
+        .ONCHIP_MEM_SIZE (ONCHIP_MEM_SIZE),
+        .WORD_BITS       (WORD_BITS),
+        .COMPUTE_BAL_THRESH (COMPUTE_BAL_THRESH),
+        .MAX_LAYER_DISTANCE (MAX_LAYER_DISTANCE),
+        .STACK_DEPTH     (STACK_DEPTH)
     ) u_dnn (
         .clk               (clk),
         .rst_n             (rst_n),
@@ -161,7 +187,26 @@ module unified_scheduler_wrapper
     );
 
     //------------------------------------------------------------------------
-    // Tagged-union output mux
+    // Concurrent MT/CT passthrough -- both valids stay live simultaneously.
+    // Gated on the DNN-aware select range so the basic families cannot drive
+    // spurious memory tasks into a dual-issue dispatcher.
+    //------------------------------------------------------------------------
+    logic dnn_sel_active;
+    assign dnn_sel_active = (scheduler_select >= 5'd11);
+
+    assign mt_valid_o             = d_mt_valid && dnn_sel_active;
+    assign mt_layer_id_o          = d_mt_layer;
+    assign mt_dnn_id_o            = d_mt_dnn;
+    assign ct_valid_o             = d_ct_valid && dnn_sel_active;
+    assign ct_layer_id_o          = d_ct_layer;
+    assign ct_dnn_id_o            = d_ct_dnn;
+    assign ct_batch_size_o        = (d_ct_batch == '0) ? BATCH_WIDTH'(1) : d_ct_batch;
+    assign dnn_available_memory   = d_avail;
+    assign dnn_total_stall_cycles = d_total_stall;
+
+    //------------------------------------------------------------------------
+    // Tagged-union output mux (legacy single-issue consumers, e.g.
+    // multi_dnn_top).  Retained unchanged for backward compatibility.
     //------------------------------------------------------------------------
     always_comb begin
         sched_out                  = '0;

@@ -1,0 +1,52 @@
+{
+  "scheduler_select": 13,
+  "workload": "/home/malinga/DNN_accelerator_dilshan/Quadramind_DNN_Accelerator/Integrated_Simulator_Backup_updated/sim_framework/results/aimt_exec/workloads/cap_batched_b4.txt",
+  "config": {
+    "dram_latency": 20,
+    "dram_bytes_per_cycle": 64,
+    "array_fill_drain": 16,
+    "onchip_mem_bytes": 8388608,
+    "compute_bal_thresh": 1000,
+    "n_layers": 12
+  },
+  "stats": {
+    "total_cycles": 181498,
+    "mt_busy_cycles": 117722,
+    "ct_busy_cycles": 125640,
+    "overlap_cycles": 61883,
+    "both_idle_cycles": 84,
+    "mt_tasks": 7,
+    "ct_tasks": 2,
+    "inferences": 8,
+    "bytes_moved": 7524352,
+    "dram_requests": 7,
+    "sched_stall_cycles": 80796,
+    "array_utilization_pct": 69.2239,
+    "dma_utilization_pct": 64.8613,
+    "overlap_pct": 34.0957,
+    "layers_completed": 2,
+    "layers_expected": 12,
+    "incomplete": 1,
+    "timed_out": 0
+  },
+  "events": [
+    {"c": 20, "k": 0, "l": 0, "b": 1},
+    {"c": 25259, "k": 1, "l": 0, "b": 1},
+    {"c": 25263, "k": 0, "l": 1, "b": 1},
+    {"c": 25264, "k": 2, "l": 0, "b": 4},
+    {"c": 37909, "k": 3, "l": 0, "b": 4},
+    {"c": 51526, "k": 1, "l": 1, "b": 1},
+    {"c": 51530, "k": 0, "l": 4, "b": 1},
+    {"c": 51531, "k": 2, "l": 1, "b": 4},
+    {"c": 63841, "k": 1, "l": 4, "b": 1},
+    {"c": 63845, "k": 0, "l": 5, "b": 1},
+    {"c": 88444, "k": 1, "l": 5, "b": 1},
+    {"c": 88448, "k": 0, "l": 6, "b": 1},
+    {"c": 94615, "k": 1, "l": 6, "b": 1},
+    {"c": 94619, "k": 0, "l": 7, "b": 1},
+    {"c": 100786, "k": 1, "l": 7, "b": 1},
+    {"c": 164528, "k": 3, "l": 1, "b": 4},
+    {"c": 164532, "k": 0, "l": 9, "b": 1},
+    {"c": 181515, "k": 1, "l": 9, "b": 1} 
+  ]
+}

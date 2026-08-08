@@ -1,0 +1,34 @@
+{
+  "scheduler_select": 11,
+  "workload": "/home/malinga/DNN_accelerator_dilshan/Quadramind_DNN_Accelerator/Integrated_Simulator_Backup_updated/sim_framework/results/aimt_exec/workloads/cap_serial_b4.txt",
+  "config": {
+    "dram_latency": 20,
+    "dram_bytes_per_cycle": 64,
+    "array_fill_drain": 16,
+    "onchip_mem_bytes": 2097152,
+    "compute_bal_thresh": 1000,
+    "n_layers": 12
+  },
+  "stats": {
+    "total_cycles": 0,
+    "mt_busy_cycles": 0,
+    "ct_busy_cycles": 0,
+    "overlap_cycles": 0,
+    "both_idle_cycles": 65,
+    "mt_tasks": 0,
+    "ct_tasks": 0,
+    "inferences": 0,
+    "bytes_moved": 0,
+    "dram_requests": 0,
+    "sched_stall_cycles": 81,
+    "array_utilization_pct": 0.0000,
+    "dma_utilization_pct": 0.0000,
+    "overlap_pct": 0.0000,
+    "layers_completed": 0,
+    "layers_expected": 12,
+    "incomplete": 1,
+    "timed_out": 0
+  },
+  "events": [
+  ]
+}

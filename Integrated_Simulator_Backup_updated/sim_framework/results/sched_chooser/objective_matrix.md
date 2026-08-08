@@ -1,6 +1,6 @@
 # Scheduler selection: objective x workload mix
 
-Array 8x8, dataflow OS. 6 objectives x 6 mixes, scored analytically in 8.0 ms with no RTL simulation and no synthesis run.
+Array 8x8, dataflow OS. 6 objectives x 6 mixes, scored analytically in 8.1 ms with no RTL simulation and no synthesis run.
 
 Timing columns are model rank scores; LUT/FF/power/Fmax are measured (Vivado OOC); throughput and turnaround_us are derived from both. Schedulers lacking a measured value are excluded from hardware objectives, never substituted.
 

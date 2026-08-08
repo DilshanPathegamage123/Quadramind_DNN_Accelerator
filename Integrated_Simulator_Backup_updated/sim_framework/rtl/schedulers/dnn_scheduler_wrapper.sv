@@ -19,7 +19,15 @@ module dnn_scheduler_wrapper #(
     parameter DNN_ID_WIDTH       = 4,
     parameter BATCH_WIDTH        = 8,
     parameter CYCLE_WIDTH        = 32,
-    parameter MEM_WIDTH          = 32
+    parameter MEM_WIDTH          = 32,
+    // On-chip capacity and balance knobs. Previously each sub-scheduler used
+    // its own hard-coded default, so a capacity sweep was impossible -- the
+    // AI-MT balance conditions could never be made to bind.
+    parameter ONCHIP_MEM_SIZE    = 44*1024*1024,
+    parameter WORD_BITS          = 16,
+    parameter COMPUTE_BAL_THRESH = 1000,
+    parameter MAX_LAYER_DISTANCE = 5,
+    parameter STACK_DEPTH        = 16
 ) (
     input  logic clk,
     input  logic rst_n,
@@ -85,6 +93,9 @@ module dnn_scheduler_wrapper #(
         .MAX_DNNS        (MAX_DNNS),
         .LAYER_ID_WIDTH  (LAYER_ID_WIDTH),
         .DNN_ID_WIDTH    (DNN_ID_WIDTH),
+        .ONCHIP_MEM_SIZE (ONCHIP_MEM_SIZE),
+        .WORD_BITS       (WORD_BITS),
+        .COMPUTE_BAL_THRESH (COMPUTE_BAL_THRESH),
         .CYCLE_WIDTH     (CYCLE_WIDTH),
         .MEM_WIDTH       (MEM_WIDTH)
     ) u_aimt (
@@ -119,6 +130,10 @@ module dnn_scheduler_wrapper #(
         .LAYER_ID_WIDTH  (LAYER_ID_WIDTH),
         .DNN_ID_WIDTH    (DNN_ID_WIDTH),
         .BATCH_WIDTH     (BATCH_WIDTH),
+        .ONCHIP_MEM_SIZE (ONCHIP_MEM_SIZE),
+        .WORD_BITS       (WORD_BITS),
+        .COMPUTE_BAL_THRESH (COMPUTE_BAL_THRESH),
+        .STACK_DEPTH     (STACK_DEPTH),
         .CYCLE_WIDTH     (CYCLE_WIDTH),
         .MEM_WIDTH       (MEM_WIDTH)
     ) u_batchdnn (
@@ -157,6 +172,10 @@ module dnn_scheduler_wrapper #(
         .LAYER_ID_WIDTH  (LAYER_ID_WIDTH),
         .DNN_ID_WIDTH    (DNN_ID_WIDTH),
         .BATCH_WIDTH     (BATCH_WIDTH),
+        .ONCHIP_MEM_SIZE (ONCHIP_MEM_SIZE),
+        .WORD_BITS       (WORD_BITS),
+        .MAX_LAYER_DISTANCE (MAX_LAYER_DISTANCE),
+        .STACK_DEPTH     (STACK_DEPTH),
         .CYCLE_WIDTH     (CYCLE_WIDTH),
         .MEM_WIDTH       (MEM_WIDTH)
     ) u_batchpp (

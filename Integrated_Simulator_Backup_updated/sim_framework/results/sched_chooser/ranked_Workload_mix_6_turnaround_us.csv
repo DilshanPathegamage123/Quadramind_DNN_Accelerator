@@ -1,0 +1,15 @@
+rank,scheduler,dispatch_order,makespan_cycles,mean_turnaround_cycles,mean_wait_cycles,max_turnaround_cycles,max_wait_cycles,luts,ffs,power_dynamic_w,fmax_mhz_post_synth,mean_turnaround_us,throughput_tasks_per_s,energy_uJ,weighted,hw_status,timing_source,hw_source,note
+1,MLQ,0->1->2->3->4->5,214493,54869.8,19121.0,214493,83081,755,490,0.008,112.4,488.17,3144.2,15.266,3.0000,ok,model,measured (Vivado 2025.2 OOC),
+2,FIFO,0->1->2->3->4->5,214493,54869.8,19121.0,214493,83081,1501,1050,0.011,106.6,514.73,2981.9,22.133,3.0000,ok,model,measured (Vivado 2025.2 OOC),
+3,RR,0->1->2->3->4->5,214493,54869.8,19121.0,214493,83081,1594,1070,0.013,93.4,587.47,2612.7,29.854,3.0000,ok,model,measured (Vivado 2025.2 OOC),
+4,MLFQ,0->1->2->3->4->5,214493,54869.8,19121.0,214493,83081,2295,1044,0.024,90.9,603.63,2542.7,56.632,3.0000,ok,model,measured (Vivado 2025.2 OOC),
+5,AIMT,0->1->2->3->4->5,214493,54869.8,19121.0,214493,83081,3417,6565,0.025,86.7,632.87,2425.3,61.849,3.0000,ok,model,measured (Vivado 2025.2 OOC),164 CRITICAL WARNING(s) in synthesis -- see AIMT_vivado.log
+6,LIFO,5->4->3->2->1->0,214493,195372.0,159623.2,214493,212873,1516,1050,0.012,111.1,1758.52,3107.8,23.168,12.9087,ok,model,measured (Vivado 2025.2 OOC),
+7,SRTF,0->1->2->3->4->5,214493,54869.8,19121.0,214493,83081,1854,490,0.018,21.1,2600.47,590.2,182.980,3.0000,ok,model,measured (Vivado 2025.2 OOC),
+8,SJF,0->1->2->3->4->5,214493,54869.8,19121.0,214493,83081,1999,1050,0.018,20.3,2702.95,567.9,190.191,3.0000,ok,model,measured (Vivado 2025.2 OOC),
+9,LRU,0->1->2->3->4->5,214493,54869.8,19121.0,214493,83081,3035,1594,0.027,19.2,2857.80,537.1,301.631,3.0000,ok,model,measured (Vivado 2025.2 OOC),
+10,EDF,0->1->2->3->4->5,214493,54869.8,19121.0,214493,83081,2374,1050,0.024,19.0,2887.89,531.5,270.939,3.0000,ok,model,measured (Vivado 2025.2 OOC),
+11,PRI,5->4->3->2->1->0,214493,195372.0,159623.2,214493,212873,1663,1050,0.020,41.7,4685.18,1166.5,102.874,12.9087,ok,model,measured (Vivado 2025.2 OOC),
+12,BATCHDNN,0->1->2->3->4->5,214493,54869.8,19121.0,214493,83081,4657,6529,0.079,10.7,5128.02,299.3,1583.640,3.0000,ok,model,measured (Vivado 2025.2 OOC),200 CRITICAL WARNING(s) in synthesis -- see BATCHDNN_vivado.log
+13,HRRN,0->1->2->3->4->5,214493,54869.8,19121.0,214493,83081,2941,1002,0.126,6.5,8441.51,181.8,4157.864,3.0000,ok,model,measured (Vivado 2025.2 OOC),
+excluded,BATCHDNN_PP,0->1->2->3->4->5,214493,54869.8,19121.0,214493,83081,,,,,,,,3.0000,unavailable,model,measured (Vivado 2025.2 OOC),"STALE: last successful synthesis (2026-07-28 17:31) predates the multi-driven-reset fix; that netlist had current_batch/slice_remaining tied to GND, so its numbers do not describe the current RTL. Re-synthesis OOM-killed 4x on this machine: sampled peak was 14.9/15GB RAM with swap fully exhausted, i.e. Vivado needs ~12GB for this module. Re-run scripts/synth_scheduler_hw.py --only BATCHDNN_PP on a host with more swap."

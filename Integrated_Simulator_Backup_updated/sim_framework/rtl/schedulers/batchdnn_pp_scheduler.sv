@@ -117,6 +117,12 @@ module batchdnn_pp_scheduler #(
         logic                      mem_access_done_flag;
         logic                      compute_done_flag;
         logic                      expedited;        // flag: expedited by BLE
+        // Set once a layer is sitting in the scheduled-CT queue. Bottleneck
+        // Expedition re-tests its condition every cycle, so without this the
+        // same layer was pushed into sct_q again and again while it waited,
+        // and each copy was dispatched as a separate compute task -- 17 CTs
+        // for a 12-layer mix, i.e. real duplicated compute, not just noise.
+        logic                      ct_queued;
     } sched_entry_t;
 
     sched_entry_t sched_table [MAX_LAYERS-1:0];
@@ -330,6 +336,7 @@ module batchdnn_pp_scheduler #(
             sched_table[st_layer_idx].mem_access_done_flag <= 1'b0;
             sched_table[st_layer_idx].compute_done_flag    <= 1'b0;
             sched_table[st_layer_idx].expedited            <= 1'b0;
+            sched_table[st_layer_idx].ct_queued            <= 1'b0;
 
             // Compute per-layer hardware cap and track minimum per DNN
             cap = compute_max_batch_cap(st_weight_fp, st_ifmap_fp, st_ofmap_fp);
@@ -389,7 +396,19 @@ module batchdnn_pp_scheduler #(
             // end of this block so same-edge enqueues cannot be lost.
             automatic logic exp_enq;
             automatic logic [LAYER_ID_WIDTH-1:0] exp_layer;
+            // F7 extended to the CT and scheduled-CT queues, which still took
+            // a raw `<= cnt + 1` / `<= cnt - 1` pair.  A same-edge enqueue and
+            // pop lost the enqueue to last-assignment-wins, stranding layers
+            // that had already advanced the tail pointer.  Same defect as
+            // BATCH-DNN, and the reason BATCH-DNN++ finished only 7 of 12
+            // layers of a 3-DNN mix.
+            automatic logic ct_enq, ct_pop, sct_enq, sct_pop;
+            automatic logic [LAYER_ID_WIDTH-1:0] ct_enq_layer, sct_enq_layer;
+            automatic logic [BATCH_WIDTH-1:0]    sct_enq_batch;
             exp_enq = 1'b0; exp_layer = '0;
+            ct_enq  = 1'b0; ct_pop  = 1'b0;
+            sct_enq = 1'b0; sct_pop = 1'b0;
+            ct_enq_layer = '0; sct_enq_layer = '0; sct_enq_batch = '0;
 
             // =============================================================
             // current_batch / slice_remaining ownership (moved here from the
@@ -413,6 +432,25 @@ module batchdnn_pp_scheduler #(
                 // N = min(cap, requested_batch)
                 current_batch[st_dnn_id]   <= (init_cap < st_requested_batch)
                                               ? init_cap : st_requested_batch;
+                // prev_batch_reg needs the same seed.  It resets to 0 and is
+                // otherwise written only on the merge/split dispatch paths,
+                // yet max_batch_size() clamps to it -- so leaving it at 0
+                // pinned feasible_b to 0 and the CT path stalled forever
+                // (every MT ran, then deadlock).  Same defect as BATCH-DNN.
+                prev_batch_reg[st_dnn_id]  <= (init_cap < st_requested_batch)
+                                              ? init_cap : st_requested_batch;
+                // Anchor the distance-throttle reference at this DNN's FIRST
+                // layer.  layer_distance() compares GLOBAL layer indices, but
+                // ct_current_layer[] reset to 0, so for any DNN whose first
+                // layer sits beyond MAX_LAYER_DISTANCE in the global table
+                // (e.g. the 3rd DNN of a mix, starting at index 8 > 5) every
+                // candidate measured as "too far ahead" and was throttled
+                // forever.  Its first MT could then never issue, so its first
+                // CT never dispatched, so ct_current_layer never advanced --
+                // a deadlock that silently dropped whole DNNs from the run.
+                // Seeding it with the DNN's own first layer makes the initial
+                // distance 0, which is what "distance within the DAG" means.
+                ct_current_layer[st_dnn_id] <= st_layer_idx;
                 // Batch slicing: how many full slices of N are needed?
                 slice_remaining[st_dnn_id] <= st_requested_batch;
             end
@@ -497,9 +535,8 @@ module batchdnn_pp_scheduler #(
                 sched_table[mt_active_layer].mem_access_done_flag <= 1'b1;
                 mem_cycle_ctr <= mem_cycle_ctr -
                     $signed({1'b0, sched_table[mt_active_layer].mem_cycles});
-                ct_cq[ct_cq_tail] <= mt_active_layer;
-                ct_cq_tail        <= (ct_cq_tail + 1) % QD;
-                ct_cq_cnt         <= ct_cq_cnt + 1;
+                ct_enq       = 1'b1;             // applied at block end (F7)
+                ct_enq_layer = mt_active_layer;
                 mt_active <= 1'b0;
                 mt_valid  <= 1'b0;
             end
@@ -524,12 +561,11 @@ module batchdnn_pp_scheduler #(
 
                 if (all_prev_done) begin
                     // Normal path (box 9): schedule for computation
-                    ct_cq_head <= (ct_cq_head + 1) % QD;
-                    ct_cq_cnt  <= ct_cq_cnt - 1;
-                    sct_q    [sct_tail] <= ct_cand;
-                    sct_batch[sct_tail] <= current_batch[sched_table[ct_cand].dnn_id];
-                    sct_tail  <= (sct_tail + 1) % QD;
-                    sct_cnt   <= sct_cnt + 1;
+                    ct_pop        = 1'b1;        // applied at block end (F7)
+                    sct_enq       = 1'b1;
+                    sct_enq_layer = ct_cand;
+                    sct_enq_batch = current_batch[sched_table[ct_cand].dnn_id];
+                    sched_table[ct_cand].ct_queued <= 1'b1;
                 end else begin
                     // Box 11-18: Bottleneck layer expedition
                     // Check if predecessor memory access is done
@@ -559,13 +595,17 @@ module batchdnn_pp_scheduler #(
                                 sched_table[bottleneck].expedited <= 1'b1;
                                 expedition_ctr <= expedition_ctr + 1;
                             end else if (sched_table[bottleneck].mem_access_done_flag &&
-                                         !sched_table[bottleneck].compute_done_flag) begin
+                                         !sched_table[bottleneck].compute_done_flag &&
+                                         !sched_table[bottleneck].ct_queued) begin
                                 // Expedite computation of bottleneck (box 15)
-                                sct_q    [sct_tail] <= bottleneck;
-                                sct_batch[sct_tail] <= current_batch[
+                                // - applied at block end (F7).  Mutually
+                                // exclusive with the all_prev_done enqueue
+                                // above, so one sct_enq flag serves both.
+                                sct_enq       = 1'b1;
+                                sct_enq_layer = bottleneck;
+                                sct_enq_batch = current_batch[
                                     sched_table[bottleneck].dnn_id];
-                                sct_tail <= (sct_tail + 1) % QD;
-                                sct_cnt  <= sct_cnt + 1;
+                                sched_table[bottleneck].ct_queued <= 1'b1;
                                 expedition_ctr <= expedition_ctr + 1;
                             end
                         end
@@ -653,8 +693,11 @@ module batchdnn_pp_scheduler #(
                                 (req_batch - feasible_b)});
                     end
 
-                    avail_mem_reg      <= avail_mem_reg -
-                                         sched_table[next_layer].ofmap_fp * feasible_b;
+                    // Duplicate OFMAP reservation removed: the MT path above
+                    // already includes ofmap_fp * batch in mem_req.  Charging
+                    // it twice while the completion path returned neither copy
+                    // leaked 2x OFMAP per layer and wedged the scheduler part
+                    // way through a mix.  Same defect as BATCH-DNN.
                     current_batch[did] <= feasible_b;
                     prev_batch_reg[did]<= feasible_b;
 
@@ -670,8 +713,7 @@ module batchdnn_pp_scheduler #(
                     ct_current_layer[did] <= next_layer;
 
                     // Dispatch
-                    sct_head        <= (sct_head + 1) % QD;
-                    sct_cnt         <= sct_cnt - 1;
+                    sct_pop         = 1'b1;      // applied at block end (F7)
                     ct_active       <= 1'b1;
                     ct_active_layer <= next_layer;
                     ct_active_dnn   <= did;
@@ -689,14 +731,22 @@ module batchdnn_pp_scheduler #(
             // =============================================================
             if (ct_active && compute_done) begin
                 automatic logic [MEM_WIDTH-1:0] freed;
-                freed = sched_table[ct_active_layer].ifmap_fp * ct_active_batch;
+                // Return both per-inference terms the MT path reserved
+                // (ifmap + ofmap) * batch; weights only once the sub-batch
+                // stack has drained.  Previously only IFMAP was returned.
+                freed = (sched_table[ct_active_layer].ifmap_fp +
+                         sched_table[ct_active_layer].ofmap_fp) * ct_active_batch;
+
+                if (sb_sp[ct_active_dnn] == 0)
+                    freed = freed + sched_table[ct_active_layer].weight_fp;
 
                 avail_mem_reg <= avail_mem_reg + freed;
-                if (sb_sp[ct_active_dnn] == 0)
-                    avail_mem_reg <= avail_mem_reg + freed +
-                                     sched_table[ct_active_layer].weight_fp;
 
                 sched_table[ct_active_layer].compute_done_flag <= 1'b1;
+                // Released so a paused sub-batch of this layer can legitimately
+                // be re-queued later; the guard only suppresses duplicates
+                // while a copy is already waiting in sct_q.
+                sched_table[ct_active_layer].ct_queued <= 1'b0;
                 compute_cycle_ctr <= compute_cycle_ctr -
                     $signed({1'b0,
                         sched_table[ct_active_layer].compute_cycles * ct_active_batch});
@@ -719,6 +769,25 @@ module batchdnn_pp_scheduler #(
                 mt_cq_tail        <= (mt_cq_tail + 1) % QD;
             end
             mt_cq_cnt <= mt_cq_cnt + (st_write_en ? 1 : 0) + (exp_enq ? 1 : 0);
+
+            // F7: single-owner CT candidate queue update
+            if (ct_enq) begin
+                ct_cq[ct_cq_tail] <= ct_enq_layer;
+                ct_cq_tail        <= (ct_cq_tail + 1) % QD;
+            end
+            if (ct_pop)
+                ct_cq_head <= (ct_cq_head + 1) % QD;
+            ct_cq_cnt <= ct_cq_cnt + (ct_enq ? 1 : 0) - (ct_pop ? 1 : 0);
+
+            // F7: single-owner scheduled-CT queue update
+            if (sct_enq) begin
+                sct_q    [sct_tail] <= sct_enq_layer;
+                sct_batch[sct_tail] <= sct_enq_batch;
+                sct_tail            <= (sct_tail + 1) % QD;
+            end
+            if (sct_pop)
+                sct_head <= (sct_head + 1) % QD;
+            sct_cnt <= sct_cnt + (sct_enq ? 1 : 0) - (sct_pop ? 1 : 0);
 
         end // !rst_n
     end

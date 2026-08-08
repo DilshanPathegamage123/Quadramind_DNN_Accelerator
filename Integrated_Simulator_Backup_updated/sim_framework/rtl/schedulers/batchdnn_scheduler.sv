@@ -251,7 +251,21 @@ module batchdnn_scheduler #(
         end else begin
             // F7: MT queue ops applied once at block end
             automatic logic mt_pop;
-            mt_pop = 1'b0;
+            // F7 extended to the CT and scheduled-CT queues.  The fix had only
+            // ever been applied to mt_cq; ct_cq_cnt and sct_cnt still took a
+            // raw `<= cnt + 1` on the enqueue path and `<= cnt - 1` on the pop
+            // path.  When both fired on the same edge, last-assignment-wins
+            // dropped the enqueue, so the count silently under-counted while
+            // the payload and tail pointer had already advanced.  Layers were
+            // then stranded in the queue and never dispatched -- BATCH-DNN
+            // finished only 8 of 12 layers of a 3-DNN mix.
+            automatic logic ct_enq, ct_pop, sct_enq, sct_pop;
+            automatic logic [LAYER_ID_WIDTH-1:0] ct_enq_layer, sct_enq_layer;
+            automatic logic [BATCH_WIDTH-1:0]    sct_enq_batch;
+            mt_pop  = 1'b0;
+            ct_enq  = 1'b0; ct_pop  = 1'b0;
+            sct_enq = 1'b0; sct_pop = 1'b0;
+            ct_enq_layer = '0; sct_enq_layer = '0; sct_enq_batch = '0;
 
             // =========================================================
             // current_batch ownership (moved here from the table-load
@@ -266,8 +280,19 @@ module batchdnn_scheduler #(
             // decision.  Previously the outcome of that collision was a
             // race between two always_ff blocks, i.e. undefined.
             // =========================================================
-            if (st_write_en && current_batch[st_dnn_id] == 0)
+            // prev_batch must be seeded here too.  It resets to 0 and is
+            // otherwise written ONLY on the merge/split dispatch paths below,
+            // but max_batch_size() clamps its result to prev_batch -- so a
+            // prev_batch of 0 forces feasible_b = 0, which takes the "even
+            // unit batch won't fit" branch and stalls forever.  The CT path
+            // could therefore never dispatch a single compute task: the
+            // scheduler ran every memory task and then deadlocked, with the
+            // stall counter running away.  Seeding it with the same value as
+            // current_batch makes the first dispatch feasible.
+            if (st_write_en && current_batch[st_dnn_id] == 0) begin
                 current_batch[st_dnn_id] <= st_initial_batch;
+                prev_batch[st_dnn_id]    <= st_initial_batch;
+            end
 
             // =========================================================
             // BLOCK A: Memory Access Scheduler (identical to AI-MT)
@@ -323,9 +348,8 @@ module batchdnn_scheduler #(
                 sched_table[mt_active_layer].mem_access_done_flag <= 1'b1;
                 mem_cycle_ctr <= mem_cycle_ctr -
                                  $signed({1'b0, sched_table[mt_active_layer].mem_cycles});
-                ct_cq[ct_cq_tail] <= mt_active_layer;
-                ct_cq_tail        <= (ct_cq_tail + 1) % QD;
-                ct_cq_cnt         <= ct_cq_cnt + 1;
+                ct_enq       = 1'b1;              // applied at block end (F7)
+                ct_enq_layer = mt_active_layer;
                 mt_active <= 1'b0;
                 mt_valid  <= 1'b0;
             end
@@ -343,13 +367,10 @@ module batchdnn_scheduler #(
                              sched_table[sched_table[ct_cand].prev_layer].compute_done_flag;
 
                 if (prev_done) begin
-                    ct_cq_head <= (ct_cq_head + 1) % QD;
-                    ct_cq_cnt  <= ct_cq_cnt - 1;
-
-                    sct_q[sct_tail]     <= ct_cand;
-                    sct_batch[sct_tail] <= current_batch[sched_table[ct_cand].dnn_id];
-                    sct_tail            <= (sct_tail + 1) % QD;
-                    sct_cnt             <= sct_cnt + 1;
+                    ct_pop        = 1'b1;          // applied at block end (F7)
+                    sct_enq       = 1'b1;
+                    sct_enq_layer = ct_cand;
+                    sct_enq_batch = current_batch[sched_table[ct_cand].dnn_id];
 
                     compute_cycle_ctr <= compute_cycle_ctr +
                         $signed({1'b0,
@@ -446,15 +467,20 @@ module batchdnn_scheduler #(
                                 (req_batch - feasible_b)});
                     end
 
-                    // Update memory register (box 24)
-                    avail_mem_reg     <= avail_mem_reg -
-                                        sched_table[next_layer].ofmap_fp * feasible_b;
+                    // Box 24 used to reserve OFMAP a SECOND time here --
+                    // Block A's mem_req already includes ofmap_fp * batch.
+                    // Reserving it twice while the completion path returned
+                    // neither copy leaked 2x OFMAP per layer, so avail_mem_reg
+                    // hit zero mid-mix, max_batch_size() then returned 0, and
+                    // every later layer stalled forever.  feasible_b above
+                    // still governs how large a sub-batch may be, which is the
+                    // part that actually implements splitting; only the
+                    // duplicate reservation is dropped.
                     current_batch[did] <= feasible_b;
                     prev_batch[did]    <= feasible_b;
 
                     // Dispatch
-                    sct_head        <= (sct_head + 1) % QD;
-                    sct_cnt         <= sct_cnt - 1;
+                    sct_pop         = 1'b1;        // applied at block end (F7)
                     ct_active       <= 1'b1;
                     ct_active_layer <= next_layer;
                     ct_active_dnn   <= did;
@@ -472,16 +498,21 @@ module batchdnn_scheduler #(
             // =========================================================
             if (ct_active && compute_done) begin
                 automatic logic [MEM_WIDTH-1:0] freed;
-                freed = sched_table[ct_active_layer].ifmap_fp * ct_active_batch;
+                // Block A reserved weight_fp + (ifmap_fp + ofmap_fp) * batch,
+                // so BOTH per-inference terms are returned per completed
+                // sub-batch.  Summed over the sub-batches a split produces,
+                // ct_active_batch adds back up to the batch Block A reserved,
+                // so the accounting closes exactly.  Previously only IFMAP
+                // came back and the OFMAP share leaked.
+                freed = (sched_table[ct_active_layer].ifmap_fp +
+                         sched_table[ct_active_layer].ofmap_fp) * ct_active_batch;
 
-                // Release IFMAP of completed sub-batch
+                // Weights are shared by the whole batch, so they are released
+                // only once every sub-batch has drained (stack empty).
+                if (sb_sp[ct_active_dnn] == 0)
+                    freed = freed + sched_table[ct_active_layer].weight_fp;
+
                 avail_mem_reg <= avail_mem_reg + freed;
-                // Check if all inferences in this batch completed (stack empty)
-                if (sb_sp[ct_active_dnn] == 0) begin
-                    // Release weight memory too
-                    avail_mem_reg <= avail_mem_reg + freed +
-                                     sched_table[ct_active_layer].weight_fp;
-                end
 
                 sched_table[ct_active_layer].compute_done_flag <= 1'b1;
                 compute_cycle_ctr <= compute_cycle_ctr -
@@ -500,6 +531,25 @@ module batchdnn_scheduler #(
             if (mt_pop)
                 mt_cq_head <= (mt_cq_head + 1) % QD;
             mt_cq_cnt <= mt_cq_cnt + (st_write_en ? 1 : 0) - (mt_pop ? 1 : 0);
+
+            // F7: single-owner CT candidate queue update
+            if (ct_enq) begin
+                ct_cq[ct_cq_tail] <= ct_enq_layer;
+                ct_cq_tail        <= (ct_cq_tail + 1) % QD;
+            end
+            if (ct_pop)
+                ct_cq_head <= (ct_cq_head + 1) % QD;
+            ct_cq_cnt <= ct_cq_cnt + (ct_enq ? 1 : 0) - (ct_pop ? 1 : 0);
+
+            // F7: single-owner scheduled-CT queue update
+            if (sct_enq) begin
+                sct_q[sct_tail]     <= sct_enq_layer;
+                sct_batch[sct_tail] <= sct_enq_batch;
+                sct_tail            <= (sct_tail + 1) % QD;
+            end
+            if (sct_pop)
+                sct_head <= (sct_head + 1) % QD;
+            sct_cnt <= sct_cnt + (sct_enq ? 1 : 0) - (sct_pop ? 1 : 0);
         end // else (not reset)
     end
 
